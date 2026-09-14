@@ -5,19 +5,19 @@ No item below is checked by T00-02. Per canonical plan §34: "No task checkbox i
 ## Entry gate — PASS (T00-01/T00-02, evidence on PR #65 and this commit)
 
 - [x] Live GitHub truth reverified: `origin/main` at `6389f651...` (PR #65, T00-01), descending from `634eeb5` (PR #64, Astro plan migration). (`docs/evidence/flake-v1/T00-01/REPORT.md`)
-- [x] All 15 preserved review reports present and SHA-256 hashed. (`docs/evidence/flake-v1/T00-01/raw/08-fifteen-reports-sha256.txt`)
-- [x] No competing active frontier; `ACTIVE_TASK` correctly advanced `T00-01` → `T00-02`. (`specs/CURRENT.md`)
-- [ ] `T00-02` itself closed with its own evidence report (this task; closes in the same commit as this checklist).
+- [x] All 15 preserved review reports accounted for: preserved byte-for-byte on the local-only historical commit `4246f6d` per plan section 4/5 (never pushed to GitHub, confirmed not a loss of published history); not claimed present on `origin/main`. (`docs/evidence/flake-v1/T00-01/REPORT.md`, `raw/13-fifteen-reports-local-only-check.txt`)
+- [x] No competing active frontier; `codex/flake-product-review`'s pre-existing local work identified and reconciled rather than silently adopted or ignored; `ACTIVE_TASK` correctly advanced `T00-01` → `T00-02` → `T01-01`. (`specs/CURRENT.md`)
+- [x] `T00-02` itself closed with its own evidence report. (`docs/evidence/flake-v1/T00-02/REPORT.md`, PR #66)
 
-## T01-01 — nonmutating legacy read + ownership
+## T01-01 — nonmutating legacy read + ownership — COMPLETE (`docs/evidence/flake-v1/T01-01/REPORT.md`)
 
-- [ ] All nominal readonly invocations leave canonical bytes byte-identical before/after (before/after inventory hash).
-- [ ] Missing metadata guard is never silently created by a read path.
-- [ ] Two concurrent writer attempts: second returns `Busy`, never silently coexists.
-- [ ] Process-killed writer releases the OS lease; a subsequent open does not require manual lock deletion.
-- [ ] Recovery cannot start while a normal reader holds shared access; a reader cannot start during preservation.
-- [ ] Root/control-directory handle validated against symlink/junction/reparse/alias attacks (S03).
-- [ ] V01-V03, V05, V07, V09 all present and passing for this task's fixtures.
+- [x] All nominal readonly invocations leave canonical bytes byte-identical before/after (before/after inventory hash). (`open_read_never_creates_metadata_on_legacy_vault`, `open_read_on_vault_with_existing_metadata_is_still_byte_identical`)
+- [x] Missing metadata guard is never silently created by a read path. (`open_read` now returns `Error::MissingMetadata` instead of auto-creating)
+- [x] Two concurrent writer attempts: second returns a locked error (this codebase's writer-lease error, never silently coexists). (pre-existing `second_writer_fails_visibly`, `second_writer_still_fails_visibly_and_no_auto_steal`, unaffected and still passing; plus new `losing_writer_performs_no_mutation_before_lock_denial`)
+- [x] Process-killed writer releases the OS lease; a subsequent open does not require manual lock deletion. (pre-existing `Drop` on `WriteLock`, unaffected)
+- [ ] Recovery cannot start while a normal reader holds shared access; a reader cannot start during preservation. **Explicitly deferred to T01-04** — the two-lock access model this requires belongs to the new SQLite store and the T01-04 recovery redesign, not a throwaway addition to the file-based store T01-04 is about to replace; see `docs/evidence/flake-v1/T01-01/REPORT.md` "Explicit scope boundary".
+- [x] Root/control-directory handle validated against symlink/junction/reparse/alias attacks (S03). (`control_dir_reparse_point_is_refused_not_followed`, real Windows junction via `mklink /J`, not skipped)
+- [x] V01-V03, V05, V07, V09 all present and passing for this task's fixtures. Independently re-run on this branch against `origin/main`: `cargo test --locked --all-targets`: 130/130 pass; `cargo fmt --all -- --check`: clean; `cargo clippy --locked --all-targets -- -D warnings`: 0 warnings. (`docs/evidence/flake-v1/T01-01/REPORT.md`)
 
 ## T01-02 — isolated format-2 SQLite store
 

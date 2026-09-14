@@ -526,8 +526,10 @@ fn as8_deleting_derived_state_entirely_and_rebuilding_is_equivalent() {
     }
 
     let log = EventLog::open(&vault.control_dir()).unwrap();
+    let writer = vault.writer().unwrap();
     for id in &ids {
-        log.append(EventKind::ObjectRegistered, &id.to_string(), "")
+        writer
+            .append_event(&log, EventKind::ObjectRegistered, &id.to_string(), "")
             .unwrap();
     }
     let events_before = log.read_all().unwrap();

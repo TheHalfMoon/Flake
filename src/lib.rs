@@ -74,6 +74,13 @@ pub enum Error {
         holder: String,
         path: String,
     },
+    /// A readonly open found the vault's control directory but no identity
+    /// file inside it (T01-01). Distinct from "not a vault": readonly opens
+    /// never create or upcast state — only a writer-context open may. The
+    /// caller should open for write to perform the explicit legacy migration.
+    MissingMetadata {
+        control_dir: String,
+    },
     /// A local resource-safety bound was exceeded. Explicit, audited, and never a
     /// silent discard of canonical state.
     LimitExceeded {
@@ -103,6 +110,10 @@ impl std::fmt::Display for Error {
             Error::WriterLocked { holder, path } => write!(
                 f,
                 "vault is locked by another writer ({holder}); lock file: {path}"
+            ),
+            Error::MissingMetadata { control_dir } => write!(
+                f,
+                "vault metadata missing at {control_dir}/vault.json; open for write to migrate this legacy vault (readonly open never creates it)"
             ),
             Error::LimitExceeded {
                 what,

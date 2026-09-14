@@ -140,14 +140,22 @@ fn k04_in_scope_but_not_served_is_not_observed_evidence() {
 #[test]
 fn k05_partial_tamper_is_detected() {
     let d = tmp("k05");
-    let log = EventLog::open(&d).unwrap();
-    log.append(EventKind::VaultCreated, "v", "").unwrap();
-    log.append(EventKind::ContextCompiled, "ctx-1", "digest=abc")
+    // T01-01: EventLog::append is no longer a public unbound mutator; go
+    // through a real writer, as any real caller now must.
+    let vault = Vault::create(&d).unwrap();
+    let writer = vault.writer().unwrap();
+    let log = EventLog::open(&vault.control_dir()).unwrap();
+    writer
+        .append_event(&log, EventKind::VaultCreated, "v", "")
         .unwrap();
-    log.append(EventKind::ContextCompiled, "ctx-2", "digest=def")
+    writer
+        .append_event(&log, EventKind::ContextCompiled, "ctx-1", "digest=abc")
+        .unwrap();
+    writer
+        .append_event(&log, EventKind::ContextCompiled, "ctx-2", "digest=def")
         .unwrap();
 
-    let p = d.join("events.jsonl");
+    let p = vault.control_dir().join("events.jsonl");
     let text = fs::read_to_string(&p).unwrap();
     let mut lines: Vec<String> = text.lines().map(str::to_string).collect();
     lines[1] = lines[1].replace("digest=abc", "digest=EVIL");
@@ -587,12 +595,16 @@ fn k17_oversized_query_is_bounded() {
 #[test]
 fn k18_reorder_and_replay_are_surfaced() {
     let d = tmp("k18");
-    let log = EventLog::open(&d).unwrap();
+    // T01-01: go through a real writer, as any real caller now must.
+    let vault = Vault::create(&d).unwrap();
+    let writer = vault.writer().unwrap();
+    let log = EventLog::open(&vault.control_dir()).unwrap();
     for i in 0..4 {
-        log.append(EventKind::ObjectRegistered, &format!("o{i}"), "x")
+        writer
+            .append_event(&log, EventKind::ObjectRegistered, &format!("o{i}"), "x")
             .unwrap();
     }
-    let p = d.join("events.jsonl");
+    let p = vault.control_dir().join("events.jsonl");
     let text = fs::read_to_string(&p).unwrap();
     let lines: Vec<&str> = text.lines().collect();
 
@@ -852,11 +864,14 @@ fn k24_concurrent_writer_is_rejected_visibly() {
 #[test]
 fn k24b_permanent_state_amplification_is_bounded() {
     let d = tmp("k24b");
-    let log = EventLog::open(&d).unwrap();
+    // T01-01: go through a real writer, as any real caller now must.
+    let vault = Vault::create(&d).unwrap();
+    let writer = vault.writer().unwrap();
+    let log = EventLog::open(&vault.control_dir()).unwrap();
 
     // An authorized agent tries to write an unbounded event payload.
     let huge = "x".repeat(limits::MAX_EVENT_BYTES + 1);
-    match log.append(EventKind::MemoryRecorded, "m", &huge) {
+    match writer.append_event(&log, EventKind::MemoryRecorded, "m", &huge) {
         Err(Error::LimitExceeded { what, limit, .. }) => {
             assert_eq!(what, "event detail");
             assert_eq!(limit, limits::MAX_EVENT_BYTES);

@@ -1,0 +1,7 @@
+ src/cli.rs           |  80 ++++++++++++-
+ src/events.rs        |  16 ++-
+ src/lib.rs           |  11 ++
+ src/vault.rs         | 324 +++++++++++++++++++++++++++++++++++++++++++++++++--
+ tests/integration.rs |   4 +-
+ tests/kill_tests.rs  |  35 ++++--
+ 6 files changed, 444 insertions(+), 26 deletions(-)

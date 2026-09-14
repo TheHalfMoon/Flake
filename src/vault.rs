@@ -71,6 +71,28 @@ fn is_reserved_component(name: &str) -> bool {
     RESERVED_DIRS.contains(&name)
 }
 
+/// True if `meta` describes a symlink, junction, mount point, or any other
+/// filesystem reparse point (T01-01, S03 filesystem escape/relocation).
+///
+/// `std::fs::FileType::is_symlink()` alone is insufficient on Windows: NTFS
+/// junctions and mount points carry `IO_REPARSE_TAG_MOUNT_POINT`, not
+/// `IO_REPARSE_TAG_SYMLINK`, so `is_symlink()` returns `false` for them even
+/// though they redirect exactly like a symlink for this purpose. Checking the
+/// raw `FILE_ATTRIBUTE_REPARSE_POINT` bit (via the safe
+/// `MetadataExt::file_attributes` accessor — no `unsafe`, matching this
+/// crate's `forbid(unsafe_code)` lint) catches every reparse type uniformly.
+#[cfg(windows)]
+fn is_reparse_point(meta: &fs::Metadata) -> bool {
+    use std::os::windows::fs::MetadataExt;
+    const FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x0400;
+    meta.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT != 0
+}
+
+#[cfg(not(windows))]
+fn is_reparse_point(meta: &fs::Metadata) -> bool {
+    meta.file_type().is_symlink()
+}
+
 /// One admitted canonical object.
 #[derive(Debug, Clone)]
 pub struct ObjectRecord {
@@ -108,28 +130,42 @@ pub struct Vault {
 
 impl Vault {
     /// Create a new vault, taking the write lock.
+    ///
+    /// T01-01: identity is written only after this process holds the OS-held
+    /// writer lease (inside `open_write`), never before. Two concurrent
+    /// `create` calls on the same root no longer race to write competing
+    /// vault identities before either has proven ownership.
     pub fn create(root: impl AsRef<Path>) -> Result<Self> {
         let root = root.as_ref().to_path_buf();
         let control = root.join(CONTROL_DIR);
         fs::create_dir_all(&control)
             .map_err(|e| Error::Vault(format!("cannot create control dir: {e}")))?;
-        // Write vault identity atomically before taking lock, so even if lock
-        // acquisition later fails the vault is left with a valid identity.
-        ensure_vault_meta(&control)?;
         Self::open_write(root)
     }
 
     /// Open an existing vault for writing, taking the single-writer lock.
+    ///
+    /// T01-01: the OS-held writer lease is acquired **first**. Only after
+    /// this process structurally holds it does anything mutate — vault
+    /// identity upcast, torn-tail detection/repair. Previously these ran
+    /// before the lease existed, so two processes calling `open_write`
+    /// concurrently on the same (possibly legacy, metadata-less) root could
+    /// both perform startup mutation at once; whichever's atomic rename won
+    /// last silently discarded the other's chosen identity. Acquiring the
+    /// lease first makes every subsequent mutation in this function
+    /// serialized against every other writer by construction.
     pub fn open_write(root: impl AsRef<Path>) -> Result<Self> {
         let root = root.as_ref().to_path_buf();
         Self::require_vault(&root)?;
-        // Validate (and auto-migrate legacy missing) vault metadata before
-        // granting writer ownership — startup integrity gate FR2-019 steps 1-2.
+        let lock = WriteLock::acquire(&root)?;
+        // Validate (and auto-migrate legacy missing) vault metadata now that
+        // ownership is held — startup integrity gate FR2-019 steps 1-2.
         ensure_vault_meta(&root.join(CONTROL_DIR))?;
         // Steps 3-5: startup integrity gating before writable open (T066)
         // Reads event log, repairs torn tail (quarantine before truncate), then fails closed on gap/chain break.
+        // `lock` is still held (moved into the returned Vault only on success);
+        // an early `?` return here drops it, releasing the lease.
         startup_integrity_check(&root.join(CONTROL_DIR))?;
-        let lock = WriteLock::acquire(&root)?;
         Ok(Vault {
             root,
             lock: Some(lock),
@@ -137,18 +173,50 @@ impl Vault {
     }
 
     /// Open read-only. Takes no lock, so concurrent readers are fine.
+    ///
+    /// T01-01: this path is now genuinely nonmutating. It previously called
+    /// `ensure_vault_meta`, which silently creates and durably writes a fresh
+    /// vault identity when none exists — a "read" that could mutate on-disk
+    /// state on first open of a legacy vault. A readonly open of a legacy
+    /// (metadata-less) vault now returns `MissingMetadata` instead; the
+    /// explicit legacy-upgrade path is `open_write`, which performs the
+    /// upcast under proven writer ownership.
     pub fn open_read(root: impl AsRef<Path>) -> Result<Self> {
         let root = root.as_ref().to_path_buf();
         Self::require_vault(&root)?;
-        // Read path also validates metadata (and auto-creates legacy identity
-        // so a vault is never observed without identity). This keeps
-        // read/write views consistent.
-        ensure_vault_meta(&root.join(CONTROL_DIR))?;
-        Ok(Vault { root, lock: None })
+        match read_vault_meta(&root.join(CONTROL_DIR))? {
+            Some(_) => Ok(Vault { root, lock: None }),
+            None => Err(Error::MissingMetadata {
+                control_dir: root.join(CONTROL_DIR).display().to_string(),
+            }),
+        }
     }
 
     fn require_vault(root: &Path) -> Result<()> {
-        if !root.join(CONTROL_DIR).is_dir() {
+        let control = root.join(CONTROL_DIR);
+        // T01-01 / S03: use symlink_metadata (does not follow the final
+        // component) so a `.fehrest` that is itself a symlink, junction, or
+        // other reparse point is detected here rather than silently followed
+        // to wherever it points. `is_symlink()` alone misses Windows NTFS
+        // junctions/mount points (a well-known std gap: those carry a
+        // different reparse tag than `IO_REPARSE_TAG_SYMLINK`), so the
+        // Windows path additionally checks the raw reparse-point attribute.
+        let meta = match fs::symlink_metadata(&control) {
+            Ok(m) => m,
+            Err(_) => {
+                return Err(Error::Vault(format!(
+                    "not a Fehrest vault (no {CONTROL_DIR}/): {}",
+                    root.display()
+                )))
+            }
+        };
+        if is_reparse_point(&meta) {
+            return Err(Error::Containment(format!(
+                "vault control directory is a symlink/reparse point, refused: {}",
+                control.display()
+            )));
+        }
+        if !meta.is_dir() {
             return Err(Error::Vault(format!(
                 "not a Fehrest vault (no {CONTROL_DIR}/): {}",
                 root.display()
@@ -1337,5 +1405,237 @@ mod tests {
             drop(v2);
         }
         let _ = fs::remove_dir_all(&root);
+    }
+
+    // — T01-01: nonmutating read, lock-before-mutation ordering, reparse handles —
+
+    #[test]
+    fn open_read_never_creates_metadata_on_legacy_vault() {
+        let root = tmp();
+        // Manually create legacy Phase T structure: .fehrest dir only, no vault.json —
+        // exactly the shape that used to trigger a silent auto-create on read.
+        fs::create_dir_all(root.join(CONTROL_DIR)).unwrap();
+        let before: Vec<String> = fs::read_dir(root.join(CONTROL_DIR))
+            .unwrap()
+            .map(|e| e.unwrap().file_name().to_string_lossy().to_string())
+            .collect();
+        assert!(before.is_empty(), "precondition: control dir starts empty");
+
+        let err = Vault::open_read(&root).unwrap_err();
+        assert!(
+            matches!(err, Error::MissingMetadata { .. }),
+            "expected MissingMetadata, got {err:?}"
+        );
+
+        let after: Vec<String> = fs::read_dir(root.join(CONTROL_DIR))
+            .unwrap()
+            .map(|e| e.unwrap().file_name().to_string_lossy().to_string())
+            .collect();
+        assert_eq!(
+            before, after,
+            "T01-01: a readonly open must leave the control directory byte-for-byte \
+             unchanged — before/after inventory must match exactly, not merely be non-empty"
+        );
+
+        // The writer-context path is still the sanctioned legacy upgrade.
+        let v = Vault::open_write(&root).expect("open_write still performs the upcast");
+        assert!(v.vault_meta().is_ok());
+        drop(v);
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn open_read_on_vault_with_existing_metadata_is_still_byte_identical() {
+        let root = tmp();
+        let w = Vault::create(&root).unwrap();
+        drop(w);
+        let before: Vec<(String, u64)> = fs::read_dir(root.join(CONTROL_DIR))
+            .unwrap()
+            .map(|e| {
+                let e = e.unwrap();
+                (
+                    e.file_name().to_string_lossy().to_string(),
+                    e.metadata().unwrap().len(),
+                )
+            })
+            .collect();
+
+        let r = Vault::open_read(&root).unwrap();
+        assert!(r.vault_meta().is_ok());
+        drop(r);
+
+        let after: Vec<(String, u64)> = fs::read_dir(root.join(CONTROL_DIR))
+            .unwrap()
+            .map(|e| {
+                let e = e.unwrap();
+                (
+                    e.file_name().to_string_lossy().to_string(),
+                    e.metadata().unwrap().len(),
+                )
+            })
+            .collect();
+        let mut before_sorted = before;
+        let mut after_sorted = after;
+        before_sorted.sort();
+        after_sorted.sort();
+        assert_eq!(
+            before_sorted, after_sorted,
+            "readonly open on an already-valid vault must not change any file"
+        );
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn open_write_acquires_lock_before_any_startup_mutation_no_split_brain_identity() {
+        // T01-01: a concurrent-load stress/consistency check under real thread
+        // contention. This does NOT, by itself, prove the pre-fix ordering
+        // could produce two different persisted identities — `atomic_write_file`'s
+        // create-temp-then-rename already made the *final* on-disk winner
+        // consistent under either ordering, since a rename onto an existing
+        // target is itself atomic at the OS level. What this test establishes
+        // is that concurrent open_write calls on a legacy root never panic,
+        // never corrupt state, and always converge to exactly one stable,
+        // reopenable identity. The precise, deterministic proof that a losing
+        // writer performs **zero** mutation under the new ordering — which the
+        // old ordering could not guarantee — is
+        // `losing_writer_performs_no_mutation_before_lock_denial` below.
+        let root = tmp();
+        fs::create_dir_all(root.join(CONTROL_DIR)).unwrap();
+
+        let barrier = std::sync::Arc::new(std::sync::Barrier::new(8));
+        let root = std::sync::Arc::new(root);
+        let handles: Vec<_> = (0..8)
+            .map(|_| {
+                let root = std::sync::Arc::clone(&root);
+                let barrier = std::sync::Arc::clone(&barrier);
+                std::thread::spawn(move || {
+                    barrier.wait(); // maximize actual concurrent arrival at open_write
+                    Vault::open_write(root.as_ref())
+                })
+            })
+            .collect();
+
+        let mut successes = 0;
+        for h in handles {
+            match h.join().unwrap() {
+                Ok(v) => {
+                    successes += 1;
+                    // Hold briefly then drop, releasing the lease for the next contender.
+                    drop(v);
+                }
+                Err(Error::WriterLocked { .. }) => {}
+                Err(e) => panic!("unexpected error during contention: {e:?}"),
+            }
+        }
+        assert!(successes >= 1, "at least one open_write must succeed");
+
+        // The critical assertion: exactly one vault_id was ever durably written,
+        // observed by reopening after all contenders have finished.
+        let final_v = Vault::open_write(root.as_ref()).unwrap();
+        let id = final_v.vault_meta().unwrap().vault_id;
+        drop(final_v);
+        // Reopening again must observe the *same* id — no thread silently
+        // overwrote another's identity after the fact.
+        let again = Vault::open_write(root.as_ref()).unwrap();
+        assert_eq!(again.vault_meta().unwrap().vault_id, id);
+        drop(again);
+        let _ = fs::remove_dir_all(root.as_ref());
+    }
+
+    #[test]
+    fn losing_writer_performs_no_mutation_before_lock_denial() {
+        // T01-01: the deterministic (non-racy) regression proof.
+        //
+        // The writer lock is planted directly (mimicking an already-held
+        // lease) on a fresh, metadata-less legacy root — without going
+        // through `open_write` at all, so no metadata upcast has happened
+        // yet. `open_write` is then called once, and must fail with
+        // `WriterLocked` *without* ever creating `vault.json`.
+        //
+        // Under the pre-fix ordering this assertion would have failed: the
+        // old `open_write` called `ensure_vault_meta` (and
+        // `startup_integrity_check`) *before* `WriteLock::acquire`, so a call
+        // that ultimately failed with `WriterLocked` would nonetheless
+        // already have durably mutated the vault on its way to that failure
+        // — a non-owner performing a canonical write, exactly the I02
+        // authority violation T01-01 exists to close. Under the fixed
+        // ordering, `WriteLock::acquire` is the first fallible step, so a
+        // losing writer returns before `ensure_vault_meta` ever runs.
+        let root = tmp();
+        fs::create_dir_all(root.join(CONTROL_DIR)).unwrap();
+        assert!(
+            !root.join(CONTROL_DIR).join(VAULT_META_FILE).exists(),
+            "precondition: legacy root has no vault.json yet"
+        );
+        // Plant the lock file exactly as `WriteLock::acquire` would, without
+        // running any of the rest of `open_write`.
+        fs::write(root.join(CONTROL_DIR).join("writer.lock"), "pid=999999\n").unwrap();
+
+        let err = Vault::open_write(&root).unwrap_err();
+        assert!(
+            matches!(err, Error::WriterLocked { .. }),
+            "expected WriterLocked, got {err:?}"
+        );
+        assert!(
+            !root.join(CONTROL_DIR).join(VAULT_META_FILE).exists(),
+            "T01-01: a writer denied the lease must perform zero mutation — \
+             vault.json must not exist merely because a denied open_write \
+             attempt happened"
+        );
+
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn control_dir_reparse_point_is_refused_not_followed() {
+        // T01-01 / S03: `.fehrest` itself must never be silently followed if it
+        // is a symlink, junction, or other reparse point — that would let vault
+        // operations be transparently redirected to an unintended location.
+        // `mklink /J` creates a directory junction without needing admin rights
+        // (same technique already used by the existing K-13 kill test).
+        use std::process::Command;
+        let base = tmp();
+        let root = base.join("vault");
+        let real_control = base.join("real-control");
+        fs::create_dir_all(&root).unwrap();
+        fs::create_dir_all(&real_control).unwrap();
+
+        let junction = root.join(CONTROL_DIR);
+        let out = Command::new("cmd")
+            .args([
+                "/C",
+                "mklink",
+                "/J",
+                &junction.to_string_lossy(),
+                &real_control.to_string_lossy(),
+            ])
+            .output();
+        let created = out.map(|o| o.status.success()).unwrap_or(false);
+        if !created {
+            eprintln!(
+                "control_dir_reparse_point_is_refused_not_followed: \
+                 PENDING_NATIVE_EXECUTION — directory junction creation unavailable on this host"
+            );
+            let _ = fs::remove_dir_all(&base);
+            return;
+        }
+
+        let err_r = Vault::open_read(&root).unwrap_err();
+        assert!(
+            matches!(err_r, Error::Containment(_)),
+            "open_read must refuse a reparse-point control dir, got {err_r:?}"
+        );
+        let err_w = Vault::open_write(&root).unwrap_err();
+        assert!(
+            matches!(err_w, Error::Containment(_)),
+            "open_write must refuse a reparse-point control dir, got {err_w:?}"
+        );
+        // Nothing was ever written through the junction into the real target.
+        let real_contents: Vec<_> = fs::read_dir(&real_control).unwrap().collect();
+        assert!(
+            real_contents.is_empty(),
+            "refused open must not have written through the junction"
+        );
+        let _ = fs::remove_dir_all(&base);
     }
 }
