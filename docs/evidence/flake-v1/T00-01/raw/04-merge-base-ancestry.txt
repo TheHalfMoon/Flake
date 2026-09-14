@@ -1,0 +1,6 @@
+=== merge-base b03b7a8 vs origin/main ===
+b03b7a8a1507cccef9f7230e17b1c2ff9f08ae84
+=== is 852e44b ancestor of origin/main? ===
+NO
+=== is origin/main ancestor of local branch codex/flake-product-review? ===
+NO
