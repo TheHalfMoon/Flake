@@ -1,0 +1,54 @@
+=== WebFetch: https://crates.io/api/v1/crates/rusqlite/0.37.0 ===
+Prompt: Report the license field and any repository/homepage URL for this crate version.
+Result:
+# Rusqlite v0.37.0 - License and URLs
+License: MIT
+Repository: https://github.com/rusqlite/rusqlite
+Homepage: Not specified (field is null)
+
+=== WebFetch: https://crates.io/api/v1/crates/libsqlite3-sys/0.35.0 ===
+Prompt: Report the license field and any repository/homepage URL for this crate version.
+Result:
+# libsqlite3-sys v0.35.0 - License and URLs
+License: MIT
+Repository: https://github.com/rusqlite/rusqlite
+Homepage: Not specified (listed as null)
+
+=== WebFetch: https://rustsec.org/packages/rusqlite.html ===
+Prompt: List any open/active RustSec security advisories for the rusqlite crate, and note whether version 0.37.0 is affected by any of them.
+Result:
+Two security advisories listed:
+1. RUSTSEC-2021-0128 (2021-12-09) - Incorrect Lifetime Bounds on Closures in rusqlite
+2. RUSTSEC-2020-0014 (2020-10-01) - Various memory safety issues
+(page did not include per-version affected ranges; followed up per-advisory below)
+
+=== WebFetch: https://rustsec.org/packages/libsqlite3-sys.html ===
+Prompt: List any open/active RustSec security advisories for the libsqlite3-sys crate, and note whether version 0.35.0 is affected by any of them.
+Result:
+One active advisory: RUSTSEC-2022-0090 (2023-02-14, HIGH) - Vulnerability in libsqlite3-sys via C SQLite CVE-2022-35737
+(page did not include per-version affected ranges; followed up per-advisory below)
+
+=== WebFetch: https://rustsec.org/advisories/RUSTSEC-2021-0128.html ===
+Prompt: Report the exact 'Patched versions' or affected version range field for this advisory, verbatim.
+Result: Patched: >=0.26.2, ^0.25.4
+
+=== WebFetch: https://rustsec.org/advisories/RUSTSEC-2020-0014.html ===
+Prompt: Report the exact 'Patched versions' or affected version range field for this advisory, verbatim.
+Result: Patched: >=0.23.0
+
+=== WebFetch: https://rustsec.org/advisories/RUSTSEC-2022-0090.html ===
+Prompt: Report the exact 'Patched versions' or affected version range field for this advisory, verbatim.
+Result: Patched: >=0.25.1
+
+=== WebFetch: https://raw.githubusercontent.com/rusqlite/rusqlite/v0.37.0/Cargo.toml ===
+Prompt: Report the exact 'license' field value from this Cargo.toml.
+Result: license = "MIT"
+
+=== WebFetch: https://raw.githubusercontent.com/rusqlite/rusqlite/v0.37.0/libsqlite3-sys/Cargo.toml ===
+Prompt: Report the exact 'license' field value and 'version' field value from this Cargo.toml.
+Result: License field value: "MIT"; Version field value: "0.35.0"
+
+Conclusion: locked versions (rusqlite 0.37.0, libsqlite3-sys 0.35.0) are at or above every advisory's patched floor.
+These results were obtained via the WebFetch tool (fetches + small-model summarization of public pages), not
+via a local `cargo audit` run, per this task's "no installs" forbidden scope. Recorded as a limitation in
+dependency-admission.md.

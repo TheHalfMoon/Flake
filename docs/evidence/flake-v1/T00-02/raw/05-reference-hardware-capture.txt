@@ -1,0 +1,24 @@
+$ Get-CimInstance Win32_Processor | Select Name,NumberOfCores,NumberOfLogicalProcessors
+Name: 13th Gen Intel(R) Core(TM) i5-13420H
+NumberOfCores: 8
+NumberOfLogicalProcessors: 12
+
+$ systeminfo (filtered)
+OS Name:                       Microsoft Windows 11 Home
+OS Version:                    10.0.26200 N/A Build 26200
+OS Build Type:                 Multiprocessor Free
+System Type:                   x64-based PC
+Processor(s):                  1 Processor(s) Installed.
+BIOS Version:                  HUAWEI 1.20, 10/11/2025
+Total Physical Memory:         16,106 MB
+
+$ Get-CimInstance Win32_LogicalDisk -Filter DeviceID=C:
+DeviceID: C:  DriveType: 3 (Local Disk)  FileSystem: NTFS  SizeGB: 200  FreeGB: 6.4
+
+$ Get-PhysicalDisk
+FriendlyName: WD PC SN740 SDDPNQD-512G-1127  MediaType: SSD  BusType: NVMe
+
+$ rustc --version / cargo --version / git --version
+rustc 1.97.1 (8bab26f4f 2026-07-14)
+cargo 1.97.1 (c980f4866 2026-06-30)
+git version 2.55.0.windows.5

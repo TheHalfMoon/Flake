@@ -1,0 +1,106 @@
+=== Vault::open_read src/vault.rs:140-148 ===
+    pub fn open_read(root: impl AsRef<Path>) -> Result<Self> {
+        let root = root.as_ref().to_path_buf();
+        Self::require_vault(&root)?;
+        // Read path also validates metadata (and auto-creates legacy identity
+        // so a vault is never observed without identity). This keeps
+        // read/write views consistent.
+        ensure_vault_meta(&root.join(CONTROL_DIR))?;
+        Ok(Vault { root, lock: None })
+    }
+
+=== Vault::open_write src/vault.rs:123-137 ===
+    pub fn open_write(root: impl AsRef<Path>) -> Result<Self> {
+        let root = root.as_ref().to_path_buf();
+        Self::require_vault(&root)?;
+        // Validate (and auto-migrate legacy missing) vault metadata before
+        // granting writer ownership — startup integrity gate FR2-019 steps 1-2.
+        ensure_vault_meta(&root.join(CONTROL_DIR))?;
+        // Steps 3-5: startup integrity gating before writable open (T066)
+        // Reads event log, repairs torn tail (quarantine before truncate), then fails closed on gap/chain break.
+        startup_integrity_check(&root.join(CONTROL_DIR))?;
+        let lock = WriteLock::acquire(&root)?;
+        Ok(Vault {
+            root,
+            lock: Some(lock),
+        })
+    }
+
+=== ensure_vault_meta src/vault.rs:460-473 ===
+pub fn ensure_vault_meta(control_dir: &Path) -> Result<VaultMeta> {
+    if let Some(meta) = read_vault_meta(control_dir)? {
+        return Ok(meta);
+    }
+    // Legacy Phase T vault without file: auto-create with fresh identity (T046 §5).
+    // This is the upcastable path — explicit file creation is itself the migration.
+    let meta = VaultMeta {
+        vault_id: uuid::Uuid::now_v7().to_string(),
+        format_version: SUPPORTED_FORMAT_VERSION,
+        created_by_version: env!("CARGO_PKG_VERSION").to_string(),
+        created_at: chrono_like_now_iso8601(),
+    };
+    write_vault_meta_atomic(control_dir, &meta)?;
+    Ok(meta)
+
+=== startup_integrity_check src/vault.rs:629-647 ===
+pub fn startup_integrity_check(control_dir: &Path) -> Result<()> {
+    let log = crate::events::EventLog::open(control_dir)?;
+    // Step 3: torn tail detection + authorized quarantine/recovery (T067/T068)
+    if let Some(qpath) = log.quarantine_and_repair_torn_tail()? {
+        // Recovery is auditable via quarantine file path; future T071 would emit synthetic event
+        let _ = qpath;
+    }
+    // Steps 4-5: gap and chain failures must fail closed, not normalized as crash damage
+    match log.verify()? {
+        crate::events::ChainStatus::Intact { .. } => Ok(()),
+        crate::events::ChainStatus::Gap { from_seq, to_seq } => Err(Error::Vault(format!(
+            "event log gap detected from seq {} to {} — writable continuation refused; quarantine affected segment (FR2-016)",
+            from_seq, to_seq
+        ))),
+        crate::events::ChainStatus::Broken { at_seq, reason } => Err(Error::Vault(format!(
+            "event log chain broken at seq {}: {} — writable continuation refused; tamper/fork signal (FR2-016)",
+            at_seq, reason
+        ))),
+    }
+
+=== EventLog::open src/events.rs:202-208 ===
+    pub fn open(control_dir: &Path) -> Result<Self> {
+        std::fs::create_dir_all(control_dir)
+            .map_err(|e| Error::Event(format!("cannot create control dir: {e}")))?;
+        Ok(EventLog {
+            path: control_dir.join("events.jsonl"),
+        })
+    }
+
+=== EventLog::append_for_writer / append src/events.rs:210-240 ===
+    /// Type-proven append that requires a `VaultWriter` token.
+    ///
+    /// Per FR2-008 the API SHOULD structurally require writer ownership.
+    /// The writer's vault control_dir must match this log's directory;
+    /// this prevents a writer for vault A from appending to vault B's log
+    /// via a forged path.
+    pub fn append_for_writer(
+        &self,
+        writer: &crate::vault::VaultWriter<'_>,
+        kind: EventKind,
+        subject: &str,
+        detail: &str,
+    ) -> Result<Event> {
+        // Verify control_dir identity — prevents cross-vault forgery
+        let writer_control = writer.vault().control_dir();
+        let self_parent = self.path.parent().unwrap_or(self.path.as_path());
+        // Canonicalize both where possible, else string compare; we want strict equality.
+        // Use string compare for portability (no extra syscall on read-only path that may not exist yet)
+        if writer_control != self_parent {
+            return Err(Error::Event(format!(
+                "writer vault mismatch: writer holds {}, log at {}",
+                writer_control.display(),
+                self.path.display()
+            )));
+        }
+        self.append(kind, subject, detail)
+    }
+
+    pub fn append(&self, kind: EventKind, subject: &str, detail: &str) -> Result<Event> {
+        if detail.len() > crate::limits::MAX_EVENT_BYTES {
+            return Err(Error::LimitExceeded {
