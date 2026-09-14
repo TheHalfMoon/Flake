@@ -15,6 +15,12 @@ pub const CONTROL_DIR: &str = ".fehrest";
 /// Vault identity file (inside CONTROL_DIR).
 pub const VAULT_META_FILE: &str = "vault.json";
 
+/// Access-coordination lock file (inside CONTROL_DIR). §14: "an access lock
+/// held shared by every normal open connection and exclusively by
+/// recovery/snapshot-preservation." Shared by both vault formats — see
+/// [`AccessGuard`].
+pub(crate) const ACCESS_LOCK_FILE: &str = "access.lock";
+
 /// Current supported vault format version (Spec 002 FR2-001).
 pub const SUPPORTED_FORMAT_VERSION: u32 = 1;
 
@@ -122,6 +128,14 @@ pub struct ScanResult {
 }
 
 /// An open vault. Holding this value holds the write lock.
+///
+/// `T01-01`'s evidence records that §14's shared/exclusive "access lock" is
+/// described "in terms of the future SQLite canonical store" — i.e. the
+/// format-2 store `T01-02`/`T01-04` build, not this file-based format-1
+/// store. Format-1 therefore does not take [`AccessGuard`] here; only
+/// `crate::canonical::CanonicalStore` does. This type's own pre-existing
+/// torn-tail repair remains the format-1 recovery mechanism, unchanged by
+/// `T01-04`.
 #[derive(Debug)]
 pub struct Vault {
     root: PathBuf,
@@ -760,6 +774,60 @@ impl WriteLock {
 impl Drop for WriteLock {
     fn drop(&mut self) {
         let _ = fs::remove_file(&self.path);
+    }
+}
+
+/// The "normal access" side of §14's two-lock model (`T01-04`).
+///
+/// Held **shared** for the entire lifetime of every ordinary open
+/// connection — a format-1 `Vault::open_read`/`open_write`, or a format-2
+/// `CanonicalStore::open` — of either vault format (both share the same
+/// `.fehrest` control directory, so one `access.lock` file coordinates
+/// both). Recovery/snapshot-preservation (`crate::recovery`) takes this
+/// lock **exclusively** instead, which cannot succeed while any normal
+/// connection's shared guard is still alive; a new normal `open` therefore
+/// cannot start while recovery holds it either (`try_lock_shared` fails
+/// against an outstanding exclusive holder). This closes the residual gap
+/// `T01-01`'s evidence named and explicitly deferred here: "recovery
+/// cannot race a reader."
+///
+/// Uses `std::fs::File`'s stable advisory-lock API (`lock_shared`/
+/// `try_lock`/`unlock`, stable since Rust 1.89 — this crate's
+/// `rust-version` is `1.97`) rather than a third-party crate: no new
+/// dependency is admitted for this task. Like `WriteLock`, this coordinates
+/// cooperating Flake processes, not adversarial same-user filesystem access
+/// (§14, §20).
+#[derive(Debug)]
+pub(crate) struct AccessGuard {
+    file: fs::File,
+}
+
+impl AccessGuard {
+    /// Used by every ordinary open of an already-initialized store.
+    /// Requires `access.lock` to already exist — mirrors `open_read`'s
+    /// `MissingMetadata` philosophy for a missing `vault.json`: missing
+    /// coordination metadata is never lazily created by an open, only ever
+    /// reported ("owner-directed inspection, not readonly repair", §14).
+    pub(crate) fn acquire_shared(control_dir: &Path) -> Result<Self> {
+        let path = control_dir.join(ACCESS_LOCK_FILE);
+        let file = fs::OpenOptions::new()
+            .write(true)
+            .open(&path)
+            .map_err(|e| {
+                Error::Vault(format!(
+                    "cannot open access lock (missing coordination metadata at {}): {e}",
+                    path.display()
+                ))
+            })?;
+        file.lock_shared()
+            .map_err(|e| Error::Vault(format!("cannot acquire shared access: {e}")))?;
+        Ok(AccessGuard { file })
+    }
+}
+
+impl Drop for AccessGuard {
+    fn drop(&mut self) {
+        let _ = self.file.unlock();
     }
 }
 

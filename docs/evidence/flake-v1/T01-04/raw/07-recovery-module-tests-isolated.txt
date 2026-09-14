@@ -1,0 +1,15 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.22s
+     Running unittests src\lib.rs (target\debug\deps\fehrest-5ef098747a8d001b.exe)
+
+running 8 tests
+test recovery::tests::missing_database_with_guard_present_is_refused_before_any_preservation ... ok
+test recovery::tests::recovery_is_refused_while_a_normal_connection_holds_shared_access ... ok
+test recovery::tests::a_new_normal_open_is_blocked_while_recovery_holds_exclusive_access ... ok
+test recovery::tests::tampered_resulting_head_hash_is_irrecoverable_and_original_untouched ... ok
+test recovery::tests::clean_store_recovers_to_new_root_with_matching_state ... ok
+test recovery::tests::refused_recovery_writes_a_refusal_incident_manifest_and_preserves_evidence ... ok
+test recovery::tests::successful_recovery_writes_a_verified_incident_manifest ... ok
+test recovery::tests::destination_already_published_is_refused_without_touching_the_original ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 120 filtered out; finished in 0.14s
+

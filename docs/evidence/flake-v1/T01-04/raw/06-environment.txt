@@ -1,0 +1,10 @@
+rustc 1.97.1 (8bab26f4f 2026-07-14)
+cargo 1.97.1 (c980f4866 2026-06-30)
+OS: Microsoft Windows 11 Home, 10.0.26200 Build 26200 (MINGW64/MSYS shell)
+CPU: 12 logical processors (nproc)
+RAM: 16,106 MB total physical memory
+Vendored SQLite (rusqlite 0.37.0 "bundled" feature, libsqlite3-sys 0.35.0): 3.50.2 (unchanged from T01-02/T01-03; no Cargo.toml/Cargo.lock change this task)
+std::fs::File shared/exclusive advisory lock API (lock_shared/try_lock/try_lock_shared/unlock): stable since Rust 1.89; this crate's rust-version is 1.97 — no new dependency admitted for the access lock.
+Build mode for functional test/fmt/clippy runs: dev (cargo test/fmt/clippy default)
+Build mode for timing measurement (raw/05): release (cargo run --release)
+Baseline / tested source commit: forked from origin/main b59d39edf92c3214f68903f5af4977a03c1346fa (PR #69, T01-03 merge)

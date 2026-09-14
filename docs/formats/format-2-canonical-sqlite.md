@@ -289,6 +289,65 @@ command_id|object_id|revision_id|resulting_head_seq
 <uuid7>|<uuid7>|<uuid7>|1
 ```
 
+## Access coordination and recovery (`T01-04`)
+
+A third file, `.fehrest/access.lock`, coordinates normal opens against
+recovery — plan §14's second lock, alongside `writer.lock`:
+
+| Lock | File | Held by | Mode |
+|---|---|---|---|
+| Writer ownership | `writer.lock` | one writer/recovery process at a time | exclusive, `create_new`/O_EXCL marker file (unchanged from `T01-01`) |
+| Access | `access.lock` | every normal open connection | shared, for its entire open lifetime |
+| Access | `access.lock` | `crate::recovery` | exclusive, only while recovering |
+
+`access.lock` is created empty, unlocked, as part of `CanonicalStore::create`'s
+staged publication (never lazily by a read — `CanonicalStore::open` requires
+it to already exist, exactly like it requires the guard to exist). This
+uses `std::fs::File`'s stable advisory-lock API (`lock_shared`/`try_lock`/
+`unlock`, stable since Rust 1.89; this crate's `rust-version` is `1.97`) —
+no new dependency. This coordinates cooperating Flake processes, not
+adversarial same-user filesystem access (§14, §20), matching every other
+lock in this crate.
+
+Recovery (`crate::recovery::recover_to_new_root`) acquires writer ownership
+*then* exclusive access, in that fixed order — the same order a normal
+writer's `CanonicalStore::writer()` effectively participates in by sharing
+the identical `writer.lock` primitive — so every code path in the crate
+acquires these two locks in one consistent global order. If any normal
+connection currently holds shared access, recovery's exclusive attempt
+returns `Busy`-shaped `Error::Recovery` immediately rather than blocking; a
+new normal `open` attempted while recovery holds exclusive access blocks
+until recovery releases it.
+
+Recovery never touches the live original: it preserves the exact guard/
+database/(-journal, if present) bytes to a `.fehrest/recovery-preserved-
+<uuid7>/` directory first, builds a disposable working copy from *those*
+preserved bytes, and verifies the working copy independently and far more
+thoroughly than an ordinary `open` — recomputing the entire `command` chain
+from scratch (§16 "verify... history/head and reconstructed current
+state"), not merely re-reading the stored head. Only a fully-verified
+working copy is published, staged-and-renamed onto a caller-chosen new
+root exactly like `CanonicalStore::create`'s own no-clobber discipline. A
+verification failure removes only the disposable working copy; the
+original is completely untouched and the preserved bytes remain on disk.
+
+Every recovery attempt — success or refusal — writes
+`incident-manifest.json` into its preservation directory:
+
+```json
+{
+  "schema": "flake-recovery-incident-v1",
+  "original_root": "<path>",
+  "attempted_at": "<placeholder timestamp>",
+  "outcome": "verified_and_published" | "refused",
+  "recovered_root": "<path> | null",
+  "vault_id": "<uuid7> | null",
+  "verified_transaction_head_seq": "<int> | null",
+  "verified_object_count": "<int> | null",
+  "refusal_reason": "<string> | null"
+}
+```
+
 ## Known limitations (recorded, not hidden)
 
 - `created_at` is a placeholder timestamp (seconds-of-day since a fixed
@@ -313,15 +372,23 @@ command_id|object_id|revision_id|resulting_head_seq
 - The command digest is a deliberately narrower canonicalization than full
   RFC 8785 JCS (sorted keys only, no Unicode NFC, no cross-language golden
   vectors) — see "Command digest" above.
-- `created_at` is a placeholder timestamp (seconds-of-day since a fixed
-  base date, RFC3339-shaped but not calendar-correct), matching the
-  identical, pre-existing limitation in the format-1 guard
-  (`vault.rs::chrono_like_now_iso8601`). A real `chrono`/`time` dependency
-  was not admitted for this minimal task; named, not silently worked
-  around.
 - No performance measurement against plan §27's M/L datasets: those
   datasets require typed record shapes (`Project`/`Note`/`Action`/...) that
   do not exist before `P02`. Evidence reports record bounded, S-scale
   timing only, consistent with these tasks' own "Native development profile
   mandatory now; all remaining profiles retained for T05-02" cross-platform
   gate.
+- `T01-04` recovery is all-or-nothing (a single chain break, dangling
+  reference, or head mismatch refuses complete publication); it does not
+  build a labeled *partial* salvage that admits a truncated-but-valid
+  history prefix. It does not have a CLI `recover`/`verify` command (this
+  store has no CLI wiring at all yet). It does not restore from a separate
+  backup artifact — only from the live root's own current bytes (`T01-05`'s
+  objective). Recovery's `Busy` response to contention is immediate, not a
+  bounded wait — `crate::vault::Vault`'s own readers/writers use a blocking
+  acquire for the analogous case, but this module chose immediate refusal
+  instead; a bounded-wait variant is left to a future task if needed.
+- Format-1's own torn-tail repair is completely untouched by `T01-04`: the
+  §14 access-lock model is, per `T01-01`'s own evidence, described "in
+  terms of the future SQLite canonical store" — this format — not the
+  file-based format-1 store.

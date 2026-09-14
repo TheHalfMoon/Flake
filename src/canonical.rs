@@ -171,12 +171,17 @@ fn expected_columns(table: &str) -> Vec<(String, String)> {
         .collect()
 }
 
-/// A published, open format-2 canonical store.
+/// A published, open format-2 canonical store. Holds shared access
+/// (`T01-04`, §14) for its entire lifetime, so recovery cannot start while
+/// this handle is open, and this handle cannot open while recovery holds
+/// exclusive access.
 #[derive(Debug)]
 pub struct CanonicalStore {
     conn: Connection,
     root: PathBuf,
     vault_id: String,
+    #[allow(dead_code)] // held only for its Drop; never read
+    access: crate::vault::AccessGuard,
 }
 
 /// Injected failure points for `create`'s staged-publication protocol
@@ -244,6 +249,17 @@ impl CanonicalStore {
             return Err(Error::Canonical("injected fault: AfterGuardWritten".into()));
         }
 
+        // §14: "Lock files are created only during explicit vault
+        // initialization." Created empty here (not locked yet — an OS lock
+        // held on a file inside `staging` would make the directory rename
+        // below fragile, especially on Windows) so it is published
+        // atomically alongside the guard and database; `Self::open` below
+        // acquires the actual shared lock only after publication.
+        fs::File::create(staging.join(crate::vault::ACCESS_LOCK_FILE)).map_err(|e| {
+            let _ = fs::remove_dir_all(&staging);
+            Error::Canonical(format!("cannot create access lock file: {e}"))
+        })?;
+
         let db_path = staging.join(CANONICAL_DB_FILE);
         if db_path.exists() {
             let _ = fs::remove_dir_all(&staging);
@@ -294,6 +310,10 @@ impl CanonicalStore {
     pub fn open(root: impl AsRef<Path>) -> Result<Self> {
         let root = root.as_ref().to_path_buf();
         let control = root.join(CONTROL_DIR);
+        // T01-04, §14: acquire shared access before opening SQLite at all, so
+        // this open cannot start while `crate::recovery` holds exclusive
+        // access, and recovery cannot start while this handle stays open.
+        let access = crate::vault::AccessGuard::acquire_shared(&control)?;
         let meta = read_guard(&control)?.ok_or_else(|| {
             Error::Canonical(format!(
                 "no canonical store guard at {}; not a format-2 vault",
@@ -325,6 +345,7 @@ impl CanonicalStore {
             conn,
             root,
             vault_id: meta.vault_id,
+            access,
         })
     }
 
@@ -1073,6 +1094,195 @@ fn now_iso8601_placeholder() -> String {
         .unwrap_or_default()
         .as_secs();
     format!("2026-09-14T{:05}Z", secs % 86400)
+}
+
+/// What an independent recovery-candidate verification reconstructed,
+/// rather than trusted from stored values (`T01-04`).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct RecoveryVerification {
+    pub(crate) vault_id: String,
+    pub(crate) transaction_head_seq: i64,
+    pub(crate) transaction_head_hash: Option<String>,
+    pub(crate) object_count: usize,
+}
+
+/// Independently verify a format-2 store whose control-directory contents
+/// (guard + database, laid out exactly like a published `.fehrest`) live
+/// directly at `control`, for `crate::recovery` (`T01-04`) — **not** the
+/// same trust level as `open`'s own checks, and
+/// never called by `open`. `open` trusts `canonical_vault`'s stored head as
+/// an optimization on every ordinary connection; recovery does not trust
+/// anything it did not itself recompute:
+///
+/// 1. `PRAGMA integrity_check` must report `ok` (SQLite's own page-level
+///    corruption detector).
+/// 2. The exact same [`assert_schema_recognized`] rule `open` uses.
+/// 3. Every `command` row's `previous_head_seq`/`previous_head_hash` must
+///    equal the previous row's `resulting_head_seq`/`resulting_head_hash`
+///    (or `(0, None)` for the first), forming an unbroken chain from
+///    genesis — not merely "each row individually looks fine."
+/// 4. Every `command` row's `resulting_head_hash` is **recomputed** from
+///    `(previous_head_hash, revision_id, input_digest)` and compared to the
+///    stored value — a tampered stored hash is caught even if the chain
+///    linkage in (3) still lines up.
+/// 5. Every `current_object.current_revision_id` references an existing
+///    `revision` row (no dangling current pointer).
+/// 6. Every `revision.parent_revision_id`, where not `NULL`, references an
+///    existing `revision` row (no dangling history edge).
+/// 7. `canonical_vault`'s stored head matches the reconstructed chain's
+///    end exactly.
+///
+/// Any failure returns `Err` naming exactly what did not verify; nothing
+/// here mutates `control`.
+pub(crate) fn verify_recovery_candidate(control: &Path) -> Result<RecoveryVerification> {
+    let meta = read_guard(control)?
+        .ok_or_else(|| Error::Recovery("recovery candidate has no guard".into()))?;
+    if meta.format_version != CANONICAL_FORMAT_VERSION {
+        return Err(Error::Recovery(format!(
+            "recovery candidate guard declares format_version {}, expected {}",
+            meta.format_version, CANONICAL_FORMAT_VERSION
+        )));
+    }
+    let db_path = control.join(CANONICAL_DB_FILE);
+    // A plain `Connection::open` (read-write, default flags) is what lets
+    // SQLite perform its own automatic hot-journal rollback if an
+    // interrupted transaction's `-journal` file is present alongside the
+    // database — this is SQLite's built-in crash recovery, not something
+    // this module implements; opening it is what triggers it.
+    let conn = Connection::open(&db_path).map_err(|e| {
+        Error::Recovery(format!(
+            "cannot open recovery candidate database (possibly corrupt): {e}"
+        ))
+    })?;
+
+    let integrity: String = conn
+        .query_row("PRAGMA integrity_check", [], |r| r.get(0))
+        .map_err(|e| Error::Recovery(format!("cannot run integrity_check: {e}")))?;
+    if integrity != "ok" {
+        return Err(Error::Recovery(format!(
+            "integrity_check failed: {integrity}"
+        )));
+    }
+
+    assert_schema_recognized(&conn, &meta.vault_id)
+        .map_err(|e| Error::Recovery(format!("recovery candidate schema not recognized: {e}")))?;
+
+    struct CommandChainRow {
+        command_id: String,
+        input_digest: String,
+        previous_head_seq: i64,
+        previous_head_hash: Option<String>,
+        revision_id: String,
+        recorded_seq: i64,
+        resulting_head_hash: String,
+    }
+
+    let mut stmt = conn
+        .prepare(
+            "SELECT command_id, input_digest, previous_head_seq, previous_head_hash,
+                    revision_id, recorded_seq, resulting_head_hash
+             FROM command ORDER BY recorded_seq ASC",
+        )
+        .map_err(|e| Error::Recovery(format!("cannot prepare command scan: {e}")))?;
+    let rows: Vec<CommandChainRow> = stmt
+        .query_map([], |r| {
+            Ok(CommandChainRow {
+                command_id: r.get(0)?,
+                input_digest: r.get(1)?,
+                previous_head_seq: r.get(2)?,
+                previous_head_hash: r.get(3)?,
+                revision_id: r.get(4)?,
+                recorded_seq: r.get(5)?,
+                resulting_head_hash: r.get(6)?,
+            })
+        })
+        .map_err(|e| Error::Recovery(format!("cannot run command scan: {e}")))?
+        .collect::<rusqlite::Result<_>>()
+        .map_err(|e| Error::Recovery(format!("cannot read command rows: {e}")))?;
+
+    let mut expected_prev_seq = 0i64;
+    let mut expected_prev_hash: Option<String> = None;
+    for row in &rows {
+        if row.previous_head_seq != expected_prev_seq
+            || row.previous_head_hash != expected_prev_hash
+        {
+            return Err(Error::Recovery(format!(
+                "command chain broken at {}: expected previous head ({expected_prev_seq}, {expected_prev_hash:?}), found ({}, {:?})",
+                row.command_id, row.previous_head_seq, row.previous_head_hash
+            )));
+        }
+        let recomputed = crate::events::hash_bytes(
+            format!(
+                "flake-canonical-tx-v1|{}|{}|{}",
+                row.previous_head_hash.clone().unwrap_or_default(),
+                row.revision_id,
+                row.input_digest
+            )
+            .as_bytes(),
+        );
+        if recomputed != row.resulting_head_hash {
+            return Err(Error::Recovery(format!(
+                "command {} resulting_head_hash does not match its recomputed value; tamper or corruption signal",
+                row.command_id
+            )));
+        }
+        expected_prev_seq = row.recorded_seq;
+        expected_prev_hash = Some(row.resulting_head_hash.clone());
+    }
+
+    let dangling_current: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM current_object c
+             LEFT JOIN revision r ON r.revision_id = c.current_revision_id
+             WHERE r.revision_id IS NULL",
+            [],
+            |r| r.get(0),
+        )
+        .map_err(|e| Error::Recovery(format!("cannot check current_object references: {e}")))?;
+    if dangling_current != 0 {
+        return Err(Error::Recovery(format!(
+            "{dangling_current} current_object row(s) reference a missing revision"
+        )));
+    }
+
+    let dangling_parent: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM revision r
+             WHERE r.parent_revision_id IS NOT NULL
+               AND NOT EXISTS (SELECT 1 FROM revision p WHERE p.revision_id = r.parent_revision_id)",
+            [],
+            |r| r.get(0),
+        )
+        .map_err(|e| Error::Recovery(format!("cannot check revision parent references: {e}")))?;
+    if dangling_parent != 0 {
+        return Err(Error::Recovery(format!(
+            "{dangling_parent} revision row(s) reference a missing parent_revision_id"
+        )));
+    }
+
+    let (stored_head_seq, stored_head_hash): (i64, Option<String>) = conn
+        .query_row(
+            "SELECT transaction_head_seq, transaction_head_hash FROM canonical_vault WHERE singleton = 1",
+            [],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
+        .map_err(|e| Error::Recovery(format!("cannot read stored transaction head: {e}")))?;
+    if stored_head_seq != expected_prev_seq || stored_head_hash != expected_prev_hash {
+        return Err(Error::Recovery(format!(
+            "canonical_vault head ({stored_head_seq}, {stored_head_hash:?}) does not match the reconstructed command chain end ({expected_prev_seq}, {expected_prev_hash:?})"
+        )));
+    }
+
+    let object_count: i64 = conn
+        .query_row("SELECT COUNT(*) FROM current_object", [], |r| r.get(0))
+        .map_err(|e| Error::Recovery(format!("cannot count current_object rows: {e}")))?;
+
+    Ok(RecoveryVerification {
+        vault_id: meta.vault_id,
+        transaction_head_seq: stored_head_seq,
+        transaction_head_hash: stored_head_hash,
+        object_count: object_count as usize,
+    })
 }
 
 #[cfg(test)]
