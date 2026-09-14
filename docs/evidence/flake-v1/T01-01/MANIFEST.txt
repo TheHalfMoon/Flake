@@ -1,0 +1,6 @@
+10231	cb1af8b5664cc89e5f0e2c3be2d667b79017c493b3cd9bc79a12eba05cd2e892	01-full-test-run.txt
+0	e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855	02-fmt-check.txt
+159	bc95dfd9a466adc602f7a03f0a3088602e6a209dbb3cd220bcf22c1ac85e060e	03-clippy.txt
+304	245c57e90faf71f28f8af83f64416dcda159bcd4ba06626bf8ed079eae6e51f8	04-diff-stat.txt
+918	f8dfdb307dba4e7e47e54f0facdaf4f50c9a5da8dae35c02dc661b5b96c5122d	05-empirical-prefix-ordering-fails.txt
+757	32b8c57bcad1d70a9b2e3cfa35e5e270f94ec2e584ab6d4625226ba8e01dc697	06-restore-and-final-green-confirmation.txt

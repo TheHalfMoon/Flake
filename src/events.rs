@@ -235,7 +235,21 @@ impl EventLog {
         self.append(kind, subject, detail)
     }
 
-    pub fn append(&self, kind: EventKind, subject: &str, detail: &str) -> Result<Event> {
+    /// Unchecked append — no writer-ownership proof required by this
+    /// function itself.
+    ///
+    /// **T01-01: this is deliberately `pub(crate)`, not `pub`.** It is the
+    /// mechanism `append_for_writer` delegates to after verifying a bound
+    /// `VaultWriter`, and it remains directly reachable from this crate's own
+    /// tests (which legitimately need to fabricate specific chain states
+    /// without a full `Vault`/writer scaffold) and from `verify`/recovery
+    /// code paths that are themselves already gated elsewhere. It must
+    /// **never** be reachable from `cli.rs` or any future product surface —
+    /// two call sites in `cli.rs` did exactly that before this task (`init`,
+    /// `compile`); both now go through `append_for_writer` instead. A new
+    /// caller outside this file should be treated as a regression of the
+    /// bypass this task closes, not a reason to widen this back to `pub`.
+    pub(crate) fn append(&self, kind: EventKind, subject: &str, detail: &str) -> Result<Event> {
         if detail.len() > crate::limits::MAX_EVENT_BYTES {
             return Err(Error::LimitExceeded {
                 what: "event detail",

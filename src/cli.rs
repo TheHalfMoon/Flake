@@ -87,8 +87,14 @@ pub fn run(argv: &[String]) -> Result<i32> {
         "init" => {
             let root = args.vault_root()?;
             let v = Vault::create(root)?;
+            let w = v.writer()?;
             let log = EventLog::open(&v.control_dir())?;
-            log.append(EventKind::VaultCreated, &root.display().to_string(), "")?;
+            w.append_event(
+                &log,
+                EventKind::VaultCreated,
+                &root.display().to_string(),
+                "",
+            )?;
             Derived::open(&v.control_dir())?;
             println!("vault created: {}", root.display());
             Ok(0)
@@ -186,6 +192,7 @@ pub fn run(argv: &[String]) -> Result<i32> {
 
         "compile" => {
             let v = Vault::open_write(args.vault_root()?)?;
+            let w = v.writer()?;
             let scan = v.scan()?;
             let scope = match args.get("project") {
                 Some(p) => Scope::project("vault", p),
@@ -231,7 +238,8 @@ pub fn run(argv: &[String]) -> Result<i32> {
             .map_err(|e| crate::Error::Vault(format!("cannot write manifest: {e}")))?;
 
             let log = EventLog::open(&v.control_dir())?;
-            log.append(
+            w.append_event(
+                &log,
                 EventKind::ContextCompiled,
                 &pkg.manifest.context_id,
                 &format!(
@@ -290,5 +298,73 @@ pub fn run(argv: &[String]) -> Result<i32> {
             eprintln!("unknown command: {other}\n\n{USAGE}");
             Ok(64)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn tmp() -> PathBuf {
+        let d = std::env::temp_dir().join(format!("fehrest-cli-{}", uuid::Uuid::now_v7()));
+        std::fs::create_dir_all(&d).unwrap();
+        d
+    }
+
+    fn s(v: &[&str]) -> Vec<String> {
+        v.iter().map(|s| s.to_string()).collect()
+    }
+
+    /// T01-01: `init` and `compile` used to append their event directly on a
+    /// bare `EventLog`, bypassing the writer-owned chokepoint (the exact class
+    /// of unbound mutator this task closes). Both now go through
+    /// `VaultWriter::append_event`. This test proves the externally-visible
+    /// behavior is unchanged — the vault is created, the event is recorded,
+    /// and the resulting chain still verifies intact — so the fix is a pure
+    /// authorization-path correction, not a behavior change.
+    #[test]
+    fn init_appends_vault_created_event_via_writer_and_chain_verifies() {
+        let root = tmp();
+        let root_str = root.to_string_lossy().to_string();
+        let code = run(&s(&["init", "--vault", &root_str])).unwrap();
+        assert_eq!(code, 0);
+
+        let v = Vault::open_read(&root).unwrap();
+        let log = EventLog::open(&v.control_dir()).unwrap();
+        let events = log.read_all().unwrap();
+        assert_eq!(events.len(), 1);
+        assert!(matches!(events[0].kind, EventKind::VaultCreated));
+        assert!(matches!(
+            log.verify().unwrap(),
+            ChainStatus::Intact { events: 1 }
+        ));
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn compile_appends_context_compiled_event_via_writer_and_chain_verifies() {
+        let root = tmp();
+        let root_str = root.to_string_lossy().to_string();
+        assert_eq!(run(&s(&["init", "--vault", &root_str])).unwrap(), 0);
+        assert_eq!(
+            run(&s(&[
+                "add", "--vault", &root_str, "--path", "a.md", "--body", "hello"
+            ]))
+            .unwrap(),
+            0
+        );
+        assert_eq!(run(&s(&["compile", "--vault", &root_str])).unwrap(), 0);
+
+        let v = Vault::open_read(&root).unwrap();
+        let log = EventLog::open(&v.control_dir()).unwrap();
+        let events = log.read_all().unwrap();
+        // init -> VaultCreated, add -> ObjectRegistered, compile -> ContextCompiled
+        assert_eq!(events.len(), 3);
+        assert!(matches!(events[2].kind, EventKind::ContextCompiled));
+        assert!(matches!(
+            log.verify().unwrap(),
+            ChainStatus::Intact { events: 3 }
+        ));
+        let _ = std::fs::remove_dir_all(&root);
     }
 }
