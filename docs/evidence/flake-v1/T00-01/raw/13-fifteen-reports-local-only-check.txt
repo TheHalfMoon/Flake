@@ -1,0 +1,12 @@
+=== docs/reviews present on origin/main ===
+docs/reviews/FLAKE_FINAL_PLANNING_SECURITY_REVIEW.md
+docs/reviews/FLAKE_FINAL_PLANNING_VERIFICATION.md
+docs/reviews/G3-SECURITY-RECONCILIATION.md
+docs/reviews/PHASE_T_IMPLEMENTATION_CONFORMANCE.md
+docs/reviews/REPLACEMENT_SEMANTICS_MEASUREMENT.md
+docs/reviews/WRITER_OWNERSHIP_INVENTORY.md
+
+=== does b03b7a8 (actual GitHub baseline before migration) contain any of the 15 FLAKE_*.md review reports? ===
+0
+0
+(0 confirms those 15 reports were added only by locally-preserved commit 4246f6d and were never pushed to GitHub; their absence from origin/main is expected local-only status, not a deletion of published history)

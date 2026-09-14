@@ -1,0 +1,6 @@
+git: git version 2.55.0.windows.5
+gh: gh version 2.96.0 (2026-07-02)
+cargo: cargo 1.97.1 (c980f4866 2026-06-30)
+rustc: rustc 1.97.1 (8bab26f4f 2026-07-14)
+OS: Windows 11 (10.0.26200), PowerShell/Git-Bash on host
+date (UTC): 2026-09-14T19:18:51Z

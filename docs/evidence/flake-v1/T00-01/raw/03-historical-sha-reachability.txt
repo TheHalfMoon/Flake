@@ -1,0 +1,6 @@
+=== 4246f6d exists ===
+PRESENT_LOCAL
+=== 852e44b exists ===
+PRESENT_LOCAL
+=== both reachable only from local branch codex/flake-product-review, not from origin/main ===
+  codex/flake-product-review

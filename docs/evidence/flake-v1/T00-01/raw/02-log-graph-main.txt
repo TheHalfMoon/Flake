@@ -1,0 +1,20 @@
+634eeb5 (HEAD -> flake/t00-01-frontier-reverification, origin/main, origin/HEAD) docs(plan): canonicalize final Astro Flake roadmap (#64)
+1c78512 (origin/codex/flake-canonical-plan) docs(plan): canonicalize final Astro Flake roadmap
+b03b7a8 docs(spec-002): closeout verification and Spec 002 completion (T074-T083 slice G) (#63)
+7c23c9d feat(core): startup integrity gating and torn-tail recovery (T066-T073 slice F) (#62)
+fe29022 feat(events): versioned event journal (T060-T065 slice E) (#61)
+7c32cb1 refactor(core): writer-owned mutation chokepoint (T054-T059 slice C) (#60)
+6bb4e8a feat(core): vault identity + crash-safe canonical writes (T046-T053 slice B) (#59)
+cf1a046 docs(spec-002): close Slice A Phase T truth reconciliation (T041-T045) (#58)
+a8d3052 Merge pull request #57 from TheHalfMoon/feat/spec-002-activation
+c54734d (origin/feat/spec-002-activation) feat(spec-002): activate Spec 002 post-R1 canonical core convergence (T038-T040)
+b152bcf Merge pull request #56 from TheHalfMoon/feat/r1-v3-terminal-verdict
+3c89c5d (origin/feat/r1-v3-terminal-verdict) feat(r1): terminal R1-v3 verdict THESIS_SUPPORTED_ON_COST_CAVEAT (B5 vs B4 p=1.2e-32, 107/0)
+716cbaf Merge pull request #55 from TheHalfMoon/feat/r1-v3-confirmatory-manifest
+1b8da0d (origin/feat/r1-v3-confirmatory-manifest) feat(r1): create R1-v3 confirmatory manifest (N_pairs 187, r_conf 8, K_eligible 24, 1404 sessions)
+7037c94 Merge pull request #54 from TheHalfMoon/feat/r1-v3-pilot-seal-and-derive
+eaad75f (origin/feat/r1-v3-pilot-seal-and-derive) feat(r1): seal R1-v3 pilot 972 sessions powered (K_eligible 24, psi_hat 0.5417, r_conf 8)
+5d91959 Merge pull request #53 from TheHalfMoon/feat/r1-v3-preregistration-design
+fb187bd (origin/feat/r1-v3-preregistration-design) docs(current): record R1-v3 pilot blocked on provider credential (OPENAI_API_KEY)
+5b575ff seal: R1-v3 candidate bec381f via internal qualification (low B-NULL leakage)
+bec381f chore(r1): regenerate v3 artifact manifest at 5e36081 (candidate 5e36081 tree 502467f)

@@ -1,0 +1,8 @@
+{"conclusion":"success","name":"manifest-check"}
+{"conclusion":"success","name":"canonical-equality"}
+{"conclusion":"success","name":"validate"}
+{"conclusion":"success","name":"test-review-binding"}
+{"conclusion":"success","name":"test-statistical-design"}
+{"conclusion":"success","name":"test-validator"}
+{"conclusion":"success","name":"test-scorer"}
+{"conclusion":"success","name":"verify-artifacts"}

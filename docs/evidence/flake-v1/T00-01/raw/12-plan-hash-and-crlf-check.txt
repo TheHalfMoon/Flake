@@ -1,0 +1,10 @@
+=== SHA256 of canonical plan on origin/main ===
+b555f83ff12882ae6f55f90bbeaa411de52b84661a7f3953350cbfc6bd789fb2 *-
+expected: b555f83ff12882ae6f55f90bbeaa411de52b84661a7f3953350cbfc6bd789fb2 (per specs/CURRENT.md and migration provenance doc)
+
+=== SHA256 of local draft plan at 852e44b (pre-migration, LF line endings) ===
+8a523562960b93ec6dcb4030da523ec68d541fbd016d041abd95da255042a3f9 *-
+
+=== diff ignoring whitespace/line-endings between 852e44b and origin/main plan text ===
+0
+(0 = content-identical once CRLF/LF normalized; confirms local draft and published plan carry the same substance)
