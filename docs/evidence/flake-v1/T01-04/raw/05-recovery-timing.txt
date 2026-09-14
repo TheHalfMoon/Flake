@@ -1,0 +1,17 @@
+Throwaway harness (deleted before commit; not part of the shipped diff):
+examples/recovery_timing.rs: 15 independent stores, each with 5 committed
+revisions (1 create + 4 updates to the same object), each fully recovered
+via recover_to_new_root to a fresh root, release build, timed end to end
+(recovery ownership acquisition + forensic preservation + working-copy
+verification + staged publication).
+
+Command: cargo run --release --example recovery_timing
+Output:
+recover_to_new_root: n=15 p50=24066us p95=38757us max=38757us
+
+Interpretation (S-scale only; not a plan §27 M/L release measurement — see
+REPORT.md "Performance gate" and docs/formats/format-2-canonical-sqlite.md
+"Known limitations"): p95 38.8ms is well inside the closest §27 analog,
+"Full verify / recovery working copy M": target 60s, maximum 180s (that
+budget is for the interactive-release M dataset; this is a 5-revision
+S-scale store, reported honestly as such, not extrapolated to M/L).

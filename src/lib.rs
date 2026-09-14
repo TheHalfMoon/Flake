@@ -23,6 +23,7 @@ pub mod events;
 pub mod identity;
 pub mod locator;
 pub mod memory;
+pub mod recovery;
 pub mod temporal;
 pub mod vault;
 
@@ -71,6 +72,13 @@ pub enum Error {
     /// failure. Never a mutation of an already-published store on this
     /// path — see `canonical.rs` module docs for the exact scope boundary.
     Canonical(String),
+    /// Recovery/access-coordination failure (`recovery.rs`, T01-04):
+    /// exclusive recovery access denied by a currently-open normal
+    /// connection, forensic preservation failure, or recovery-candidate
+    /// verification failure. Distinct from `Canonical`/`Vault` so a caller
+    /// can tell "this store's own content is wrong" apart from "recovery
+    /// itself could not proceed" — see `recovery.rs` module docs.
+    Recovery(String),
     Event(String),
     Memory(String),
     /// An invalid supersession edge. Never silently normalised (F §6.1).
@@ -111,6 +119,7 @@ impl std::fmt::Display for Error {
             Error::InvalidId(s) => write!(f, "invalid object id: {s}"),
             Error::Derived(m) => write!(f, "derived store error: {m}"),
             Error::Canonical(m) => write!(f, "canonical store error: {m}"),
+            Error::Recovery(m) => write!(f, "recovery error: {m}"),
             Error::Event(m) => write!(f, "event log error: {m}"),
             Error::Memory(m) => write!(f, "memory error: {m}"),
             Error::InvalidSupersession(m) => write!(f, "invalid supersession: {m}"),
