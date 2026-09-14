@@ -24,6 +24,7 @@ pub mod events;
 pub mod identity;
 pub mod locator;
 pub mod memory;
+pub mod migration;
 pub mod recovery;
 pub mod temporal;
 pub mod vault;
@@ -84,6 +85,11 @@ pub enum Error {
     /// publication, a manifest/member digest mismatch, or backup-candidate
     /// verification failure. See `backup.rs` module docs.
     Backup(String),
+    /// Legacy format-1-to-format-2 migration failure (`migration.rs`,
+    /// T01-06): an ambiguous "complete" migration request, an unadmittable
+    /// or unrecognized explicit selection, or an import-time admission
+    /// failure. See `migration.rs` module docs.
+    Migration(String),
     Event(String),
     Memory(String),
     /// An invalid supersession edge. Never silently normalised (F §6.1).
@@ -126,6 +132,7 @@ impl std::fmt::Display for Error {
             Error::Canonical(m) => write!(f, "canonical store error: {m}"),
             Error::Recovery(m) => write!(f, "recovery error: {m}"),
             Error::Backup(m) => write!(f, "backup error: {m}"),
+            Error::Migration(m) => write!(f, "migration error: {m}"),
             Error::Event(m) => write!(f, "event log error: {m}"),
             Error::Memory(m) => write!(f, "memory error: {m}"),
             Error::InvalidSupersession(m) => write!(f, "invalid supersession: {m}"),

@@ -541,6 +541,15 @@ pub enum CommandTarget {
         expected_revision_id: String,
         payload: String,
     },
+    /// `T01-06` legacy migration only: admit a brand-new object under a
+    /// **caller-supplied** `object_id` rather than allocating a fresh one —
+    /// the one deliberate, narrowly-scoped exception to I03's "identity is
+    /// Core-assigned" rule, used only to retain an unambiguous legacy
+    /// format-1 identity across the migration (§ "original IDs retained
+    /// only when unambiguous"). Refused if `object_id` is not a valid UUID,
+    /// or if it already names a live object (S05: no overwrite of live
+    /// data or import-minted authority).
+    ImportObject { object_id: String, payload: String },
 }
 
 /// One command submission. `command_id` is the caller-supplied idempotency
@@ -624,6 +633,7 @@ impl<'a> CanonicalWriter<'a> {
         let payload = match &input.target {
             CommandTarget::CreateObject { payload } => payload,
             CommandTarget::UpdateObject { payload, .. } => payload,
+            CommandTarget::ImportObject { payload, .. } => payload,
         };
         if payload.len() > crate::limits::MAX_OBJECT_BYTES {
             return Err(Error::Canonical(format!(
@@ -692,6 +702,27 @@ impl<'a> CanonicalWriter<'a> {
                     )));
                 }
                 (object_id.clone(), Some(expected_revision_id.clone()))
+            }
+            CommandTarget::ImportObject { object_id, .. } => {
+                if uuid::Uuid::parse_str(object_id).is_err() {
+                    return Err(Error::Canonical(format!(
+                        "import object_id is not a valid UUID: {object_id}"
+                    )));
+                }
+                let existing: Option<String> = tx
+                    .query_row(
+                        "SELECT current_revision_id FROM current_object WHERE object_id = ?1",
+                        rusqlite::params![object_id],
+                        |r| r.get(0),
+                    )
+                    .optional()
+                    .map_err(|e| Error::Canonical(format!("cannot check existing object: {e}")))?;
+                if existing.is_some() {
+                    return Err(Error::Canonical(format!(
+                        "cannot import object_id {object_id}: an object with this identity already exists (no overwrite of live data)"
+                    )));
+                }
+                (object_id.clone(), None)
             }
         };
 
@@ -814,6 +845,9 @@ fn compute_input_digest(input: &CommandInput, payload_sha256: &str) -> String {
                 Some(object_id.as_str()),
                 Some(expected_revision_id.as_str()),
             ),
+            CommandTarget::ImportObject { object_id, .. } => {
+                ("import_object", Some(object_id.as_str()), None)
+            }
         };
     let value = serde_json::json!({
         "version": 1,
