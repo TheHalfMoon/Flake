@@ -1,0 +1,5 @@
+ docs/formats/format-2-canonical-sqlite.md         | 193 +++++
+ src/canonical.rs                                  | 851 ++++++++++++++++++++++
+ src/lib.rs                                        |   7 +
+ tests/fixtures/canonical/malformed_not_sqlite.bin | Bin 0 -> 96 bytes
+ 4 files changed, 1051 insertions(+)
