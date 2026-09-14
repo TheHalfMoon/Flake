@@ -1,0 +1,4 @@
+ docs/formats/format-2-canonical-sqlite.md |  234 +++++--
+ src/canonical.rs                          | 1013 +++++++++++++++++++++++++++--
+ src/vault.rs                              |    8 +-
+ 3 files changed, 1135 insertions(+), 120 deletions(-)

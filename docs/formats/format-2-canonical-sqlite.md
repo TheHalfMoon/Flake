@@ -1,13 +1,14 @@
 # Flake canonical format 2 — `canonical.sqlite`
 
-**Status:** `T01-02` (canonical build plan §13/§15/§16) — **create-only**.
-This document describes exactly what `T01-02` publishes today. It is not a
-forward-looking schema for the finished product; the `Project`/`Note`/
-`Action`/`Decision`/`Source`/`Transaction`/... tables in plan §15 do not
-exist yet. They are added by later `P01`/`P02` tasks as the command/
-transaction admission API (`T01-03` onward) lands, each through its own
-reviewed schema-version bump, not by silently widening what this document
-calls "recognized."
+**Status:** schema version 2, built by `T01-02` (create-only) and `T01-03`
+(transaction/command admission). This document describes exactly what those
+two tasks publish today. It is not a forward-looking schema for the
+finished product: the typed `Project`/`Note`/`Action`/`Decision`/`Source`/...
+records in plan §15 do not exist yet — `T01-03` admits one opaque UTF-8
+payload per object ("a minimal record", its own objective wording), not a
+typed model. Typed records are `P02`'s job once the command API exists to
+populate them, each landing through its own reviewed schema-version bump,
+not by silently widening what this document calls "recognized."
 
 ## On-disk layout
 
@@ -65,9 +66,10 @@ compiled with `default-features = false, features = ["bundled"]`
 (`Cargo.toml`), so the `load_extension` C API is not even linked in. This
 build never calls `enable_load_extension`.
 
-### Table `canonical_vault`
+### Tables (schema version 2)
 
-The only table `T01-02` publishes. One singleton row.
+Four tables, exactly. `canonical_vault` (`T01-02`) plus three added by
+`T01-03`: `revision`, `current_object`, `command`.
 
 ```sql
 CREATE TABLE canonical_vault (
@@ -80,18 +82,101 @@ CREATE TABLE canonical_vault (
     transaction_head_seq    INTEGER NOT NULL,
     transaction_head_hash   TEXT
 );
+
+CREATE TABLE revision (
+    revision_id             TEXT PRIMARY KEY,
+    object_id               TEXT NOT NULL,
+    parent_revision_id      TEXT,
+    recorded_seq            INTEGER NOT NULL,
+    recorded_at             TEXT NOT NULL,
+    actor                   TEXT NOT NULL,
+    origin                  TEXT NOT NULL,
+    payload                 TEXT NOT NULL,
+    payload_sha256          TEXT NOT NULL,
+    FOREIGN KEY (parent_revision_id) REFERENCES revision(revision_id)
+);
+
+CREATE TABLE current_object (
+    object_id               TEXT PRIMARY KEY,
+    current_revision_id     TEXT NOT NULL,
+    tombstoned              INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY (current_revision_id) REFERENCES revision(revision_id)
+);
+
+CREATE TABLE command (
+    command_id              TEXT PRIMARY KEY,
+    input_digest            TEXT NOT NULL,
+    actor                   TEXT NOT NULL,
+    recorded_seq            INTEGER NOT NULL,
+    recorded_at             TEXT NOT NULL,
+    previous_head_seq       INTEGER NOT NULL,
+    previous_head_hash      TEXT,
+    object_id               TEXT NOT NULL,
+    revision_id             TEXT NOT NULL,
+    resulting_head_seq      INTEGER NOT NULL,
+    resulting_head_hash     TEXT NOT NULL,
+    FOREIGN KEY (revision_id) REFERENCES revision(revision_id)
+);
 ```
 
-| Column | Meaning |
-|---|---|
-| `singleton` | Always `1`. Enforces exactly one identity row via `PRIMARY KEY CHECK`. |
-| `vault_id` | Lowercase UUIDv7, **must equal** the guard's `vault_id` (§15 "guard/DB identity agrees"). |
-| `schema_version` | Logical schema version. `1` as of `T01-02` (identity/head-summary table only). May advance for a compatible, in-place addition. |
-| `min_reader_capability` | Minimum reader capability a build must implement to open this database safely. `1` as of `T01-02`; a reader that implements less must refuse, never guess. |
-| `created_by_version` | Producing binary's `Cargo.toml` package version (currently `fehrest`'s `0.0.1-phase-t`). |
-| `created_at` | Placeholder RFC3339-shaped creation timestamp (see Known limitations). |
-| `transaction_head_seq` | Transaction-monotonic sequence of the last committed transaction. `0` until `T01-03` commits the first one. |
-| `transaction_head_hash` | Hash of the last committed transaction. `NULL` until `T01-03`. |
+| Table | Column | Meaning |
+|---|---|---|
+| `canonical_vault` | `singleton` | Always `1`. Enforces exactly one identity row via `PRIMARY KEY CHECK`. |
+| | `vault_id` | Lowercase UUIDv7, **must equal** the guard's `vault_id` (§15 "guard/DB identity agrees"). |
+| | `schema_version` | `2` as of `T01-03` (adds `revision`/`current_object`/`command`). |
+| | `min_reader_capability` | `2` as of `T01-03`: a `T01-02`-only build does not understand these tables and must refuse to write through them, not guess. |
+| | `created_by_version` | Producing binary's `Cargo.toml` package version. |
+| | `created_at` | Placeholder RFC3339-shaped creation timestamp (see Known limitations). |
+| | `transaction_head_seq` | Sequence of the last committed command. `0` until the first commit. |
+| | `transaction_head_hash` | Hash of the last committed command. `NULL` until the first commit. |
+| `revision` | `revision_id` | UUIDv7, immutable once written. One row per accepted payload version — never overwritten or deleted (I05). |
+| | `object_id` | Groups every revision of one record. Allocated by `CreateObject`, never caller-supplied (I03). |
+| | `parent_revision_id` | The revision this one supersedes, or `NULL` for an object's first revision. Forms the full history chain. |
+| | `recorded_seq` | Transaction-monotonic sequence at which this revision was accepted (matches the command's `resulting_head_seq`). |
+| | `recorded_at` | Placeholder observation timestamp (see Known limitations). |
+| | `actor` | Caller-declared principal (§15 "actor"), not extracted from `payload`. |
+| | `origin` | One of `user`/`import`/`agent-proposal`/`migration`/`system`, caller-declared. |
+| | `payload` | Exact UTF-8 payload bytes (Rust `String`, so UTF-8 validity holds by construction — never raw arbitrary bytes). |
+| | `payload_sha256` | Lowercase hex SHA-256 of `payload`'s UTF-8 bytes. |
+| `current_object` | `object_id` | One row per live object. |
+| | `current_revision_id` | The object's current revision. Only Core (the transaction path below) writes this; a discrepancy with `revision` blocks mutation (§16). |
+| | `tombstoned` | Reserved for a future deletion task; always `0` as of `T01-03` (no tombstone/delete command exists yet). |
+| `command` | `command_id` | Caller-supplied UUID: the idempotency key. Immutable once committed. |
+| | `input_digest` | Digest of the normalized command input (see "Command digest" below). Detects a changed request replayed under the same `command_id`. |
+| | `actor` | Same value as the resulting revision's `actor`. |
+| | `recorded_seq` / `recorded_at` | Same values as the resulting revision's. |
+| | `previous_head_seq` / `previous_head_hash` | The transaction head immediately before this command, for independent chain verification. |
+| | `object_id` / `revision_id` | The object and revision this command produced. |
+| | `resulting_head_seq` / `resulting_head_hash` | The transaction head immediately after this command (mirrors `canonical_vault`'s head at the moment of commit). |
+
+### Command digest
+
+`input_digest` is computed over a JSON object with keys `version`,
+`command_id`, `actor`, `origin`, `target_kind` (`create_object` or
+`update_object`), `object_id` (`null` for a create), `expected_revision_id`
+(`null` for a create), and `payload_sha256` — **not** the raw payload bytes,
+which are separately hashed and stored. This is serialized through
+`serde_json::Value` (whose `Map` is `BTreeMap`-backed in this crate, since
+the `preserve_order` feature is not enabled), which yields object keys in
+sorted order — the core "canonical key order" property of RFC 8785 JCS.
+This is **deliberately narrower than full JCS**: no Unicode NFC
+normalization, and no cross-language golden vectors (§15) exist yet, because
+there is no second implementation to vector against — this digest is used
+only for this store's own in-process idempotency check, not yet an interop
+wire format. The non-finite-number rejection rule JCS also requires cannot
+be violated here by construction: every field is a string or `null`, never
+a float. `sha256(canonical_json_bytes)`, lowercase hex, using the same
+`hash_bytes` helper `src/events.rs` already uses for the event log.
+
+### `resulting_head_hash` chain
+
+`sha256("flake-canonical-tx-v1|" + previous_head_hash_or_empty + "|" +
+revision_id + "|" + input_digest)`. Each command's result depends on the
+previous head, so the chain is tamper-evident in the same limited sense
+`src/events.rs`'s event chain already documents (S05: detects inconsistent
+local edits relative to an expected head; a same-user attacker with direct
+file access can still rewrite the whole file — this is not a signature or
+non-repudiation claim).
 
 ### Schema recognition (what "refuses writes" means here)
 
@@ -99,9 +184,11 @@ Every open (`CanonicalStore::open`, and the independent verification step
 inside `CanonicalStore::create` before publication) runs the same check:
 
 1. `SELECT name FROM sqlite_master WHERE type='table'` must return **exactly**
-   `["canonical_vault"]` — no fewer, no more, no differently-named table.
-2. `PRAGMA table_info(canonical_vault)` must return exactly the eight
-   `(name, declared_type)` pairs above, in that order.
+   `["canonical_vault", "command", "current_object", "revision"]`, sorted —
+   no fewer, no more, no differently-named table.
+2. `PRAGMA table_info(<table>)` must return exactly the documented
+   `(name, declared_type)` pairs, in that order, for **every** one of the
+   four tables above.
 3. `SELECT vault_id, min_reader_capability FROM canonical_vault WHERE singleton = 1`
    must return exactly one row; its `vault_id` must equal the guard's; its
    `min_reader_capability` must not exceed what the opening build
@@ -109,10 +196,11 @@ inside `CanonicalStore::create` before publication) runs the same check:
 4. `PRAGMA page_size` must read back `4096`.
 
 Any deviation — an extra table (however innocuous-looking), a renamed or
-retyped column, more or fewer identity rows, a mismatched `vault_id`, a
-`min_reader_capability` this build does not implement, or a wrong
-`page_size` — is refused with a specific `Error::Canonical` message rather
-than silently opened, partially trusted, or "migrated" on the spot.
+retyped column in any of the four tables, more or fewer identity rows, a
+mismatched `vault_id`, a `min_reader_capability` this build does not
+implement, or a wrong `page_size` — is refused with a specific
+`Error::Canonical` message rather than silently opened, partially trusted,
+or "migrated" on the spot.
 
 ## Publication protocol
 
@@ -132,6 +220,40 @@ than silently opened, partially trusted, or "migrated" on the spot.
 6. Any failure at any stage removes the staging directory and returns an
    error; `.fehrest` is never touched, so a retry always sees a clean root.
 
+## Command commit protocol (`T01-03`)
+
+Mutation requires a `CanonicalWriter`, obtained only via
+`CanonicalStore::writer()`, which acquires the same OS-held `writer.lock`
+lease format-1's `Vault::open_write` uses (reused, not duplicated — both
+formats share the `.fehrest` control-directory layout, and a root publishes
+at most one format at a time). One `CanonicalWriter` can exist per root at
+a time, both across processes (the OS lease) and within one process
+(`writer()` takes `&mut self`).
+
+`CanonicalWriter::commit` runs entirely inside one `rusqlite` transaction
+(I04 — one acknowledged command, one committed transaction):
+
+1. Compute `payload_sha256` and `input_digest` (above).
+2. If `command_id` already has a stored `command` row: same `input_digest`
+   → return that row's result again (`replay: true`, no new mutation, no
+   transaction opened at all); different `input_digest` → refuse
+   immediately ("changed digest under the same command_id").
+3. Begin a transaction. Read the current `transaction_head_seq`/`_hash`.
+4. `CreateObject`: allocate a fresh UUIDv7 `object_id`, no parent revision.
+   `UpdateObject`: look up `current_object`'s pointer for the given
+   `object_id`; missing → refuse ("unknown object_id"); present but not
+   equal to the caller's `expected_revision_id` → refuse ("expected
+   revision conflict", never a silent last-writer-wins).
+5. Insert the new `revision` row, upsert `current_object`'s pointer,
+   compute `resulting_head_hash`, insert the `command` row, and advance
+   `canonical_vault`'s head — four statements, one transaction.
+6. Commit. A failure at any point before this step rolls back every
+   statement above (nothing partial is ever visible); a failure reported
+   to the caller *after* this step means the command is durably committed
+   even though the caller did not receive confirmation — retrying with the
+   exact same `command_id` reconciles to the real result via step 2, rather
+   than re-executing or minting a second command for one logical request.
+
 ## Generic-reader example
 
 No Flake binary, library, or network access is required to inspect a
@@ -143,25 +265,28 @@ sqlite3 <vault-root>/.fehrest/canonical.sqlite <<'SQL'
 .headers on
 PRAGMA page_size;
 PRAGMA journal_mode;
-.schema canonical_vault
 SELECT * FROM canonical_vault;
+SELECT revision_id, object_id, parent_revision_id, recorded_seq, payload FROM revision ORDER BY recorded_seq;
+SELECT object_id, current_revision_id FROM current_object;
+SELECT command_id, object_id, revision_id, resulting_head_seq FROM command ORDER BY recorded_seq;
 SQL
 ```
 
-Expected output shape:
+Expected output shape (after one `CreateObject` commit):
 
 ```text
 page_size
 4096
 journal_mode
 delete
-CREATE TABLE canonical_vault (
-    singleton               INTEGER PRIMARY KEY CHECK (singleton = 1),
-    vault_id                TEXT NOT NULL,
-    ...
-);
 singleton|vault_id|schema_version|min_reader_capability|created_by_version|created_at|transaction_head_seq|transaction_head_hash
-1|<uuid7>|1|1|0.0.1-phase-t|<timestamp>|0|
+1|<uuid7>|2|2|0.0.1-phase-t|<timestamp>|1|<hex64>
+revision_id|object_id|parent_revision_id|recorded_seq|payload
+<uuid7>|<uuid7>||1|hello
+object_id|current_revision_id
+<uuid7>|<uuid7>
+command_id|object_id|revision_id|resulting_head_seq
+<uuid7>|<uuid7>|<uuid7>|1
 ```
 
 ## Known limitations (recorded, not hidden)
@@ -172,22 +297,31 @@ singleton|vault_id|schema_version|min_reader_capability|created_by_version|creat
   (`vault.rs::chrono_like_now_iso8601`). A real `chrono`/`time` dependency
   was not admitted for this minimal task; this is a named limitation for a
   future task to resolve, not silently worked around here.
-- This task does not integrate the OS-held single-writer lease
-  (`crate::vault::WriteLock`) with the format-2 store. `create`/`open` in
-  `src/canonical.rs` do not take that lease. Binding mutation of this store
-  to the writer lease is `T01-03`'s "bind private mutators to owning vault
-  writer" clause, not this one's.
-- Genuine concurrent-multi-process creation racing on a brand-new root is
-  not tested here (only a single interrupted creator, and a second
-  *sequential* creation attempt against an already-published root). This
-  task's own acceptance clause is "interrupted creation leaves old paths
-  intact," not a multi-process stress proof; that pattern exists for the
-  format-1 writer lease (`T01-01`) and will apply here once `T01-03` wires
-  the lease in.
+- Genuine concurrent-**multi-process** contention over `CanonicalWriter` is
+  not tested here — only in-process sequencing (`&mut self` makes a second
+  concurrent `writer()` call in the *same* process a compile error, and a
+  second `CanonicalStore` handle's `writer()` call is proven to return
+  `Error::WriterLocked`). A real second-process kill/contention harness
+  matches `T01-01`'s own established methodology of deterministic in-process
+  fault injection rather than literal cross-process signaling; see
+  `docs/evidence/flake-v1/T01-03/REPORT.md`.
+- `T01-03` admits exactly one opaque payload per command against exactly
+  one object. Multi-object commands, ordered multi-operation commands, and
+  a tombstone/delete command (the `tombstoned` column exists but nothing
+  ever sets it to `1`) are not implemented — all explicitly out of this
+  task's "minimal record" scope.
+- The command digest is a deliberately narrower canonicalization than full
+  RFC 8785 JCS (sorted keys only, no Unicode NFC, no cross-language golden
+  vectors) — see "Command digest" above.
+- `created_at` is a placeholder timestamp (seconds-of-day since a fixed
+  base date, RFC3339-shaped but not calendar-correct), matching the
+  identical, pre-existing limitation in the format-1 guard
+  (`vault.rs::chrono_like_now_iso8601`). A real `chrono`/`time` dependency
+  was not admitted for this minimal task; named, not silently worked
+  around.
 - No performance measurement against plan §27's M/L datasets: those
   datasets require typed record shapes (`Project`/`Note`/`Action`/...) that
-  do not exist before `P02`. `docs/evidence/flake-v1/T01-02/REPORT.md`
-  records a bounded, S-scale (single empty store) creation/reopen timing
-  only, consistent with this task's own "Native development profile
+  do not exist before `P02`. Evidence reports record bounded, S-scale
+  timing only, consistent with these tasks' own "Native development profile
   mandatory now; all remaining profiles retained for T05-02" cross-platform
   gate.
