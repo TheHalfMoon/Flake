@@ -1,0 +1,15 @@
+Throwaway harness (deleted before commit; not part of the shipped diff):
+examples/commit_timing.rs: 1 CreateObject commit followed by 29 sequential
+UpdateObject commits to the same object (30 committed transactions total,
+release build), each timed individually.
+
+Command: cargo run --release --example commit_timing
+Output:
+commit: n=30 p50=2862us p95=6046us max=8078us
+
+Interpretation (S-scale only; not a plan §27 M/L release measurement — see
+REPORT.md "Performance gate" and docs/formats/format-2-canonical-sqlite.md
+"Known limitations"): p95 6.0ms is well inside the closest §27 analog,
+"Save/write acknowledgement <=64 KiB": target p95 150ms, maximum 750ms.
+Single-object history depth (up to 30 revisions) only; no dataset-M/L
+history-depth or concurrent-writer-contention measurement.

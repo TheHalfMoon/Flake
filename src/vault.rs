@@ -727,7 +727,13 @@ pub struct WriteLock {
 }
 
 impl WriteLock {
-    fn acquire(root: &Path) -> Result<Self> {
+    /// `pub(crate)`: `T01-03` (`src/canonical.rs`) reuses this exact OS-held
+    /// lock-file mechanism for the format-2 store's writer ownership, rather
+    /// than duplicating lock logic. Both formats share the same `.fehrest`
+    /// control-directory layout under a vault root, and a root has at most
+    /// one published format at a time, so `writer.lock` unambiguously
+    /// serializes writers regardless of which format owns that root.
+    pub(crate) fn acquire(root: &Path) -> Result<Self> {
         let path = root.join(CONTROL_DIR).join("writer.lock");
         match fs::OpenOptions::new()
             .write(true)
