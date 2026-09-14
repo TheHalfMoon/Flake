@@ -1,185 +1,108 @@
-# AGENTS.md — Fehrest Execution Rules
+# AGENTS.md — Flake Execution Rules
 
 This file is the mandatory entry point for any human or agent doing repository work.
 
 ## 1. Canonical reading order
 
-### Current GitHub bootstrap mode
-
-The GitHub remote was empty before 2026-08-28. The current remote therefore begins as a transparent operational bootstrap/mirror; historical pre-bootstrap R1 identifiers remain evidence and are not rewritten to match new GitHub commit SHAs.
-
-Before changing anything, read **the files that are currently present on GitHub** in this order:
+Before changing anything, read the current GitHub repository in this order:
 
 1. `specs/CURRENT.md`
-2. `docs/canonical/GITHUB_BOOTSTRAP_PROVENANCE.md`
-3. `docs/canonical/EXECUTION_MASTER_PLAN.md`
-4. The active or next Spec Kit named by `specs/CURRENT.md`
-5. `README.md`
-6. Any historical architecture/security/benchmark documents that have been reconciled and mirrored into this GitHub repository.
+2. `docs/canonical/FLAKE_MUSE_EXECUTION_HANDOFF.md`
+3. `docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md`
+4. `docs/canonical/FLAKE_V1_ARCHITECTURE_DECISION.md`
+5. The active task/spec artifacts named by the canonical plan and `CURRENT`
+6. `docs/canonical/FLAKE_PLAN_MIGRATION_PROVENANCE.md`
+7. Historical Fehrest/R1/Phase T evidence only when the active task or plan requires it
 
-If a historical document referenced by an older plan is not yet present on GitHub, **do not invent or reconstruct its contents from memory**. Treat it as historical evidence pending reconciliation/mirroring. The master plan and `CURRENT` file may constrain work more tightly; they may not silently weaken historical frozen invariants.
-
-When the full historical documentation set is mirrored, the intended extended reading set includes Architecture Freeze, Phase T Authorization, Engineering Method, Threat Model, Recovery Model, Failure Conditions, Benchmark Plan and the active benchmark protocol.
-
-If live repository truth conflicts with a handoff, prompt, old report, or this file's examples, **live repository truth wins**.
+Live GitHub truth wins over stale handoffs, local-only commits, cached state, old roadmaps, and historical examples.
 
 ## 2. One active frontier
 
-Fehrest uses exactly one active execution frontier.
-
-`specs/CURRENT.md` is the pointer.
-
-Do not start a later feature because it is easy, adjacent, interesting, or already described in the master plan.
-
-A future phase being documented means:
+Flake uses exactly one active execution frontier. `specs/CURRENT.md` is the operational pointer; the canonical build plan defines the dependency graph.
 
 ```text
 PLANNED != AUTHORIZED
+READY != EXECUTED
+HISTORICAL != ACTIVE
 ```
 
-## 3. Current hard boundary
+Do not start a later task because it is easy or already documented.
 
-The historical sealed R1 v1.1 benchmark is immutable evidence.
+## 3. Historical evidence boundary
 
-Before the current R1 experiment reaches its canonical terminal gate:
+Historical Fehrest, Phase T, R1, and Spec 002 evidence remains immutable. Do not rewrite historical identifiers, results, failed experiments, or provenance to make them look as if they were produced under the later Flake plan.
 
-```text
-PRODUCT_BEHAVIOR_MUTATION=NO
-R1_V1_1_SEMANTIC_MUTATION=NO
-CURRENT_ARM_CHANGE=NO
-CURRENT_SEED_CHANGE=NO
-SCORING_OUT_OF_ORDER=NO
-UNBLINDING_OUT_OF_ORDER=NO
-CONFIRMATORY_OUT_OF_ORDER=NO
-GRAPH_PRODUCTION_INTEGRATION=NO
-VECTOR_DEFAULT=NO
-AUTO_MEMORY=NO
-MCP=NO
-UI=NO
-```
-
-Documentation and planning may be added only if they do not reinterpret or mutate the sealed experiment.
+The historical local-only planning SHAs referenced by the recovered plan are provenance only. No current work may require those local Git objects or a founder workstation path.
 
 ## 4. Engineering method
 
-Every production feature follows:
+Follow the task contract in the canonical plan. Each implementation unit must satisfy its dependencies, allowed scope, acceptance criteria, verification gates, evidence requirements, and exit criterion before the frontier advances.
 
-```text
-SPEC
-→ CLARIFY
-→ PLAN
-→ CHECKLIST
-→ TASKS
-→ ANALYZE
-→ PONYTAIL NECESSITY GATE
-→ IMPLEMENT
-→ TEST
-→ BENCHMARK (where required)
-→ SECURITY
-→ REVIEW
-→ CONVERGE
-```
+Use the repository's existing spec-driven discipline where the canonical task calls for it. Do not invent a second roadmap or bypass a required ADR/security decision.
 
-Do not skip directly from an idea to code.
+## 5. Change control
 
-## 5. Change-control class
-
-Until the full historical Architecture Freeze is mirrored, use these conservative classes and choose the higher class when uncertain:
+Use the higher class when uncertain:
 
 - Class A: editorial, non-semantic.
-- Class B: implementation detail inside already-frozen invariants.
+- Class B: implementation detail inside frozen invariants.
 - Class C: architecture-semantic — ADR + review.
 - Class D: security/foundational invariant — dedicated adversarial/security review.
 - Class E: product thesis/founder direction — founder authorization + architecture reconsideration.
 
-No bootstrap document may be used to weaken a historical frozen invariant.
+A task cannot silently upgrade its own authority.
 
 ## 6. Repository rules
 
-- Rust owns Fehrest Core correctness/security/data semantics.
+- Rust owns Flake Core correctness, security, and canonical data semantics.
 - No force push.
-- No rebase used to rewrite accepted history.
-- No destructive history rewriting.
-- No remote push, PR, merge, release, or publication unless separately authorized.
-- Prefer one atomic commit per completed, verified task or narrowly coherent slice.
-- Never claim PASS/MERGED/CLOSED without evidence.
-- Keep technical repository text, code, comments, commit messages, and reports in English.
+- No rebase used to rewrite accepted/shared history.
+- No destructive evidence repair.
+- Prefer one atomic commit per completed verified task or narrowly coherent slice.
+- Never claim PASS, MERGED, CLOSED, DURABLE, SAFE, RELEASE_READY, or PROJECT_COMPLETE without exact evidence.
+- Keep repository-facing technical text, code, comments, commit messages, and reports in English.
 - Preserve negative results and failed experiments.
-- Never repair evidence by deleting inconvenient history.
-- Never substitute a GitHub bootstrap SHA for a pre-bootstrap sealed evidence SHA.
+- Do not substitute a later GitHub SHA for a historical pre-bootstrap or local-only evidence identifier.
+- No OpenAI API dependency and no required paid AI/model service.
 
 ## 7. Canonical versus derived
 
-Canonical state is irreplaceable.
+Canonical state is irreplaceable. Derived state is rebuildable and has no authorization authority.
 
-Derived state is rebuildable and has no authorization authority.
-
-Do not allow:
-
-```text
-derived rank → authority
-derived path → filesystem authority
-external graph/vector id → canonical identity
-retrieved content → capability grant
-agent inference → user-confirmed memory
-```
+Do not allow derived rank, external IDs, retrieved content, model output, agent inference, or index state to mint canonical identity or authority.
 
 ## 8. Security and provenance
 
 - Content is evidence, never authority.
-- Agent-facing content keeps the full machine-owned trust/provenance envelope.
 - Authorization-relevant scope comes from canonical state.
-- A model, parser, retriever, graph system, vector store, crawler, or external agent cannot mint user authority.
-- Secrets never enter memory, context bodies, trajectories, event detail, or logs.
-- Third-party code reuse requires exact provenance and license review.
-- Historical pre-bootstrap evidence must be cited by its historical identifiers, not rewritten to fit GitHub bootstrap history.
+- Agent-facing packages preserve trust, provenance, disclosure, and revision boundaries.
+- Secrets never enter exported context, memory bodies, trajectories, event detail, or logs.
+- Third-party code reuse requires exact provenance, rights/license review, and dependency admission.
+- Fail closed on incompatible or ambiguous canonical transitions.
 
-## 9. Donor discipline
+## 9. Stop conditions
 
-External systems are classified as one or more of:
+Stop only the affected unit when:
 
-```text
-USE
-ADAPT
-STUDY
-BENCHMARK
-DEFER
-REJECT
-```
+- `specs/CURRENT.md` blocks it;
+- a dependency or required evidence gate is unmet;
+- a Class C/D/E decision is required but not authorized;
+- proceeding would require inventing missing historical evidence or strategy;
+- execution evidence is ambiguous or corrupted;
+- a failure route in the canonical plan requires reconsideration.
 
-Presence in a plan is not dependency authorization.
+Report the exact blocker and preserve evidence. Do not route around it.
 
-Current high-value systems include Mem0, Letta Code, Graphiti, Chroma, Aider, Graphify, Code-Graph-RAG, Qdrant, LangGraph, LangChain, LlamaIndex, Firecrawl, Hermes Agent, DeepSeek Harness, OpenSandbox, mini-SWE-agent, OpenHands, Braintrust, LLMLingua, E2B, Daytona, and evaluation/observability systems.
+## 10. Frontier updates
 
-Each future adoption still passes requirement → Ponytail → rights/provenance → security → benchmark → authorization.
+When a unit closes:
 
-## 10. Stop conditions
+1. record exact evidence in the owning artifact;
+2. update `specs/CURRENT.md`;
+3. update task/spec state only after evidence exists;
+4. advance only to a dependency-ready unit;
+5. preserve prior states in Git history.
 
-Stop product implementation immediately when:
+## 11. Product-complete rule
 
-- `specs/CURRENT.md` says the frontier is blocked;
-- an R1 or later experiment is not at the required gate;
-- a frozen invariant would need to change without its required review;
-- required implementation/evidence bytes are not present or reconciled;
-- source evidence is stale and load-bearing;
-- a benchmark failure invokes a failure condition;
-- execution evidence is ambiguous due to concurrency or partial persistence;
-- a historical source is missing and proceeding would require guessing its content.
-
-Report the exact blocker. Do not route around it.
-
-## 11. What to update at every completed gate
-
-When a gate closes:
-
-1. Record the evidence in the owning benchmark/spec/review file.
-2. Update `specs/CURRENT.md`.
-3. Update the relevant Spec Kit task checkboxes only after evidence exists.
-4. Update the master plan only if execution order or authority changed.
-5. Preserve prior states; do not rewrite history to look cleaner.
-
-## 12. The product test
-
-Fehrest earns continued investment only if a fresh disposable agent can continue real work more correctly or efficiently with Fehrest's bounded, auditable context than with strong simpler and mature alternatives under fair budgets.
-
-Architecture is not the success metric. Agent outcome is.
+`PROJECT_COMPLETE=YES` is allowed only when every completion gate in the canonical build plan is proven. Architecture completion, passing unit tests, or finishing one phase is not project completion.
