@@ -1,0 +1,40 @@
+=== vault.rs pub fn ===
+35:    pub fn new(
+63:pub fn is_supported(path: &Path) -> bool {
+111:    pub fn create(root: impl AsRef<Path>) -> Result<Self> {
+123:    pub fn open_write(root: impl AsRef<Path>) -> Result<Self> {
+140:    pub fn open_read(root: impl AsRef<Path>) -> Result<Self> {
+161:    pub fn vault_meta(&self) -> Result<VaultMeta> {
+170:    pub fn root(&self) -> &Path {
+174:    pub fn control_dir(&self) -> PathBuf {
+178:    pub fn has_write_lock(&self) -> bool {
+187:    pub fn scan(&self) -> Result<ScanResult> {
+290:    pub fn add_object(
+329:    pub fn writer(&self) -> Result<VaultWriter<'_>> {
+385:    pub fn vault(&self) -> &'a Vault {
+390:    pub fn add_object(
+401:    pub fn append_event(
+460:pub fn ensure_vault_meta(control_dir: &Path) -> Result<VaultMeta> {
+504:pub(crate) fn atomic_write_file(target: &Path, content: &[u8]) -> Result<()> {
+521:pub(crate) fn atomic_write_file_with_fault(
+629:pub fn startup_integrity_check(control_dir: &Path) -> Result<()> {
+
+=== events.rs pub fn ===
+85:pub fn hash_bytes(bytes: &[u8]) -> String {
+202:    pub fn open(control_dir: &Path) -> Result<Self> {
+216:    pub fn append_for_writer(
+238:    pub fn append(&self, kind: EventKind, subject: &str, detail: &str) -> Result<Event> {
+279:    pub fn read_all(&self) -> Result<Vec<Event>> {
+301:    pub fn verify(&self) -> Result<ChainStatus> {
+333:    pub fn path(&self) -> &Path {
+343:    pub fn detect_torn_tail(&self) -> Result<Option<String>> {
+378:    pub fn quarantine_and_repair_torn_tail(&self) -> Result<Option<PathBuf>> {
+
+=== locator.rs pub fn ===
+31:    pub fn new(rel: impl Into<String>) -> Self {
+34:    pub fn as_str(&self) -> &str {
+79:pub fn open_confined(root: &Path, rel: &str) -> Result<File> {
+128:pub fn read_verified(root: &Path, rel: &str, expected: ObjectId) -> Result<String> {
+
+=== cli.rs pub fn ===
+78:pub fn run(argv: &[String]) -> Result<i32> {

@@ -1,0 +1,5 @@
+489	d6de4395ada41a6dbed8e40e7aa16c49fa64926af93a8cc0982fa80d1d507848	01-rusqlite-usage-and-lock.txt
+1884	8cf2af49b836f7c464f269ffd856a99bb475a836a89b1d7a2a6da32a844bb30d	02-pub-fn-inventory.txt
+4910	d08c40ae77a14687b292e8cc7da4d36541ee65dd0a58abbf5a71201c733d6a75	03-mutator-source-excerpts.txt
+2951	648767d1620054d9e829cd14b39af3be3fba9e4780e7f66281bd9685b6fc6118	04-license-advisory-webfetch-results.txt
+956	c3f69d9c88ff2e2b1be8f89db3019f1e37e03d5cc424ceec4d83e8e29dd72f54	05-reference-hardware-capture.txt
