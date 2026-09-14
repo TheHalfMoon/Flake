@@ -1,0 +1,16 @@
+Throwaway harness (deleted before commit; not part of the shipped diff):
+examples/backup_timing.rs: 15 independent stores, each with 5 committed
+revisions (1 create + 4 updates to the same object), each backed up via
+backup_to_new_root then restored via restore_from_backup, release build,
+timed end to end.
+
+Command: cargo run --release --example backup_timing
+Output:
+backup: n=15 p50=29445us p95=42688us max=42688us
+restore: n=15 p50=29880us p95=34351us max=34351us
+
+Interpretation (S-scale only; not a plan §27 M/L release measurement — see
+REPORT.md "Performance gate" and docs/formats/format-2-canonical-sqlite.md
+"Known limitations"): both operations' p95 (42.7ms / 34.4ms) are well
+inside the closest §27 analog, "Full export/import M": target 60s each,
+maximum 180s each.

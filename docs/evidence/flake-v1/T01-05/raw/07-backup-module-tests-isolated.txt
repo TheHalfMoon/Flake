@@ -1,0 +1,13 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.23s
+     Running unittests src\lib.rs (target\debug\deps\fehrest-3169ee0784ab6f1d.exe)
+
+running 6 tests
+test backup::tests::cancellation_before_publication_leaves_no_published_backup ... ok
+test backup::tests::backup_destination_no_clobber ... ok
+test backup::tests::concurrent_legitimate_commits_during_backup_do_not_produce_mixed_state ... ok
+test backup::tests::restore_refuses_when_a_member_digest_does_not_match_manifest ... ok
+test backup::tests::restore_refuses_when_manifest_head_disagrees_with_database ... ok
+test backup::tests::backup_then_restore_round_trips_exact_state ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 128 filtered out; finished in 0.16s
+

@@ -365,6 +365,15 @@ impl CanonicalStore {
         &self.vault_id
     }
 
+    /// `crate::backup`'s only reason to exist as a caller: SQLite's own
+    /// Online Backup API (`rusqlite::backup::Backup::new`) needs a `&Connection`
+    /// on both ends. `pub(crate)`, not `pub`: this crate never lets an
+    /// external caller run arbitrary SQL against the canonical connection
+    /// (§14 "UI carries text, typed IDs and bounded input but never SQL").
+    pub(crate) fn connection(&self) -> &Connection {
+        &self.conn
+    }
+
     pub fn schema_version(&self) -> Result<i64> {
         self.conn
             .query_row(
@@ -929,7 +938,20 @@ fn verify_staged_database(db_path: &Path, expected_vault_id: &str) -> Result<()>
 /// Set and immediately read back every required runtime `PRAGMA`. A pragma
 /// that silently failed to apply (build variance, an unexpected SQLite
 /// compile-time option) is caught here rather than trusted.
+///
+/// Also sets a busy timeout (`T01-05`): without one, two connections that
+/// briefly contend for the same rollback-journal lock (a writer committing
+/// while a backup reads, for instance) get an immediate `SQLITE_BUSY`
+/// instead of a bounded retry — the difference between "concurrent
+/// legitimate operations resolve" and "concurrent legitimate operations
+/// race to fail." `2s` is a deliberately generous bound for this crate's
+/// own short, single-transaction commits; it never masks a genuinely stuck
+/// lock (`WriterLocked`/exclusive-access contention are separate, already
+/// non-blocking-by-design checks above the SQLite layer).
 fn apply_and_assert_runtime_pragmas(conn: &Connection) -> Result<()> {
+    conn.busy_timeout(std::time::Duration::from_secs(2))
+        .map_err(|e| Error::Canonical(format!("cannot set busy_timeout: {e}")))?;
+
     let mode: String = conn
         .pragma_update_and_check(None, "journal_mode", "DELETE", |row| row.get(0))
         .map_err(|e| Error::Canonical(format!("cannot set journal_mode: {e}")))?;
