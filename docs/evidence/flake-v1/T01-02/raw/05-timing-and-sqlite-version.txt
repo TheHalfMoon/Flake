@@ -1,0 +1,29 @@
+Throwaway harness (deleted before commit; not part of the shipped diff):
+- examples/canonical_timing.rs: 30x cold `CanonicalStore::create` on fresh
+  temp roots (release build), then 3x warm `CanonicalStore::open` on each of
+  the 30 published stores (90 opens total).
+- examples/zz_sqlite_version.rs: `SELECT sqlite_version()` on an in-memory
+  connection opened by the same vendored (bundled) rusqlite/libsqlite3-sys
+  build this crate links.
+
+Command: cargo run --release --example canonical_timing
+Output:
+create: n=30 p50=23095us p95=38284us max=40540us
+open:   n=90 p50=700us p95=1138us max=2640us
+
+Command: cargo run --release --example zz_sqlite_version
+Output:
+sqlite_version=3.50.2
+
+Interpretation (S-scale only; not a plan §27 M/L release measurement — see
+REPORT.md "Performance gate" and docs/formats/format-2-canonical-sqlite.md
+"Known limitations"):
+- create (cold, staged-create-verify-publish) p95 38.3ms is well inside the
+  closest plan §27 analog, "Save/write acknowledgement <=64 KiB": target
+  p95 150ms, maximum 750ms.
+- open (warm reopen with full pragma re-assertion + schema recognition)
+  p95 1.1ms is well inside "Clean startup integrity quick checks M": target
+  250ms, maximum 1s.
+- Both are single-empty-store measurements (no records, no history), not a
+  dataset-M/L measurement; those datasets do not exist until P02 introduces
+  typed records.

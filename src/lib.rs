@@ -14,6 +14,7 @@
 //! ([ARCHITECTURE_FREEZE §9](../docs/canonical/ARCHITECTURE_FREEZE.md), Phase T
 //! authorization boundary).
 
+pub mod canonical;
 pub mod cli;
 pub mod context;
 pub mod derived;
@@ -65,6 +66,11 @@ pub enum Error {
     MissingId,
     InvalidId(String),
     Derived(String),
+    /// The format-2 canonical store (`canonical.rs`, T01-02): staged
+    /// creation, publication, guard/database identity or schema-recognition
+    /// failure. Never a mutation of an already-published store on this
+    /// path — see `canonical.rs` module docs for the exact scope boundary.
+    Canonical(String),
     Event(String),
     Memory(String),
     /// An invalid supersession edge. Never silently normalised (F §6.1).
@@ -104,6 +110,7 @@ impl std::fmt::Display for Error {
             Error::MissingId => write!(f, "frontmatter has no id"),
             Error::InvalidId(s) => write!(f, "invalid object id: {s}"),
             Error::Derived(m) => write!(f, "derived store error: {m}"),
+            Error::Canonical(m) => write!(f, "canonical store error: {m}"),
             Error::Event(m) => write!(f, "event log error: {m}"),
             Error::Memory(m) => write!(f, "memory error: {m}"),
             Error::InvalidSupersession(m) => write!(f, "invalid supersession: {m}"),
