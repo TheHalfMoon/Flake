@@ -1,0 +1,7 @@
+ docs/formats/legacy-migration.md                  |  98 ++++
+ src/canonical.rs                                  |  34 ++
+ src/lib.rs                                        |   7 +
+ src/migration.rs                                  | 604 ++++++++++++++++++++++
+ tests/fixtures/migration/legacy-crlf-unicode.md   |   7 +
+ tests/fixtures/migration/legacy-unknown-fields.md |   7 +
+ 6 files changed, 757 insertions(+)

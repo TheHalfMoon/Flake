@@ -1,0 +1,14 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.37s
+     Running unittests src\lib.rs (target\debug\deps\fehrest-3169ee0784ab6f1d.exe)
+
+running 7 tests
+test migration::tests::requesting_an_unadmittable_id_is_refused_not_silently_skipped ... ok
+test migration::tests::duplicate_identity_is_omitted_and_blocks_a_complete_migration ... ok
+test migration::tests::new_root_no_clobber ... ok
+test migration::tests::gold_fixtures_with_crlf_unicode_and_unknown_fields_migrate_byte_identically ... ok
+test migration::tests::interrupted_migration_writes_a_manifest_and_leaves_source_untouched ... ok
+test migration::tests::malformed_file_blocks_complete_but_selected_import_still_works ... ok
+test migration::tests::complete_migration_of_a_clean_vault_preserves_exact_bytes_and_identity ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 134 filtered out; finished in 0.17s
+

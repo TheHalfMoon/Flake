@@ -1,0 +1,19 @@
+Throwaway harness (deleted before commit; not part of the shipped diff):
+examples/migration_timing.rs: 15 independent legacy format-1 vaults, each
+with 20 markdown files (each a clean, admittable record), release build,
+timed end to end.
+
+Command: cargo run --release --example migration_timing
+Output:
+preview_migration: n=15 p50=53496us p95=126193us max=126193us
+import_to_new_root: n=15 p50=166663us p95=178252us max=178252us
+
+Interpretation (S-scale only; not a plan §27 M/L release measurement — see
+REPORT.md "Performance gate"): both operations, for 20 records, complete
+in well under 200ms, comfortably inside the closest §27 analog, "Full
+export/import M": target 60s, maximum 180s. import_to_new_root is slower
+than preview_migration alone because it also creates a fresh format-2
+vault and commits one real transaction per record (20 separate atomic
+commits, each with its own transaction overhead) - a legitimate cost of
+this task's own "one acknowledged command = one committed transaction"
+invariant, not an inefficiency specific to migration.
