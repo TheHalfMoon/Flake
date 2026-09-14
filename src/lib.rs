@@ -14,6 +14,7 @@
 //! ([ARCHITECTURE_FREEZE §9](../docs/canonical/ARCHITECTURE_FREEZE.md), Phase T
 //! authorization boundary).
 
+pub mod backup;
 pub mod canonical;
 pub mod cli;
 pub mod context;
@@ -79,6 +80,10 @@ pub enum Error {
     /// can tell "this store's own content is wrong" apart from "recovery
     /// itself could not proceed" — see `recovery.rs` module docs.
     Recovery(String),
+    /// Backup/restore failure (`backup.rs`, T01-05): cancellation before
+    /// publication, a manifest/member digest mismatch, or backup-candidate
+    /// verification failure. See `backup.rs` module docs.
+    Backup(String),
     Event(String),
     Memory(String),
     /// An invalid supersession edge. Never silently normalised (F §6.1).
@@ -120,6 +125,7 @@ impl std::fmt::Display for Error {
             Error::Derived(m) => write!(f, "derived store error: {m}"),
             Error::Canonical(m) => write!(f, "canonical store error: {m}"),
             Error::Recovery(m) => write!(f, "recovery error: {m}"),
+            Error::Backup(m) => write!(f, "backup error: {m}"),
             Error::Event(m) => write!(f, "event log error: {m}"),
             Error::Memory(m) => write!(f, "memory error: {m}"),
             Error::InvalidSupersession(m) => write!(f, "invalid supersession: {m}"),
