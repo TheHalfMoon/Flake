@@ -1,0 +1,26 @@
+Throwaway harness (deleted before commit; not part of the shipped diff):
+examples/capture_timing.rs: one project, then 20 sequential source imports of
+a 1 KiB text file, 5 sequential source imports of a 1 MiB binary file, then
+extract_bytes on each of the 5 imported 1 MiB sources. Release build.
+
+Command: cargo run --release --example capture_timing
+Output:
+source-import 1KiB text: n=20 p50=4.39ms p95=5.84ms max=5.84ms
+source-import 1MiB binary: n=5 p50=119.43ms p95=136.62ms max=136.62ms
+extract 1MiB binary: n=5 p50=6.46ms p95=8.09ms max=8.09ms
+
+Interpretation (S-scale only; not a plan section 27 M/L release measurement
+-- see REPORT.md "Performance gate"): the 1 KiB text import (p95 5.84ms) is
+consistent with T02-01's own untyped/typed commit measurement (p95
+2.9-6.2ms), confirming source admission adds negligible overhead beyond one
+extra symlink_metadata/File::open/bounded-read/sha256 pass over the small
+fixture. The 1 MiB binary import (p95 136.62ms) is dominated by this
+module's own hex encoding (2x the original bytes, hand-written, no SIMD) and
+SQLite's TEXT-column write of the resulting ~2 MiB payload string --
+correctly bounded work proportional to input size, not a suspicious
+constant-factor regression. Extraction (hex decode only, no filesystem
+write) at p95 8.09ms for 1 MiB confirms decode is materially cheaper than
+encode. No claim is made about the full 64 MiB MAX_ARTIFACT_BYTES ceiling's
+absolute latency, nor about M/L dataset scaling -- both are out of this
+task's own S-scale gate and remain T05-02's full hardware-qualified
+measurement pass.

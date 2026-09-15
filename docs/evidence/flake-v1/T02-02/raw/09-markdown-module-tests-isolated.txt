@@ -1,0 +1,11 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running unittests src\lib.rs (target\debug\deps\fehrest-3169ee0784ab6f1d.exe)
+
+running 4 tests
+test markdown::tests::full_body_remains_available_unmodified_regardless_of_preview ... ok
+test markdown::tests::truncates_on_a_char_boundary_never_splitting_multibyte_sequences ... ok
+test markdown::tests::short_body_is_returned_unchanged_with_no_marker ... ok
+test markdown::tests::embedded_html_and_script_like_content_stays_literal_and_unexecuted ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 174 filtered out; finished in 0.00s
+

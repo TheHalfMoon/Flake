@@ -13,8 +13,8 @@ CANONICAL_BUILD_PLAN=docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md
 CANONICAL_BUILD_PLAN_SHA256=b555f83ff12882ae6f55f90bbeaa411de52b84661a7f3953350cbfc6bd789fb2
 CANONICAL_PLAN_REMOTE_STATUS=MIGRATED_TO_GITHUB
 CANONICAL_PLAN_LOCAL_DEPENDENCY=NONE
-ACTIVE_IMPLEMENTATION_UNIT=T02-02
-NEXT_DEPENDENCY_READY_UNIT=T02-02
+ACTIVE_IMPLEMENTATION_UNIT=T02-03
+NEXT_DEPENDENCY_READY_UNIT=T02-03
 P01_STATUS=CLOSED
 T00-01_STATUS=COMPLETE
 T00-01_EVIDENCE=docs/evidence/flake-v1/T00-01/REPORT.md
@@ -52,7 +52,11 @@ T01-07_MERGE_COMMIT=57de9bbd77bfec64a73c8c654a6d9d1459802d0c
 T02-01_STATUS=COMPLETE
 T02-01_EVIDENCE=docs/evidence/flake-v1/T02-01/REPORT.md
 T02-01_FORMAT_DOC=docs/formats/typed-records.md
-T02-01_MERGE_COMMIT=PENDING_PR_MERGE
+T02-01_MERGE_COMMIT=06818675b6bc4b5ab2904e1f5e827c028da3586b
+T02-02_STATUS=COMPLETE
+T02-02_EVIDENCE=docs/evidence/flake-v1/T02-02/REPORT.md
+T02-02_FORMAT_DOC=docs/formats/typed-records.md
+T02-02_MERGE_COMMIT=PENDING_PR_MERGE
 SPEC_003_AUTO_ACTIVATION=PROHIBITED
 PROJECT_COMPLETE=NO
 ```
@@ -68,8 +72,8 @@ The historical local-only planning SHAs `4246f6d...` and `852e44b...` are proven
 
 ## Next action
 
-`T02-02` — Capture exact notes and selected local evidence. Save a note or selected file snapshot with clear origin and recoverable bytes: Note default with explicit Action/Decision selection, title/body bounds, import only selected regular files through validated handles (no recursive scan, symlinks, or secret-file defaults), original bytes/digest/time and unknown-origin label preserved, no HTML execution/network fetch/auto-promotion, binary artifacts opaque and bounded (`docs/evidence/flake-v1/T02-01/REPORT.md`, `docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` T02-02 row).
+`T02-03` — Record decisions and complete actions with visible history. Builds the full `Action` state machine (`Doing`/`Blocked`/`Done`/`Cancelled`, "any reopening requires an event," ordered dependency-cycle rejection) and `Decision`'s evidence linkage, owner-only acceptance, override/supersession semantics, and valid-time intervals — including the `Relation` connecting a `Decision` to a `Source` `T02-02` introduced (`docs/evidence/flake-v1/T02-02/REPORT.md`, `docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` T02-03 row).
 
-`T02-01` closed: `src/project.rs` adds the typed `Project`/`Note`/`Action`/`Decision` record layer entirely on top of the existing, already-audited format-2 transaction API — no new `CommandTarget` variant, no schema change beyond one read-only helper (`CanonicalStore::list_current_objects`). Every typed mutation inherits `T01-03`/`T01-07`'s atomicity and fault-schedule proof unchanged. Project archive/unarchive preserves history as a new revision; work records validate their `project_id` against a live project before any transaction opens; field limits are enforced pre-transaction; unknown fields round-trip through a read-then-write (§15). 11 new CLI subcommands wire the typed layer end to end, proven by a full lifecycle test through the actual CLI dispatcher. Deliberately deferred, recorded in the evidence report: `Note` evidence/source linkage (`T02-02`'s own job), `Action`/`Decision` full lifecycle semantics (`T02-03`'s), and project-scoped indexing (`T02-04`'s).
+`T02-02` closed: `src/capture.rs` adds `Source` as a fifth `RecordPayload` kind, entirely on the same already-audited transaction API `T02-01` established — no new `CommandTarget` variant, no schema change. A `capture` CLI command defaults to `Note` with explicit `Action`/`Decision` selection; `source-import` admits exactly one explicitly-selected regular file (no recursive scan, symlinks refused before opening, obvious-secret filenames refused with the limitation stated in the refusal itself, size enforced against actually-read bytes not `stat()` metadata); `source-reference` registers a reference-only source; `source-extract` recovers the exact original bytes. Origin is always honestly labeled `"unknown"`; a captured file's real modification time is rendered with a newly-added, dependency-free, arbitrary-past-correct UTC formatter (this codebase's prior "now"-only placeholder would have been an invented time here). `src/markdown.rs`'s `preview` is the Markdown "parser/preview contract" — a bounded, char-safe truncation, never an HTML renderer. One existing transport-level backstop constant (`canonical.rs`'s payload-size check) was necessarily widened from 1 MiB to 150 MiB to admit a hex-encoded 64 MiB artifact, documented in the evidence report; no product-facing field limit changed. Deliberately deferred: evidence linkage from a `Decision`/`Action` to a `Source` (`T02-03`'s own job) and project-scoped indexing of sources (`T02-04`'s).
 
 Do not activate Spec 003 automatically. Do not invent a replacement roadmap. Do not use OpenAI API or a required paid AI/model service.

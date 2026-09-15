@@ -657,11 +657,19 @@ impl<'a> CanonicalWriter<'a> {
             CommandTarget::UpdateObject { payload, .. } => payload,
             CommandTarget::ImportObject { payload, .. } => payload,
         };
-        if payload.len() > crate::limits::MAX_OBJECT_BYTES {
+        // Transport-level backstop only — each record type's own tighter
+        // product-facing field limit (e.g. `project::MAX_BODY_BYTES`,
+        // `capture::MAX_ARTIFACT_BYTES`) is already checked by its own
+        // module before `commit` is ever called. This ceiling exists so an
+        // unbounded payload cannot reach a transaction at all, sized to
+        // admit the largest legitimate payload this crate can produce today
+        // (a hex-encoded `capture::MAX_ARTIFACT_BYTES` artifact) — see
+        // `crate::limits::MAX_COMMAND_PAYLOAD_BYTES`'s own doc comment.
+        if payload.len() > crate::limits::MAX_COMMAND_PAYLOAD_BYTES {
             return Err(Error::Canonical(format!(
                 "payload exceeds limit: {} > {} bytes",
                 payload.len(),
-                crate::limits::MAX_OBJECT_BYTES
+                crate::limits::MAX_COMMAND_PAYLOAD_BYTES
             )));
         }
         let payload_sha256 = crate::events::hash_bytes(payload.as_bytes());
@@ -1933,9 +1941,15 @@ mod tests {
 
     #[test]
     fn oversized_payload_is_refused_before_any_mutation() {
+        // T02-02: this backstop widened from `MAX_OBJECT_BYTES` (1 MiB) to
+        // `MAX_COMMAND_PAYLOAD_BYTES` (150 MiB) to admit a hex-encoded
+        // 64 MiB artifact — see that constant's doc comment. The specific
+        // record-type limits (e.g. a Note body over `MAX_OBJECT_BYTES`)
+        // remain enforced earlier, by `project.rs`'s own field checks,
+        // proven in `project::field_limits_are_rejected_before_any_transaction_opens`.
         let root = tmp();
         let mut store = CanonicalStore::create(&root).unwrap();
-        let huge = "x".repeat(crate::limits::MAX_OBJECT_BYTES + 1);
+        let huge = "x".repeat(crate::limits::MAX_COMMAND_PAYLOAD_BYTES + 1);
         let mut writer = store.writer().unwrap();
         let err = writer.commit(create_input(&huge)).unwrap_err();
         assert!(matches!(err, Error::Canonical(_)));
