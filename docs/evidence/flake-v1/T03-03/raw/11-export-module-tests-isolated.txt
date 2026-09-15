@@ -1,0 +1,17 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running unittests src\lib.rs (target\debug\deps\fehrest-3169ee0784ab6f1d.exe)
+
+running 10 tests
+test export::tests::unknown_project_reference_is_refused_before_any_write ... ok
+test export::tests::preview_reports_scope_without_writing_anything ... ok
+test export::tests::note_bodies_also_get_a_plain_markdown_sidecar_file ... ok
+test export::tests::payload_raw_is_byte_identical_to_canonical_state ... ok
+test export::tests::project_export_includes_a_review_checkpoint ... ok
+test export::tests::project_export_excludes_other_projects_entirely ... ok
+test export::tests::export_never_overwrites_an_existing_destination ... ok
+test export::tests::project_export_includes_source_checks ... ok
+test export::tests::integrity_root_is_independently_recomputable ... ok
+test export::tests::full_export_includes_every_project_and_full_history ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 271 filtered out; finished in 0.12s
+

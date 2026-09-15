@@ -257,6 +257,9 @@ pub enum RecordPayload {
     /// `T03-01`. Defined in `crate::source_check`, not here, for the same
     /// reason `Source`/`Relation` live in their own modules.
     SourceCheck(crate::source_check::SourceCheck),
+    /// `T03-03`. Defined in `crate::checkpoint`, not here, for the same
+    /// reason `Source`/`Relation`/`SourceCheck` live in their own modules.
+    ReviewCheckpoint(crate::checkpoint::ReviewCheckpoint),
 }
 
 impl RecordPayload {
@@ -269,6 +272,7 @@ impl RecordPayload {
             RecordPayload::Source(_) => "source",
             RecordPayload::Relation(_) => "relation",
             RecordPayload::SourceCheck(_) => "source_check",
+            RecordPayload::ReviewCheckpoint(_) => "review_checkpoint",
         }
     }
 
@@ -285,6 +289,7 @@ impl RecordPayload {
             RecordPayload::Source(s) => Some(&s.project_id),
             RecordPayload::Relation(r) => Some(&r.project_id),
             RecordPayload::SourceCheck(c) => Some(&c.project_id),
+            RecordPayload::ReviewCheckpoint(c) => Some(&c.project_id),
         }
     }
 
@@ -297,6 +302,7 @@ impl RecordPayload {
             RecordPayload::Source(s) => serde_json::to_value(s),
             RecordPayload::Relation(r) => serde_json::to_value(r),
             RecordPayload::SourceCheck(c) => serde_json::to_value(c),
+            RecordPayload::ReviewCheckpoint(c) => serde_json::to_value(c),
         }
         .map_err(|e| Error::Project(format!("cannot serialize record: {e}")))?;
         // The `kind` tag is Core-assigned here, at the one serialization
@@ -370,6 +376,11 @@ impl RecordPayload {
                 serde_json::from_value(value)
                     .map_err(|e| Error::Project(format!("malformed source_check record: {e}")))?,
             )),
+            "review_checkpoint" => Ok(RecordPayload::ReviewCheckpoint(
+                serde_json::from_value(value).map_err(|e| {
+                    Error::Project(format!("malformed review_checkpoint record: {e}"))
+                })?,
+            )),
             other => Err(Error::Project(format!("unrecognized record kind: {other}"))),
         }
     }
@@ -389,6 +400,16 @@ impl RecordPayload {
             RecordPayload::Source(s) => Ok(s),
             other => Err(Error::Project(format!(
                 "expected a source record, found {}",
+                other.kind_str()
+            ))),
+        }
+    }
+
+    pub fn as_note(&self) -> Result<&Note> {
+        match self {
+            RecordPayload::Note(n) => Ok(n),
+            other => Err(Error::Project(format!(
+                "expected a note record, found {}",
                 other.kind_str()
             ))),
         }
@@ -429,6 +450,16 @@ impl RecordPayload {
             RecordPayload::SourceCheck(c) => Ok(c),
             other => Err(Error::Project(format!(
                 "expected a source_check record, found {}",
+                other.kind_str()
+            ))),
+        }
+    }
+
+    pub fn as_review_checkpoint(&self) -> Result<&crate::checkpoint::ReviewCheckpoint> {
+        match self {
+            RecordPayload::ReviewCheckpoint(c) => Ok(c),
+            other => Err(Error::Project(format!(
+                "expected a review_checkpoint record, found {}",
                 other.kind_str()
             ))),
         }
@@ -1410,13 +1441,15 @@ pub fn list_project_records(
             RecordPayload::Action(a) => a.project_id == project_id,
             RecordPayload::Decision(d) => d.project_id == project_id,
             // `Source` (`capture::list_project_sources`), `Relation`
-            // (`relation::list_project_relations`) and `SourceCheck`
-            // (`source_check::list_project_source_checks`) each have their
-            // own dedicated listing function.
+            // (`relation::list_project_relations`), `SourceCheck`
+            // (`source_check::list_project_source_checks`) and
+            // `ReviewCheckpoint` (`checkpoint::current_checkpoint`) each
+            // have their own dedicated listing function.
             RecordPayload::Source(_)
             | RecordPayload::Relation(_)
             | RecordPayload::Project(_)
-            | RecordPayload::SourceCheck(_) => false,
+            | RecordPayload::SourceCheck(_)
+            | RecordPayload::ReviewCheckpoint(_) => false,
         };
         if belongs {
             out.push((object_id, record));

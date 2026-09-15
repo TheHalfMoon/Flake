@@ -325,6 +325,7 @@ fn validate_self_contained(package: &ParsedPackage) -> Result<()> {
             }
             RecordPayload::Project(_) => vec![],
             RecordPayload::SourceCheck(c) => vec![c.project_id.clone(), c.source_id.clone()],
+            RecordPayload::ReviewCheckpoint(c) => vec![c.project_id.clone()],
         };
         for r in refs {
             if !package.objects.contains_key(&r) {
@@ -469,6 +470,7 @@ fn rewrite_references(
             // own already-documented boundary: revision_id is always
             // freshly minted at the destination).
         }
+        RecordPayload::ReviewCheckpoint(c) => c.project_id = remap(&c.project_id, id_map)?,
     }
     Ok(())
 }
@@ -532,12 +534,15 @@ pub fn import_selected_merge(
 
     // Pass order matters: each pass only rewrites references to objects a
     // *prior* pass has already assigned a destination identity to.
-    // Project -> Source -> Note/Decision -> Action (two subpasses of its
-    // own, for sibling-action forward references) -> Relation (references
-    // anything, so it must go last).
+    // Project -> Source -> Note/Decision -> ReviewCheckpoint (only needs
+    // project_id, like Note/Decision, so it rides the same simple pass) ->
+    // SourceCheck (its own dedicated pass: needs Source's destination
+    // identity plus a re-pinned checked_revision_id) -> Action (two
+    // subpasses of its own, for sibling-action forward references) ->
+    // Relation (references anything, so it must go last).
     let mut writer = store.writer()?;
 
-    for pass_kind in ["project", "source", "note", "decision"] {
+    for pass_kind in ["project", "source", "note", "decision", "review_checkpoint"] {
         for (object_id, revisions) in &package.objects {
             if latest_kind(revisions)?.kind_str() != pass_kind {
                 continue;
@@ -1056,6 +1061,44 @@ mod tests {
             check.checked_revision_id, dest_source_rev,
             "checked_revision_id must be re-pinned to the destination's actual current revision"
         );
+
+        cleanup(&root);
+        cleanup(&export_dest);
+        cleanup(&dest_root);
+    }
+
+    #[test]
+    fn merge_review_checkpoint_is_carried_through_with_its_project_id_rewritten() {
+        // Regression for a real gap found during self-review (T03-03): the
+        // first draft of `import_selected_merge`'s explicit per-kind pass
+        // list omitted `review_checkpoint` entirely, so a merge-imported
+        // package would silently drop every checkpoint object — exactly
+        // the class of omission `T02-07`'s independent verifier exists to
+        // catch (I06/I10: full declared state is readable).
+        let root = tmp();
+        let mut store = CanonicalStore::create(&root).unwrap();
+        let project_id = {
+            let mut writer = store.writer().unwrap();
+            project::create_project(&mut writer, "owner", "P", None)
+                .unwrap()
+                .0
+                .object_id
+        };
+        crate::checkpoint::mark_reviewed_through(&mut store, "owner", &project_id, None, None)
+            .unwrap();
+
+        let export_dest = tmp();
+        crate::export::export_to_new_root(&store, Some(&project_id), &export_dest).unwrap();
+
+        let dest_root = tmp();
+        let mut dest_store = CanonicalStore::create(&dest_root).unwrap();
+        let report = import_selected_merge(&mut dest_store, &export_dest).unwrap();
+
+        let new_project_id = &report.id_map[&project_id];
+        let (_, _, checkpoint) = crate::checkpoint::current_checkpoint(&dest_store, new_project_id)
+            .unwrap()
+            .expect("the checkpoint must have been carried through the merge, not dropped");
+        assert_eq!(&checkpoint.project_id, new_project_id);
 
         cleanup(&root);
         cleanup(&export_dest);

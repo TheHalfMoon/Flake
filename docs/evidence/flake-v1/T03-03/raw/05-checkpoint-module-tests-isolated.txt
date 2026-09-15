@@ -1,0 +1,16 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.15s
+     Running unittests src\lib.rs (target\debug\deps\fehrest-3169ee0784ab6f1d.exe)
+
+running 9 tests
+test checkpoint::tests::reset_before_any_mark_is_refused ... ok
+test checkpoint::tests::reset_requires_a_non_empty_reason ... ok
+test checkpoint::tests::second_mark_without_expect_is_refused ... ok
+test checkpoint::tests::out_of_range_through_seq_is_refused ... ok
+test checkpoint::tests::reset_explicitly_moves_the_checkpoint_backward_with_a_reason ... ok
+test checkpoint::tests::no_checkpoint_before_any_mark ... ok
+test checkpoint::tests::stale_expect_is_refused ... ok
+test checkpoint::tests::first_mark_creates_a_checkpoint_without_expect ... ok
+test checkpoint::tests::mark_backward_is_refused_without_an_explicit_reset ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 272 filtered out; finished in 0.07s
+
