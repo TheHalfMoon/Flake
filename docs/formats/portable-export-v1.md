@@ -130,10 +130,41 @@ executes or interprets it.
 - Streaming export for a store too large to hold entirely in memory at
   once — `T05-02`'s hardware-qualified pass, the identical deferral every
   prior `flake-v1` task with a performance gate already records.
-- Import of this format back into a vault — `T02-06`'s objective.
 - Any redaction/encryption mechanism: nothing in the current canonical
   record model carries local filesystem or agent-grant authority to redact
   in the first place (`Source::claimed_path`/`claimed_repository`/
   `claimed_commit` are already-documented non-authoritative descriptive
   strings the user typed, never real filesystem access — see
   `crate::capture` module docs).
+
+## Importing this format (`T02-06`, `crate::import`)
+
+`crate::import::read_and_validate_package` re-verifies everything this
+document describes before trusting any of it: every declared member's
+existence, length and SHA-256; the manifest's own `integrity_root`,
+independently recomputed; every revision file's own `schema` and
+`payload_sha256`; that every revision parses as a recognized typed record;
+that no `(object_id, revision_id)` pair repeats; and that each object's
+revision chain (`parent_revision_id`) is internally consistent. Any
+violation refuses the **entire** import — there is no partial admission.
+
+Two import modes exist, both described in full in `crate::import`'s own
+module docs:
+
+- **Full restore** (`import_full_restore`) into a brand-new, empty vault:
+  every `object_id` is preserved exactly.
+- **Selected merge** (`import_selected_merge`) into an already-open,
+  possibly non-empty vault: every object gets a **new** destination
+  identity, and every internal cross-reference (`project_id`,
+  `Action::dependency_ids`, a `Relation`'s endpoints) is rewritten to point
+  at the new identities.
+
+**Neither mode preserves `revision_id`/`recorded_seq`/`recorded_at`
+byte-for-byte.** The destination canonical store always mints a fresh
+`revision_id` and `recorded_at` for every committed command — this format's
+own `revision_id`/`recorded_seq`/`recorded_at` fields exist so a reader can
+reconstruct the *exact content and order* of every historical state, not so
+an importer can literally replay the original envelope metadata verbatim.
+`object_id` (the identity §15 actually calls load-bearing) and every
+revision's exact payload bytes, replayed in their original order, are what
+survive import exactly.

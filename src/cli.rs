@@ -8,6 +8,7 @@ use crate::derived::Derived;
 use crate::envelope::TrustLevel;
 use crate::events::{ChainStatus, EventKind, EventLog};
 use crate::export;
+use crate::import;
 use crate::index;
 use crate::markdown;
 use crate::memory::Scope;
@@ -131,6 +132,11 @@ FORMAT-2 SEARCH INDEX COMMANDS (T02-04):
 FORMAT-2 EXPORT COMMANDS (T02-05):
   export-preview    Show scope/counts without writing       [--project <uuid>]
   export-run        Write a portable export package         --out <path> [--project <uuid>]
+
+FORMAT-2 IMPORT COMMANDS (T02-06; --source names a published export root):
+  import-preview       Validate a package, show scope/conflicts    --source <path>
+  import-full-restore  Import into a brand-new empty vault          --source <path> --vault <path>
+  import-merge          Import into this --vault, new identities    --source <path>
 ";
 
 struct Args {
@@ -793,6 +799,54 @@ pub fn run(argv: &[String]) -> Result<i32> {
                 report.manifest.integrity_root,
                 report.dest_root.display()
             );
+            Ok(0)
+        }
+
+        "import-preview" => {
+            let preview = import::preview_import(std::path::Path::new(args.require("source")?))?;
+            println!(
+                "kind={} source_vault={} project={:?} records={} revisions={} conflicts={}",
+                preview.kind,
+                preview.source_vault_id,
+                preview.project_id,
+                preview.record_count,
+                preview.revision_count,
+                preview.conflicts.len()
+            );
+            for c in &preview.conflicts {
+                println!("  conflict: {c}");
+            }
+            Ok(0)
+        }
+
+        "import-full-restore" => {
+            let report = import::import_full_restore(
+                std::path::Path::new(args.require("source")?),
+                args.vault_root()?,
+            )?;
+            println!(
+                "imported: mode={} objects={} revisions={} -> {}",
+                report.mode,
+                report.imported_object_count,
+                report.imported_revision_count,
+                report.dest_root.display()
+            );
+            Ok(0)
+        }
+
+        "import-merge" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let report = import::import_selected_merge(
+                &mut store,
+                std::path::Path::new(args.require("source")?),
+            )?;
+            println!(
+                "imported: mode={} objects={} revisions={}",
+                report.mode, report.imported_object_count, report.imported_revision_count
+            );
+            for (old, new) in &report.id_map {
+                println!("  {old} -> {new}");
+            }
             Ok(0)
         }
 
@@ -1902,5 +1956,118 @@ mod tests {
         let _ = std::fs::remove_dir_all(&root);
         let _ = std::fs::remove_dir_all(&full_dest);
         let _ = std::fs::remove_dir_all(&project_dest);
+    }
+
+    /// `T02-06` acceptance criterion: "CLI preview" plus a full round trip
+    /// through the actual dispatcher: export, preview the export, full
+    /// restore into a new vault, and a selected-merge import into an
+    /// already-populated one.
+    #[test]
+    fn import_preview_full_restore_and_merge_work_through_the_cli() {
+        let root = tmp();
+        let root_str = root.to_string_lossy().to_string();
+        assert_eq!(
+            run(&s(&["canonical-init", "--vault", &root_str])).unwrap(),
+            0
+        );
+        assert_eq!(
+            run(&s(&["project-create", "--vault", &root_str, "--name", "P"])).unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let project_id = store
+            .list_current_objects()
+            .unwrap()
+            .into_iter()
+            .find_map(|(id, _, payload)| {
+                project::RecordPayload::from_json(&payload)
+                    .ok()?
+                    .as_project()
+                    .ok()
+                    .map(|_| id)
+            })
+            .unwrap();
+        drop(store);
+        assert_eq!(
+            run(&s(&[
+                "note-create",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--body",
+                "importable text"
+            ]))
+            .unwrap(),
+            0
+        );
+
+        let export_dest = tmp();
+        let export_dest_str = export_dest.to_string_lossy().to_string();
+        assert_eq!(
+            run(&s(&[
+                "export-run",
+                "--vault",
+                &root_str,
+                "--out",
+                &export_dest_str
+            ]))
+            .unwrap(),
+            0
+        );
+
+        assert_eq!(
+            run(&s(&["import-preview", "--source", &export_dest_str])).unwrap(),
+            0
+        );
+
+        let restore_dest = tmp();
+        let restore_dest_str = restore_dest.to_string_lossy().to_string();
+        assert_eq!(
+            run(&s(&[
+                "import-full-restore",
+                "--source",
+                &export_dest_str,
+                "--vault",
+                &restore_dest_str
+            ]))
+            .unwrap(),
+            0
+        );
+        let restored = CanonicalStore::open(&restore_dest).unwrap();
+        assert!(
+            project::open_project(&restored, &project_id).is_ok(),
+            "object_id must be preserved by full restore"
+        );
+        drop(restored);
+
+        let merge_dest = tmp();
+        let merge_dest_str = merge_dest.to_string_lossy().to_string();
+        assert_eq!(
+            run(&s(&["canonical-init", "--vault", &merge_dest_str])).unwrap(),
+            0
+        );
+        assert_eq!(
+            run(&s(&[
+                "import-merge",
+                "--source",
+                &export_dest_str,
+                "--vault",
+                &merge_dest_str
+            ]))
+            .unwrap(),
+            0
+        );
+        let merged = CanonicalStore::open(&merge_dest).unwrap();
+        let records = project::list_project_records(&merged, &project_id);
+        assert!(
+            records.is_err() || records.unwrap().is_empty(),
+            "merge must never reuse the source's own project_id as the destination identity"
+        );
+
+        let _ = std::fs::remove_dir_all(&root);
+        let _ = std::fs::remove_dir_all(&export_dest);
+        let _ = std::fs::remove_dir_all(&restore_dest);
+        let _ = std::fs::remove_dir_all(&merge_dest);
     }
 }

@@ -24,6 +24,7 @@ pub mod envelope;
 pub mod events;
 pub mod export;
 pub mod identity;
+pub mod import;
 pub mod index;
 pub mod locator;
 pub mod markdown;
