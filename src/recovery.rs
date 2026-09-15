@@ -177,6 +177,33 @@ pub fn recover_to_new_root(
     original_root: impl AsRef<Path>,
     new_root: impl AsRef<Path>,
 ) -> Result<RecoveryReport> {
+    recover_to_new_root_with_fault(original_root, new_root, None)
+}
+
+/// `T01-07` (D1/D4, "second crash injected during recovery itself"):
+/// deterministic injection points inside `recover_to_new_root`'s own
+/// sequence, distinct from corrupting the *source* before recovery starts.
+/// Every variant must leave the preserved bytes and the live original both
+/// completely intact — a second interruption during recovery must never
+/// compound into losing the one thing recovery exists to protect.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum RecoveryFaultPoint {
+    /// Immediately after forensic preservation completes, before the
+    /// disposable working copy is built from it.
+    AfterPreservation,
+    /// After the working copy is built and independently verified, before
+    /// the access lock is created and publication begins.
+    AfterVerification,
+    /// After the working copy's access lock is created, immediately before
+    /// the final publishing rename.
+    BeforePublish,
+}
+
+pub(crate) fn recover_to_new_root_with_fault(
+    original_root: impl AsRef<Path>,
+    new_root: impl AsRef<Path>,
+    fault: Option<RecoveryFaultPoint>,
+) -> Result<RecoveryReport> {
     let original_root = original_root.as_ref().to_path_buf();
     let new_root = new_root.as_ref().to_path_buf();
 
@@ -221,6 +248,10 @@ pub fn recover_to_new_root(
     if journal_path.exists() {
         fs::copy(&journal_path, preserved.join(journal_file_name()))
             .map_err(|e| Error::Recovery(format!("cannot preserve journal: {e}")))?;
+    }
+
+    if fault == Some(RecoveryFaultPoint::AfterPreservation) {
+        return Err(Error::Recovery("injected fault: AfterPreservation".into()));
     }
 
     // Build a disposable working copy from the preserved bytes (never the
@@ -273,6 +304,11 @@ pub fn recover_to_new_root(
         }
     };
 
+    if fault == Some(RecoveryFaultPoint::AfterVerification) {
+        let _ = fs::remove_dir_all(&working);
+        return Err(Error::Recovery("injected fault: AfterVerification".into()));
+    }
+
     // Publish: a fresh, empty access.lock (this is itself "explicit vault
     // initialization" of the recovered root, per §14 — never copied from
     // the original, which may have been mid-use when preserved), then
@@ -282,6 +318,11 @@ pub fn recover_to_new_root(
         return Err(Error::Recovery(format!(
             "cannot create access lock for recovered root: {e}"
         )));
+    }
+
+    if fault == Some(RecoveryFaultPoint::BeforePublish) {
+        let _ = fs::remove_dir_all(&working);
+        return Err(Error::Recovery("injected fault: BeforePublish".into()));
     }
 
     if let Err(e) = fs::create_dir_all(&new_root) {
@@ -594,5 +635,319 @@ mod tests {
         assert!(format!("{err}").contains(reason) || reason.contains("recomputed value"));
 
         cleanup(&root);
+    }
+
+    // -----------------------------------------------------------------
+    // T01-07 — D4 durability class: deterministic fault-schedule matrix
+    // -----------------------------------------------------------------
+
+    /// D4 ("bit corruption/missing journal/inconsistent head with safe
+    /// refusal and backup recovery"): 100 genuinely distinct single-byte
+    /// corruption schedules, each flipping a byte **inside a specific,
+    /// located, currently-live revision payload** — not an arbitrary file
+    /// offset.
+    ///
+    /// An earlier version of this matrix corrupted 100 offsets spread
+    /// evenly across the raw file length and expected the overwhelming
+    /// majority to be refused. That run found only 25–59/100 refused and
+    /// was investigated rather than weakened: diagnostic output showed
+    /// most "passing" offsets were either all-zero bytes or leftover text
+    /// from a page SQLite's own rollback-journal-mode B-tree had already
+    /// stopped referencing (dead freelist/reused-page content from the
+    /// `current_object` row's 30 in-place updates during fixture setup) —
+    /// genuinely inert corruption of bytes no live query path ever reads,
+    /// not a missed detection. Confounding "did we fail to verify a real
+    /// value" with "did the flip land on a byte SQLite itself no longer
+    /// considers part of any row" made the original matrix's floor
+    /// unfalsifiable in either direction. This version removes that
+    /// confound entirely: each schedule locates the *exact* live byte
+    /// range of one revision's stored payload (via `PRAGMA` -independent
+    /// byte-string search, since SQLite stores short TEXT values as their
+    /// literal UTF-8 bytes inline) and flips a byte strictly inside it,
+    /// so every schedule provably targets a byte a live query actually
+    /// returns — for which safe refusal is a reasonable, falsifiable
+    /// expectation, closed by this task's `payload_sha256` corrective fix
+    /// (see `docs/evidence/flake-v1/T01-07/REPORT.md`).
+    #[test]
+    fn d4_bit_corruption_fault_schedule_matrix() {
+        let root = tmp();
+        let mut store = CanonicalStore::create(&root).unwrap();
+        let mut prev = {
+            let mut writer = store.writer().unwrap();
+            writer
+                .commit(CommandInput {
+                    command_id: uuid::Uuid::now_v7().to_string(),
+                    actor: "owner".into(),
+                    origin: RecordOrigin::User,
+                    target: CommandTarget::CreateObject {
+                        payload: "MARKER-SCHEDULE-0000-PAYLOAD".into(),
+                    },
+                })
+                .unwrap()
+        };
+        // 99 further revisions, each with a unique, locatable marker —
+        // 100 live payloads total (the create above is schedule 0).
+        for i in 1..100 {
+            let mut writer = store.writer().unwrap();
+            prev = writer
+                .commit(CommandInput {
+                    command_id: uuid::Uuid::now_v7().to_string(),
+                    actor: "owner".into(),
+                    origin: RecordOrigin::User,
+                    target: CommandTarget::UpdateObject {
+                        object_id: prev.object_id.clone(),
+                        expected_revision_id: prev.revision_id.clone(),
+                        payload: format!("MARKER-SCHEDULE-{i:04}-PAYLOAD"),
+                    },
+                })
+                .unwrap();
+        }
+        drop(store);
+
+        let db_path = root.join(CONTROL_DIR).join(canonical::CANONICAL_DB_FILE);
+        let original_bytes = fs::read(&db_path).unwrap();
+
+        let candidate = tmp();
+        fs::create_dir_all(&candidate).unwrap();
+        fs::copy(
+            root.join(CONTROL_DIR).join(VAULT_META_FILE),
+            candidate.join(VAULT_META_FILE),
+        )
+        .unwrap();
+
+        let mut refused = 0usize;
+        for schedule_id in 0..100usize {
+            let marker = format!("MARKER-SCHEDULE-{schedule_id:04}-PAYLOAD");
+            let needle = marker.as_bytes();
+            // A B-tree page split during the 99 sequential inserts above
+            // can leave a stale, no-longer-referenced copy of an earlier
+            // page's bytes behind (SQLite does not zero freed space), so
+            // the marker text can legitimately appear more than once in
+            // the raw file — at most one occurrence is the live one a
+            // query actually returns. Flip a byte inside *every*
+            // occurrence found, so the live copy is corrupted regardless
+            // of how many stale ghosts of it also exist on disk.
+            let positions: Vec<usize> = original_bytes
+                .windows(needle.len())
+                .enumerate()
+                .filter(|(_, w)| *w == needle)
+                .map(|(i, _)| i)
+                .collect();
+            assert!(
+                !positions.is_empty(),
+                "schedule {schedule_id}: marker {marker:?} not found anywhere in the database file"
+            );
+
+            let mut corrupted = original_bytes.clone();
+            for pos in &positions {
+                corrupted[pos + needle.len() / 2] ^= 0xFF;
+            }
+            fs::write(candidate.join(canonical::CANONICAL_DB_FILE), &corrupted).unwrap();
+
+            match canonical::verify_recovery_candidate(&candidate) {
+                Err(_) => refused += 1,
+                Ok(_) => panic!(
+                    "schedule {schedule_id}: corrupting a byte inside a located, live revision \
+                     payload must be refused, not silently admitted"
+                ),
+            }
+        }
+
+        assert_eq!(
+            refused, 100,
+            "D4 schedule matrix: every one of 100 live-payload-byte corruptions must be refused"
+        );
+
+        cleanup(&root);
+        cleanup(&candidate);
+    }
+
+    // -----------------------------------------------------------------
+    // T01-07 — D3 durability class: deterministic fault-schedule matrix
+    // -----------------------------------------------------------------
+
+    /// D3 ("competing opens, relocation and lock release after crash"): 50
+    /// revision depths x 2 real, structurally distinct contention types =
+    /// 100 genuinely distinct deterministic schedules:
+    ///
+    /// - writer-vs-writer: a second independently-opened `CanonicalStore`
+    ///   handle's `writer()` call while the first writer is held.
+    /// - normal-open-vs-recovery: a held normal (shared-access) handle
+    ///   blocking `recover_to_new_root`'s exclusive-access attempt.
+    ///
+    /// Sweeping revision depth is not padding: both contention checks are
+    /// OS-lock-level and depth-independent in principle, but exercising
+    /// them against a genuinely growing, real store — not a fixed toy
+    /// fixture — is what proves the invariant holds at every size actually
+    /// reached during the test, not only at one arbitrarily chosen size.
+    /// Every schedule additionally proves the *released* side: the losing
+    /// contender succeeds immediately once the holder is dropped.
+    #[test]
+    fn d3_competing_opens_fault_schedule_matrix() {
+        let mut schedule_id = 0usize;
+        for depth in 0..50usize {
+            // --- Type A: writer-vs-writer ---
+            schedule_id += 1;
+            {
+                let root = tmp();
+                let mut store = CanonicalStore::create(&root).unwrap();
+                let mut prev = {
+                    let mut writer = store.writer().unwrap();
+                    writer
+                        .commit(CommandInput {
+                            command_id: uuid::Uuid::now_v7().to_string(),
+                            actor: "owner".into(),
+                            origin: RecordOrigin::User,
+                            target: CommandTarget::CreateObject {
+                                payload: "seed".into(),
+                            },
+                        })
+                        .unwrap()
+                };
+                for i in 0..depth {
+                    let mut writer = store.writer().unwrap();
+                    prev = writer
+                        .commit(CommandInput {
+                            command_id: uuid::Uuid::now_v7().to_string(),
+                            actor: "owner".into(),
+                            origin: RecordOrigin::User,
+                            target: CommandTarget::UpdateObject {
+                                object_id: prev.object_id.clone(),
+                                expected_revision_id: prev.revision_id.clone(),
+                                payload: format!("depth-{i}"),
+                            },
+                        })
+                        .unwrap();
+                }
+
+                let held_writer = store.writer().unwrap();
+                let mut second_handle = CanonicalStore::open(&root).unwrap();
+                let err = second_handle.writer().unwrap_err();
+                assert!(
+                    matches!(err, Error::WriterLocked { .. }),
+                    "schedule {schedule_id} (depth {depth}, writer-vs-writer): {err}"
+                );
+                drop(held_writer);
+                // Released: the loser succeeds immediately once the holder drops.
+                assert!(
+                    second_handle.writer().is_ok(),
+                    "schedule {schedule_id} (depth {depth}): writer must succeed once released"
+                );
+                cleanup(&root);
+            }
+
+            // --- Type B: normal-open-vs-recovery-exclusive-access ---
+            schedule_id += 1;
+            {
+                let root = tmp();
+                let mut store = CanonicalStore::create(&root).unwrap();
+                let mut prev = {
+                    let mut writer = store.writer().unwrap();
+                    writer
+                        .commit(CommandInput {
+                            command_id: uuid::Uuid::now_v7().to_string(),
+                            actor: "owner".into(),
+                            origin: RecordOrigin::User,
+                            target: CommandTarget::CreateObject {
+                                payload: "seed".into(),
+                            },
+                        })
+                        .unwrap()
+                };
+                for i in 0..depth {
+                    let mut writer = store.writer().unwrap();
+                    prev = writer
+                        .commit(CommandInput {
+                            command_id: uuid::Uuid::now_v7().to_string(),
+                            actor: "owner".into(),
+                            origin: RecordOrigin::User,
+                            target: CommandTarget::UpdateObject {
+                                object_id: prev.object_id.clone(),
+                                expected_revision_id: prev.revision_id.clone(),
+                                payload: format!("depth-{i}"),
+                            },
+                        })
+                        .unwrap();
+                }
+                drop(store);
+
+                let held_reader = CanonicalStore::open(&root).unwrap();
+                let new_root = tmp();
+                let err = recover_to_new_root(&root, &new_root).unwrap_err();
+                assert!(
+                    format!("{err}").contains("busy"),
+                    "schedule {schedule_id} (depth {depth}, open-vs-recovery): {err}"
+                );
+                assert!(!new_root.join(CONTROL_DIR).exists());
+                drop(held_reader);
+                // Released: recovery succeeds immediately once the reader drops.
+                let report = recover_to_new_root(&root, &new_root).unwrap();
+                assert_eq!(report.verified_transaction_head_seq as usize, depth + 1);
+                cleanup(&root);
+                cleanup(&new_root);
+                cleanup(&report.preserved_at);
+            }
+        }
+        assert_eq!(
+            schedule_id, 100,
+            "D3 schedule matrix must run exactly 100 schedules"
+        );
+    }
+
+    /// D1/D4 checklist item — "second crash injected during recovery
+    /// itself does not corrupt or lose the preserved original": a fault
+    /// at each of `recover_to_new_root`'s own internal stages (distinct
+    /// from corrupting the source *before* recovery starts, which
+    /// `d4_bit_corruption_fault_schedule_matrix` already covers) must
+    /// leave both the live original and the already-preserved forensic
+    /// copy completely intact.
+    #[test]
+    fn second_crash_during_recovery_itself_never_loses_the_preserved_original() {
+        for fault in [
+            RecoveryFaultPoint::AfterPreservation,
+            RecoveryFaultPoint::AfterVerification,
+            RecoveryFaultPoint::BeforePublish,
+        ] {
+            let root = tmp();
+            seeded_store(&root);
+            let original_bytes_before =
+                fs::read(root.join(CONTROL_DIR).join(canonical::CANONICAL_DB_FILE)).unwrap();
+
+            let new_root = tmp();
+            let err = recover_to_new_root_with_fault(&root, &new_root, Some(fault)).unwrap_err();
+            assert!(
+                format!("{err}").contains("injected fault"),
+                "{fault:?}: {err}"
+            );
+            assert!(
+                !new_root.join(CONTROL_DIR).exists(),
+                "{fault:?}: nothing must be published"
+            );
+
+            // The live original is byte-for-byte unchanged.
+            let original_bytes_after =
+                fs::read(root.join(CONTROL_DIR).join(canonical::CANONICAL_DB_FILE)).unwrap();
+            assert_eq!(
+                original_bytes_before, original_bytes_after,
+                "{fault:?}: live original must be untouched by a crash during recovery"
+            );
+
+            // The forensic preservation directory (created before any of
+            // these fault points can fire) survived and still verifies.
+            let preserved_dir = fs::read_dir(root.join(CONTROL_DIR))
+                .unwrap()
+                .filter_map(|e| e.ok())
+                .find(|e| {
+                    e.file_name()
+                        .to_string_lossy()
+                        .starts_with("recovery-preserved-")
+                })
+                .unwrap_or_else(|| panic!("{fault:?}: preserved directory must survive"))
+                .path();
+            assert!(canonical::verify_recovery_candidate(&preserved_dir).is_ok());
+
+            cleanup(&root);
+            cleanup(&new_root);
+        }
     }
 }

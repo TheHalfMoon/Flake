@@ -199,9 +199,34 @@ pub enum ChainStatus {
 }
 
 impl EventLog {
+    /// Open the event log rooted at an **already-existing** control
+    /// directory.
+    ///
+    /// `T01-07` corrective fix (reopening `T01-01`): `docs/evidence/flake-v1/T00-02/mutator-inventory.md`
+    /// flagged this function's unconditional `create_dir_all` as a
+    /// mutation-on-open requiring a fix under `T01-01`'s own disposition —
+    /// "a genuinely readonly open must not create the control directory;
+    /// creation belongs to `Vault::create` only." `T01-01`'s shipped change
+    /// closed the *other* two findings in that inventory (`open_read`'s
+    /// metadata auto-create, and `EventLog::append`'s unbound visibility)
+    /// but left this one's implementation unchanged; `T01-07`'s re-audit
+    /// against the actual shipped code (not only the pre-implementation
+    /// inventory) caught it. Every current call site already only ever
+    /// calls this on a control directory an already-opened/created `Vault`
+    /// guarantees exists, so this was never observed to mutate in
+    /// practice — but the function's own contract retained latent
+    /// mutation capability regardless of caller discipline, which is
+    /// exactly what a "genuinely readonly open" must not do. Fixed by
+    /// requiring the directory to already exist, mirroring the same
+    /// missing-coordination-metadata philosophy already used consistently
+    /// for `vault.json` (`Error::MissingMetadata`) and `access.lock`.
     pub fn open(control_dir: &Path) -> Result<Self> {
-        std::fs::create_dir_all(control_dir)
-            .map_err(|e| Error::Event(format!("cannot create control dir: {e}")))?;
+        if !control_dir.is_dir() {
+            return Err(Error::Event(format!(
+                "cannot open event log: control directory does not exist: {}",
+                control_dir.display()
+            )));
+        }
         Ok(EventLog {
             path: control_dir.join("events.jsonl"),
         })
@@ -450,6 +475,24 @@ mod tests {
         let d = std::env::temp_dir().join(format!("fehrest-ev-{}", uuid::Uuid::now_v7()));
         std::fs::create_dir_all(&d).unwrap();
         d
+    }
+
+    /// `T01-07` regression for the corrective fix on `EventLog::open`
+    /// (reopening `T01-01`): a genuinely readonly open must refuse a
+    /// missing control directory, never silently create one.
+    #[test]
+    fn open_never_creates_a_missing_control_directory() {
+        let d = std::env::temp_dir().join(format!("fehrest-ev-missing-{}", uuid::Uuid::now_v7()));
+        assert!(!d.exists(), "precondition: directory must not exist yet");
+        let err = EventLog::open(&d).unwrap_err();
+        assert!(
+            matches!(err, Error::Event(_)),
+            "expected Error::Event, got {err:?}"
+        );
+        assert!(
+            !d.exists(),
+            "EventLog::open must never create the control directory"
+        );
     }
 
     #[test]

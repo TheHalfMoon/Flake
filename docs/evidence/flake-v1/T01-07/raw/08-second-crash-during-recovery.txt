@@ -1,0 +1,8 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.10s
+     Running unittests src\lib.rs (target\debug\deps\fehrest-3169ee0784ab6f1d.exe)
+
+running 1 test
+test recovery::tests::second_crash_during_recovery_itself_never_loses_the_preserved_original ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 148 filtered out; finished in 0.20s
+

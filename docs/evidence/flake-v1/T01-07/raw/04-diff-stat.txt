@@ -1,0 +1,7 @@
+ src/backup.rs    |  80 +++++++++++++
+ src/canonical.rs | 199 +++++++++++++++++++++++++++++++
+ src/events.rs    |  47 +++++++-
+ src/migration.rs |  88 +++++++++++++-
+ src/recovery.rs  | 355 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ src/vault.rs     |  52 ++++++++
+ 6 files changed, 814 insertions(+), 7 deletions(-)

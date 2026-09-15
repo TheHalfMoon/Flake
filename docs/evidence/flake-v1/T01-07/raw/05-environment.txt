@@ -1,0 +1,13 @@
+rustc 1.97.1 (8bab26f4f 2026-07-14)
+cargo 1.97.1 (c980f4866 2026-06-30)
+OS: Microsoft Windows 11 Home, 10.0.26200 Build 26200 (MINGW64/MSYS shell)
+CPU: 13th Gen Intel(R) Core(TM) i5-13420H, 8 physical / 12 logical processors
+RAM: 16,106 MB total physical memory
+Storage: WD PC SN740 SDDPNQD-512G-1127, NVMe SSD, NTFS system drive
+Vendored SQLite (rusqlite 0.37.0, libsqlite3-sys 0.35.0): 3.50.2 (unchanged; no Cargo.toml/Cargo.lock change this task)
+Matches specs/002-post-r1-canonical-core-convergence/corrective-t01/reference-hardware.md's frozen development profile exactly.
+Native profiles available: Windows/NTFS only (this host). Linux/ext4 and macOS/APFS are not available in this environment; deferred to T05-02 per reference-hardware.md and this task's own "D6 remains a named release dependency" clause.
+Build mode for functional test/fmt/clippy runs: dev (cargo test/fmt/clippy default)
+Baseline / tested source commit: forked from origin/main 7804f202921c3bb0f7b1dcce8b8db971c6e55ea6 (PR #72, T01-06 merge)
+
+Disk-space note (recorded honestly, not silently worked around): at the start of this task's fault-schedule work, the host's system drive had 0 bytes free (200 GiB used of 200 GiB), consistent with specs/002-post-r1-canonical-core-convergence/corrective-t01/reference-hardware.md's own prior observation of a tight disk margin on this shared host ("6.4 GiB of 200 GiB" at an earlier intake). This caused one fault-schedule test (D5 backup cancellation, which requires a ~48 MiB fixture to reach 100 genuinely distinct step-level cancellation points) to fail with a real "database or disk is full" error, not a code defect. Resolved by removing this session's own orphaned temporary test directories (91 MiB, safe/regenerable) and running `cargo clean` (1.4 GiB of regenerable build artifacts, safe to remove) — no other files on the shared host were touched or deleted. After these safe reclamations the full suite ran reliably with 9.8+ GiB free. This is recorded as a real environmental condition of the shared development host, not evidence of a durability defect in the operations under test.

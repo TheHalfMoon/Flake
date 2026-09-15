@@ -703,4 +703,84 @@ mod tests {
         cleanup(&root);
         cleanup(&backup_root);
     }
+
+    // -----------------------------------------------------------------
+    // T01-07 — D5 durability class: deterministic fault-schedule matrix
+    // -----------------------------------------------------------------
+
+    /// D5 ("interrupted backup/import/migration/export publication"): 100
+    /// genuinely distinct cancellation schedules, each stopping
+    /// `backup_to_new_root` at a different real backup-step count (1
+    /// through 100) against a source large enough to have well over 100
+    /// actual SQLite pages to copy. Every schedule is a full, independent
+    /// invocation — not a single run inspected 100 ways — and every one
+    /// must publish nothing at all.
+    #[test]
+    fn d5_backup_cancellation_fault_schedule_matrix() {
+        let root = tmp();
+        let mut store = CanonicalStore::create(&root).unwrap();
+        // The production backup step loop copies up to 100 pages
+        // (`Backup::step(100)`) per `should_cancel` check, so reaching 100
+        // *genuinely distinct* cancellation points requires the database
+        // to need more than 100 such calls to finish — over ~9,900 pages
+        // (~40.5 MiB at this store's fixed 4096-byte page size). 42
+        // separate ~1 MiB payloads (just under the per-object limit)
+        // reach that comfortably without needing 100+ commit() calls.
+        let big_payload = |tag: &str| {
+            let filler = "x".repeat(1_000_000 - tag.len());
+            format!("{tag}{filler}") // exactly ~1,000,000 bytes, under the 1 MiB limit
+        };
+        for i in 0..48 {
+            let mut writer = store.writer().unwrap();
+            writer
+                .commit(CommandInput {
+                    command_id: uuid::Uuid::now_v7().to_string(),
+                    actor: "owner".into(),
+                    origin: RecordOrigin::User,
+                    target: CommandTarget::CreateObject {
+                        payload: big_payload(&format!("obj{i}-")),
+                    },
+                })
+                .unwrap();
+        }
+        drop(store);
+
+        let db_size = fs::metadata(root.join(CONTROL_DIR).join(canonical::CANONICAL_DB_FILE))
+            .unwrap()
+            .len();
+        assert!(
+            db_size > 9_901 * 4096,
+            "fixture must exceed 9,901 real SQLite pages so 100 cancel-at-step values are all \
+             genuinely distinct checks, got {db_size} bytes ({} pages)",
+            db_size / 4096
+        );
+
+        for cancel_at_step in 1..=100u32 {
+            let backup_root = tmp();
+            let mut steps_taken = 0u32;
+            let err = backup_to_new_root(&root, &backup_root, || {
+                steps_taken += 1;
+                steps_taken >= cancel_at_step
+            })
+            .unwrap_err();
+            assert!(
+                format!("{err}").contains("cancelled"),
+                "schedule cancel_at_step={cancel_at_step}: got {err}"
+            );
+            assert!(
+                !backup_root.join(CONTROL_DIR).exists(),
+                "schedule cancel_at_step={cancel_at_step}: a cancelled backup must publish nothing"
+            );
+            cleanup(&backup_root);
+        }
+
+        // The uninterrupted operation still works after 100 interrupted
+        // attempts against the same, untouched source.
+        let backup_root = tmp();
+        let report = backup_to_new_root(&root, &backup_root, || false).unwrap();
+        assert!(report.manifest.verified);
+
+        cleanup(&root);
+        cleanup(&backup_root);
+    }
 }

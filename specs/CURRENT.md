@@ -13,8 +13,9 @@ CANONICAL_BUILD_PLAN=docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md
 CANONICAL_BUILD_PLAN_SHA256=b555f83ff12882ae6f55f90bbeaa411de52b84661a7f3953350cbfc6bd789fb2
 CANONICAL_PLAN_REMOTE_STATUS=MIGRATED_TO_GITHUB
 CANONICAL_PLAN_LOCAL_DEPENDENCY=NONE
-ACTIVE_IMPLEMENTATION_UNIT=T01-07
-NEXT_DEPENDENCY_READY_UNIT=T01-07
+ACTIVE_IMPLEMENTATION_UNIT=T02-01
+NEXT_DEPENDENCY_READY_UNIT=T02-01
+P01_STATUS=CLOSED
 T00-01_STATUS=COMPLETE
 T00-01_EVIDENCE=docs/evidence/flake-v1/T00-01/REPORT.md
 T00-01_MERGE_COMMIT=6389f6512ea0feb90fd2da7dcdbde6f442e7eb29
@@ -43,7 +44,11 @@ T01-05_MERGE_COMMIT=3e1e30cba341e3a1301e0af646e37f771debb2c7
 T01-06_STATUS=COMPLETE
 T01-06_EVIDENCE=docs/evidence/flake-v1/T01-06/REPORT.md
 T01-06_FORMAT_DOC=docs/formats/legacy-migration.md
-T01-06_MERGE_COMMIT=PENDING_PR_MERGE
+T01-06_MERGE_COMMIT=7804f202921c3bb0f7b1dcce8b8db971c6e55ea6
+T01-07_STATUS=COMPLETE
+T01-07_EVIDENCE=docs/evidence/flake-v1/T01-07/REPORT.md
+T01-07_MUTATOR_AUDIT=docs/evidence/flake-v1/T01-07/mutator-audit.md
+T01-07_MERGE_COMMIT=PENDING_PR_MERGE
 SPEC_003_AUTO_ACTIVATION=PROHIBITED
 PROJECT_COMPLETE=NO
 ```
@@ -59,8 +64,8 @@ The historical local-only planning SHAs `4246f6d...` and `852e44b...` are proven
 
 ## Next action
 
-`T01-06` — import legacy vaults without rewriting accepted history. Read format-1 vaults nonmutatingly; validate IDs/frontmatter/log consistency and preserve exact raw legacy bytes; produce a complete mapping/omissions report before admission; import valid selected records into a new format-2 vault with migration origin, never authenticating legacy log claims or pretending to recover absent history (`docs/evidence/flake-v1/T01-05/REPORT.md`).
+`T02-01` — first task of `P02`. Create and manage the four project record types (`Project`/`Note`/`Action`/`Decision`) through the transaction API section 15 defines: the common envelope, field/record limits, project membership, immutable IDs, archive/tombstone history preservation, and CLI typed commands (`docs/evidence/flake-v1/T01-07/REPORT.md`, `docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` T02-01 row). This is the first task to build product-visible typed records on top of the format-2 store `P01` closed.
 
-`T01-05` closed: `src/backup.rs` creates consistent, independently verified full backups of the format-2 store using SQLite's own Online Backup API (`rusqlite`'s `backup` Cargo feature, newly enabled on the already-admitted crate — no new dependency), and restores them to a new root only after re-verifying every manifest member's digest and cross-checking the manifest's claimed head against the database's actual reconstructed head. A real, generally-applicable fix landed along the way: every `CanonicalStore` connection now sets a `busy_timeout`, without which a concurrent writer commit and an in-progress backup could livelock (caught by an actual test hang, root-caused, not worked around). Deliberately out of scope, recorded in the evidence report: CLI wiring, a recovery guide, selected-project (partial) backups, and literal disk-full/multi-process testing.
+**`P01` is closed.** `T01-07` re-audited every canonical mutator/reader introduced since `T00-02`'s original inventory against the code as actually shipped (`docs/evidence/flake-v1/T01-07/mutator-audit.md`), ran 600 genuine deterministic fault schedules across durability classes D1–D5 (100 each; D6 explicitly deferred to `T05-02`, never claimed as passed), and found and fixed two real defects along the way rather than papering over them: (1) `EventLog::open` still unconditionally created its control directory despite `T00-02`'s own inventory naming this as a required `T01-01` fix that was never actually applied (not exploitable in any current call site, but the contract now matches its documented disposition — `docs/evidence/flake-v1/T01-01/CORRECTIVE-ADDENDUM-T01-07.md`); (2) `canonical::verify_recovery_candidate` (built by `T01-04`, reused by `T01-05`'s restore path) never cross-checked a revision's stored payload against its own `payload_sha256`, so payload-content corruption was invisible to both recovery and restore verification — found directly by this task's own D4 fault-schedule matrix (25/100 refused before the fix), root-caused, and closed. `specs/002-post-r1-canonical-core-convergence/corrective-t01/checklist.md` now has every `T01-01`–`T01-07` box checked with linked evidence.
 
 Do not activate Spec 003 automatically. Do not invent a replacement roadmap. Do not use OpenAI API or a required paid AI/model service.

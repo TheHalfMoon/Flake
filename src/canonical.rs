@@ -1316,6 +1316,100 @@ pub(crate) fn verify_recovery_candidate(control: &Path) -> Result<RecoveryVerifi
         )));
     }
 
+    // T01-07 corrective fix (reopening T01-04, and by extension T01-05's
+    // reuse of this same function for restore verification): the
+    // command-chain recomputation above never re-derives anything from
+    // `revision.payload`'s *current* bytes — `resulting_head_hash` only
+    // ever depends on `(previous_head_hash, revision_id, input_digest)`,
+    // and `input_digest` is read verbatim from the `command` row, never
+    // independently recomputed from the payload. A bit flip inside a
+    // revision's payload text — the dominant byte content of any
+    // real database — was therefore invisible to every check above, and
+    // largely invisible to SQLite's own `integrity_check` too (which
+    // validates B-tree/page structure, not arbitrary TEXT column
+    // content). T01-07's D4 bit-corruption fault-schedule matrix (100
+    // single-byte-flip schedules spread across a real database file)
+    // caught this directly: only 25/100 schedules were refused before
+    // this fix. Closed by independently recomputing `payload_sha256` from
+    // each revision's actual current payload bytes and refusing on any
+    // mismatch — this is exactly the digest every revision already
+    // stores for precisely this purpose (§15 "exact UTF-8 payload bytes
+    // and SHA-256").
+    let mut payload_stmt = conn
+        .prepare("SELECT revision_id, payload, payload_sha256 FROM revision")
+        .map_err(|e| Error::Recovery(format!("cannot prepare payload scan: {e}")))?;
+    let payload_rows: Vec<(String, String, String)> = payload_stmt
+        .query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))
+        .map_err(|e| Error::Recovery(format!("cannot run payload scan: {e}")))?
+        .collect::<rusqlite::Result<_>>()
+        .map_err(|e| Error::Recovery(format!("cannot read payload rows: {e}")))?;
+    for (revision_id, payload, stored_payload_sha256) in &payload_rows {
+        let recomputed = crate::events::hash_bytes(payload.as_bytes());
+        if &recomputed != stored_payload_sha256 {
+            return Err(Error::Recovery(format!(
+                "revision {revision_id} payload does not match its stored payload_sha256; tamper or corruption signal"
+            )));
+        }
+    }
+
+    // T01-07 corrective fix, same finding: `CanonicalWriter::commit`
+    // writes the *same* `actor`, `recorded_seq`, `recorded_at` and
+    // `object_id` values into both the `revision` row it creates and the
+    // `command` row that produced it — these are genuinely redundant
+    // copies, not two independent claims, so any divergence between them
+    // is itself a tamper/corruption signal regardless of which copy was
+    // actually flipped. `origin` has no redundant copy in `command` and
+    // is not cross-checked here; a bit flip confined to that one column
+    // alone remains a named, honest residual (see this task's evidence
+    // report), not silently claimed as covered.
+    let mut cross_stmt = conn
+        .prepare(
+            "SELECT c.command_id, c.object_id, c.actor, c.recorded_seq, c.recorded_at,
+                    r.object_id, r.actor, r.recorded_seq, r.recorded_at
+             FROM command c JOIN revision r ON r.revision_id = c.revision_id",
+        )
+        .map_err(|e| Error::Recovery(format!("cannot prepare cross-check scan: {e}")))?;
+    struct CrossCheckRow {
+        command_id: String,
+        cmd_object_id: String,
+        cmd_actor: String,
+        cmd_recorded_seq: i64,
+        cmd_recorded_at: String,
+        rev_object_id: String,
+        rev_actor: String,
+        rev_recorded_seq: i64,
+        rev_recorded_at: String,
+    }
+    let cross_rows: Vec<CrossCheckRow> = cross_stmt
+        .query_map([], |r| {
+            Ok(CrossCheckRow {
+                command_id: r.get(0)?,
+                cmd_object_id: r.get(1)?,
+                cmd_actor: r.get(2)?,
+                cmd_recorded_seq: r.get(3)?,
+                cmd_recorded_at: r.get(4)?,
+                rev_object_id: r.get(5)?,
+                rev_actor: r.get(6)?,
+                rev_recorded_seq: r.get(7)?,
+                rev_recorded_at: r.get(8)?,
+            })
+        })
+        .map_err(|e| Error::Recovery(format!("cannot run cross-check scan: {e}")))?
+        .collect::<rusqlite::Result<_>>()
+        .map_err(|e| Error::Recovery(format!("cannot read cross-check rows: {e}")))?;
+    for row in &cross_rows {
+        if row.cmd_object_id != row.rev_object_id
+            || row.cmd_actor != row.rev_actor
+            || row.cmd_recorded_seq != row.rev_recorded_seq
+            || row.cmd_recorded_at != row.rev_recorded_at
+        {
+            return Err(Error::Recovery(format!(
+                "command {} and its revision disagree on object_id/actor/recorded_seq/recorded_at; tamper or corruption signal",
+                row.command_id
+            )));
+        }
+    }
+
     let (stored_head_seq, stored_head_hash): (i64, Option<String>) = conn
         .query_row(
             "SELECT transaction_head_seq, transaction_head_hash FROM canonical_vault WHERE singleton = 1",
@@ -1988,5 +2082,110 @@ mod tests {
             (1, Some(outcome.resulting_head_hash))
         );
         cleanup(&root);
+    }
+
+    // -----------------------------------------------------------------
+    // T01-07 — D1 durability class: deterministic fault-schedule matrix
+    // -----------------------------------------------------------------
+
+    /// D1 ("every transaction/ack boundary under process termination"):
+    /// 50 revision depths x 2 real fault points (`BeforeSqlCommit`,
+    /// `AfterSqlCommitBeforeReturn`) = 100 genuinely distinct deterministic
+    /// schedules — not 100 repeats of one path. Each depth means the
+    /// commit under test acts on a store with a different amount of real
+    /// prior history, so the transaction being interrupted reads and
+    /// writes different actual rows on every schedule.
+    #[test]
+    fn d1_commit_atomicity_fault_schedule_matrix() {
+        let fault_points = [
+            CommitFaultPoint::BeforeSqlCommit,
+            CommitFaultPoint::AfterSqlCommitBeforeReturn,
+        ];
+        let mut schedule_id = 0usize;
+        for depth in 0..50usize {
+            for &fault in &fault_points {
+                schedule_id += 1;
+                let root = tmp();
+                let mut store = CanonicalStore::create(&root).unwrap();
+
+                // Build `depth` prior committed revisions on one object —
+                // the real, varying pre-state for this schedule.
+                let mut prev = {
+                    let mut writer = store.writer().unwrap();
+                    writer.commit(create_input("seed")).unwrap()
+                };
+                for i in 0..depth {
+                    let mut writer = store.writer().unwrap();
+                    prev = writer
+                        .commit(CommandInput {
+                            command_id: uuid::Uuid::now_v7().to_string(),
+                            actor: "owner".into(),
+                            origin: RecordOrigin::User,
+                            target: CommandTarget::UpdateObject {
+                                object_id: prev.object_id.clone(),
+                                expected_revision_id: prev.revision_id.clone(),
+                                payload: format!("depth-{i}"),
+                            },
+                        })
+                        .unwrap();
+                }
+                let head_before = store.transaction_head().unwrap();
+
+                let injected_command_id = uuid::Uuid::now_v7().to_string();
+                let err = {
+                    let mut writer = store.writer().unwrap();
+                    writer
+                        .commit_with_fault(
+                            CommandInput {
+                                command_id: injected_command_id.clone(),
+                                actor: "owner".into(),
+                                origin: RecordOrigin::User,
+                                target: CommandTarget::UpdateObject {
+                                    object_id: prev.object_id.clone(),
+                                    expected_revision_id: prev.revision_id.clone(),
+                                    payload: format!("schedule-{schedule_id}"),
+                                },
+                            },
+                            Some(fault),
+                        )
+                        .unwrap_err()
+                };
+                assert!(
+                    matches!(err, Error::Canonical(_)),
+                    "schedule {schedule_id} (depth {depth}, {fault:?}): {err}"
+                );
+
+                match fault {
+                    CommitFaultPoint::BeforeSqlCommit => {
+                        assert_eq!(
+                            store.transaction_head().unwrap(),
+                            head_before,
+                            "schedule {schedule_id} (depth {depth}): pre-commit fault must leave zero trace"
+                        );
+                        assert!(store
+                            .command_outcome(&injected_command_id)
+                            .unwrap()
+                            .is_none());
+                    }
+                    CommitFaultPoint::AfterSqlCommitBeforeReturn => {
+                        assert_eq!(
+                            store.transaction_head().unwrap().0,
+                            head_before.0 + 1,
+                            "schedule {schedule_id} (depth {depth}): post-commit fault must still be durably committed"
+                        );
+                        let reconciled = store.command_outcome(&injected_command_id).unwrap();
+                        assert!(
+                            reconciled.is_some(),
+                            "schedule {schedule_id}: must reconcile without resubmitting"
+                        );
+                    }
+                }
+                cleanup(&root);
+            }
+        }
+        assert_eq!(
+            schedule_id, 100,
+            "D1 schedule matrix must run exactly 100 schedules"
+        );
     }
 }
