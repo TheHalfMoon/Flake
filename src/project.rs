@@ -260,6 +260,15 @@ pub enum RecordPayload {
     /// `T03-03`. Defined in `crate::checkpoint`, not here, for the same
     /// reason `Source`/`Relation`/`SourceCheck` live in their own modules.
     ReviewCheckpoint(crate::checkpoint::ReviewCheckpoint),
+    /// `T03-04`. Defined in `crate::grant`, not here, for the same reason
+    /// every other kind lives in its own module.
+    ExportGrant(crate::grant::ExportGrant),
+    /// `T03-04`. Defined in `crate::disclosure`, not here. Unlike every
+    /// other kind, this one is never updated after creation — a receipt
+    /// is immutable by construction (§15 "Disclosure receipt"), not merely
+    /// by convention: no function anywhere in this crate ever issues a
+    /// `CommandTarget::UpdateObject` against one.
+    DisclosureReceipt(crate::disclosure::DisclosureReceipt),
 }
 
 impl RecordPayload {
@@ -273,6 +282,8 @@ impl RecordPayload {
             RecordPayload::Relation(_) => "relation",
             RecordPayload::SourceCheck(_) => "source_check",
             RecordPayload::ReviewCheckpoint(_) => "review_checkpoint",
+            RecordPayload::ExportGrant(_) => "export_grant",
+            RecordPayload::DisclosureReceipt(_) => "disclosure_receipt",
         }
     }
 
@@ -290,6 +301,8 @@ impl RecordPayload {
             RecordPayload::Relation(r) => Some(&r.project_id),
             RecordPayload::SourceCheck(c) => Some(&c.project_id),
             RecordPayload::ReviewCheckpoint(c) => Some(&c.project_id),
+            RecordPayload::ExportGrant(g) => Some(&g.project_id),
+            RecordPayload::DisclosureReceipt(r) => Some(&r.project_id),
         }
     }
 
@@ -303,6 +316,8 @@ impl RecordPayload {
             RecordPayload::Relation(r) => serde_json::to_value(r),
             RecordPayload::SourceCheck(c) => serde_json::to_value(c),
             RecordPayload::ReviewCheckpoint(c) => serde_json::to_value(c),
+            RecordPayload::ExportGrant(g) => serde_json::to_value(g),
+            RecordPayload::DisclosureReceipt(r) => serde_json::to_value(r),
         }
         .map_err(|e| Error::Project(format!("cannot serialize record: {e}")))?;
         // The `kind` tag is Core-assigned here, at the one serialization
@@ -379,6 +394,15 @@ impl RecordPayload {
             "review_checkpoint" => Ok(RecordPayload::ReviewCheckpoint(
                 serde_json::from_value(value).map_err(|e| {
                     Error::Project(format!("malformed review_checkpoint record: {e}"))
+                })?,
+            )),
+            "export_grant" => Ok(RecordPayload::ExportGrant(
+                serde_json::from_value(value)
+                    .map_err(|e| Error::Project(format!("malformed export_grant record: {e}")))?,
+            )),
+            "disclosure_receipt" => Ok(RecordPayload::DisclosureReceipt(
+                serde_json::from_value(value).map_err(|e| {
+                    Error::Project(format!("malformed disclosure_receipt record: {e}"))
                 })?,
             )),
             other => Err(Error::Project(format!("unrecognized record kind: {other}"))),
@@ -460,6 +484,26 @@ impl RecordPayload {
             RecordPayload::ReviewCheckpoint(c) => Ok(c),
             other => Err(Error::Project(format!(
                 "expected a review_checkpoint record, found {}",
+                other.kind_str()
+            ))),
+        }
+    }
+
+    pub fn as_export_grant(&self) -> Result<&crate::grant::ExportGrant> {
+        match self {
+            RecordPayload::ExportGrant(g) => Ok(g),
+            other => Err(Error::Project(format!(
+                "expected an export_grant record, found {}",
+                other.kind_str()
+            ))),
+        }
+    }
+
+    pub fn as_disclosure_receipt(&self) -> Result<&crate::disclosure::DisclosureReceipt> {
+        match self {
+            RecordPayload::DisclosureReceipt(r) => Ok(r),
+            other => Err(Error::Project(format!(
+                "expected a disclosure_receipt record, found {}",
                 other.kind_str()
             ))),
         }
@@ -1442,14 +1486,19 @@ pub fn list_project_records(
             RecordPayload::Decision(d) => d.project_id == project_id,
             // `Source` (`capture::list_project_sources`), `Relation`
             // (`relation::list_project_relations`), `SourceCheck`
-            // (`source_check::list_project_source_checks`) and
-            // `ReviewCheckpoint` (`checkpoint::current_checkpoint`) each
+            // (`source_check::list_project_source_checks`),
+            // `ReviewCheckpoint` (`checkpoint::current_checkpoint`) and
+            // `ExportGrant` (`grant::current_grant`, via a caller-known ID
+            // — grants have no dedicated project-scoped listing function
+            // since nothing yet needs "every grant for a project") each
             // have their own dedicated listing function.
             RecordPayload::Source(_)
             | RecordPayload::Relation(_)
             | RecordPayload::Project(_)
             | RecordPayload::SourceCheck(_)
-            | RecordPayload::ReviewCheckpoint(_) => false,
+            | RecordPayload::ReviewCheckpoint(_)
+            | RecordPayload::ExportGrant(_)
+            | RecordPayload::DisclosureReceipt(_) => false,
         };
         if belongs {
             out.push((object_id, record));

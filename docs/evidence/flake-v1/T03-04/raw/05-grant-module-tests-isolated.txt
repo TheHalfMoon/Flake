@@ -1,0 +1,14 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.16s
+     Running unittests src\lib.rs (target\debug\deps\fehrest-3169ee0784ab6f1d.exe)
+
+running 7 tests
+test grant::tests::ttl_beyond_seven_days_is_refused ... ok
+test grant::tests::unrecognized_kind_is_refused ... ok
+test grant::tests::issue_grant_defaults_to_full_disclosable_scope ... ok
+test grant::tests::byte_budget_out_of_range_is_refused ... ok
+test grant::tests::revoke_makes_the_grant_unusable_and_cannot_be_repeated ... ok
+test grant::tests::expired_grant_is_unusable ... ok
+test grant::tests::covers_respects_kind_allowlist_id_allowlist_and_exclusions ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 297 filtered out; finished in 0.08s
+

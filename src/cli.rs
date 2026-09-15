@@ -7,9 +7,11 @@ use crate::checkpoint;
 use crate::context::{self, CompileRequest, SourceItem};
 use crate::decision_state;
 use crate::derived::Derived;
+use crate::disclosure;
 use crate::envelope::TrustLevel;
 use crate::events::{ChainStatus, EventKind, EventLog};
 use crate::export;
+use crate::grant;
 use crate::import;
 use crate::index;
 use crate::markdown;
@@ -157,6 +159,12 @@ FORMAT-2 RESUME/CHECKPOINT COMMANDS (T03-03):
   checkpoint-mark     Mark reviewed through a sequence (default: current head); --expect required after the first mark     --project <uuid> [--expect <revision-uuid>] [--through N]
   checkpoint-reset    Explicitly move the checkpoint backward with a reason                                                  --project <uuid> --expect <revision-uuid> --through N --reason R
   checkpoint-history  Show every checkpoint revision for a project                                                           --project <uuid>
+
+FORMAT-2 DISCLOSURE COMMANDS (T03-04):
+  grant-issue      Issue an owner-scoped export grant                                            --project <uuid> [--kinds note,action,...] [--ids id1,id2] [--exclude id1,id2] [--budget N] [--ttl-hours N]
+  grant-revoke     Revoke an active grant                                                          --id <uuid> --expect <revision-uuid>
+  package-preview  Compile a disclosure package without persisting a receipt                       --grant <uuid> --request-id R [--principal P]
+  package-export   Compile, persist the receipt, and write the package to a staged file            --grant <uuid> --request-id R --out <path> [--principal P]
 ";
 
 struct Args {
@@ -1236,6 +1244,119 @@ pub fn run(argv: &[String]) -> Result<i32> {
                     c.reviewed_through_seq, c.reset_reason
                 );
             }
+            Ok(0)
+        }
+
+        "grant-issue" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let allowed_kinds = args.get("kinds").map(split_ids).unwrap_or_default();
+            let allowed_object_ids = args.get("ids").map(split_ids);
+            let privacy_exclusions = args.get("exclude").map(split_ids).unwrap_or_default();
+            let byte_budget: u32 = args
+                .get("budget")
+                .map(|s| {
+                    s.parse()
+                        .map_err(|_| Error::Project(format!("invalid --budget: {s}")))
+                })
+                .transpose()?
+                .unwrap_or(limits::MAX_PACKAGE_BYTES as u32);
+            let ttl_hours: i64 = args
+                .get("ttl-hours")
+                .map(|s| {
+                    s.parse()
+                        .map_err(|_| Error::Project(format!("invalid --ttl-hours: {s}")))
+                })
+                .transpose()?
+                .unwrap_or(grant::DEFAULT_TTL_SECS / 3600);
+            let mut writer = store.writer()?;
+            let (outcome, g) = grant::issue_grant(
+                &mut writer,
+                CLI_ACTOR,
+                args.require("project")?,
+                &allowed_kinds,
+                allowed_object_ids.as_deref(),
+                &privacy_exclusions,
+                byte_budget,
+                ttl_hours * 3600,
+            )?;
+            println!(
+                "{} {} expires_at={} byte_budget={}",
+                outcome.object_id, outcome.revision_id, g.expires_at, g.byte_budget
+            );
+            Ok(0)
+        }
+
+        "grant-revoke" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let (outcome, g) = grant::revoke_grant(
+                &mut store,
+                CLI_ACTOR,
+                args.require("id")?,
+                args.require("expect")?,
+            )?;
+            println!(
+                "{} {} state={:?}",
+                outcome.object_id, outcome.revision_id, g.state
+            );
+            Ok(0)
+        }
+
+        "package-preview" => {
+            let store = CanonicalStore::open(args.vault_root()?)?;
+            let (receipt, wire) = disclosure::preview_disclosure_package(
+                &store,
+                args.require("grant")?,
+                args.require("request-id")?,
+                args.get("principal").unwrap_or("agent"),
+            )?;
+            println!(
+                "selected={} rejected={} emitted_byte_count={} emitted_sha256={}",
+                receipt.selected.len(),
+                receipt.rejected.len(),
+                receipt.emitted_byte_count,
+                receipt.emitted_sha256
+            );
+            for r in &receipt.rejected {
+                println!("  rejected {} [{}]: {}", r.object_id, r.kind, r.reason);
+            }
+            let _ = wire;
+            Ok(0)
+        }
+
+        "package-export" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let (receipt, wire) = disclosure::compile_disclosure_package(
+                &mut store,
+                args.require("grant")?,
+                args.require("request-id")?,
+                args.get("principal").unwrap_or("agent"),
+            )?;
+            let out_path = std::path::Path::new(args.require("out")?);
+            if out_path.exists() {
+                return Err(Error::Project(format!(
+                    "refusing to overwrite an existing path: {}",
+                    out_path.display()
+                )));
+            }
+            std::fs::write(out_path, wire.as_bytes())
+                .map_err(|e| Error::Project(format!("cannot write package file: {e}")))?;
+            // Stage/verify: reopen and reread what was actually written,
+            // rather than trusting the write call succeeded silently.
+            let reread = std::fs::read(out_path)
+                .map_err(|e| Error::Project(format!("cannot verify written package file: {e}")))?;
+            if reread != wire.as_bytes() {
+                return Err(Error::Project(
+                    "written package file does not match the compiled bytes".to_string(),
+                ));
+            }
+            println!(
+                "selected={} rejected={} emitted_byte_count={} emitted_sha256={} out={}",
+                receipt.selected.len(),
+                receipt.rejected.len(),
+                receipt.emitted_byte_count,
+                receipt.emitted_sha256,
+                out_path.display()
+            );
             Ok(0)
         }
 
@@ -2833,6 +2954,172 @@ mod tests {
             .unwrap(),
             0
         );
+
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn grant_and_package_lifecycle_works_through_the_cli() {
+        let root = tmp();
+        let root_str = root.to_string_lossy().to_string();
+        assert_eq!(
+            run(&s(&["canonical-init", "--vault", &root_str])).unwrap(),
+            0
+        );
+        assert_eq!(
+            run(&s(&["project-create", "--vault", &root_str, "--name", "P"])).unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let project_id = store
+            .list_current_objects()
+            .unwrap()
+            .into_iter()
+            .find_map(|(id, _, payload)| {
+                project::RecordPayload::from_json(&payload)
+                    .ok()?
+                    .as_project()
+                    .ok()
+                    .map(|_| id)
+            })
+            .unwrap();
+        drop(store);
+        assert_eq!(
+            run(&s(&[
+                "note-create",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--body",
+                "disclosable note"
+            ]))
+            .unwrap(),
+            0
+        );
+
+        assert_eq!(
+            run(&s(&[
+                "grant-issue",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let (grant_id, grant_rev) = store
+            .list_current_objects()
+            .unwrap()
+            .into_iter()
+            .find_map(|(id, rev, payload)| {
+                project::RecordPayload::from_json(&payload)
+                    .ok()?
+                    .as_export_grant()
+                    .ok()?;
+                Some((id, rev))
+            })
+            .unwrap();
+        drop(store);
+
+        assert_eq!(
+            run(&s(&[
+                "package-preview",
+                "--vault",
+                &root_str,
+                "--grant",
+                &grant_id,
+                "--request-id",
+                "req-preview"
+            ]))
+            .unwrap(),
+            0
+        );
+
+        let out_path = root.join("package.jsonl");
+        let out_str = out_path.to_string_lossy().to_string();
+        assert_eq!(
+            run(&s(&[
+                "package-export",
+                "--vault",
+                &root_str,
+                "--grant",
+                &grant_id,
+                "--request-id",
+                "req-export",
+                "--out",
+                &out_str
+            ]))
+            .unwrap(),
+            0
+        );
+        let written = std::fs::read_to_string(&out_path).unwrap();
+        assert!(written.contains("disclosable note"));
+
+        let store = CanonicalStore::open(&root).unwrap();
+        let receipt = disclosure::current_receipt(
+            &store,
+            &store
+                .list_current_objects()
+                .unwrap()
+                .into_iter()
+                .find_map(|(id, _, payload)| {
+                    project::RecordPayload::from_json(&payload)
+                        .ok()?
+                        .as_disclosure_receipt()
+                        .ok()
+                        .map(|_| id)
+                })
+                .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            receipt.emitted_sha256,
+            crate::events::hash_bytes(written.as_bytes())
+        );
+        drop(store);
+
+        // A second export to the same path must not silently overwrite it.
+        let err = run(&s(&[
+            "package-export",
+            "--vault",
+            &root_str,
+            "--grant",
+            &grant_id,
+            "--request-id",
+            "req-export-2",
+            "--out",
+            &out_str,
+        ]))
+        .unwrap_err();
+        assert!(format!("{err}").contains("refusing to overwrite"));
+
+        assert_eq!(
+            run(&s(&[
+                "grant-revoke",
+                "--vault",
+                &root_str,
+                "--id",
+                &grant_id,
+                "--expect",
+                &grant_rev
+            ]))
+            .unwrap(),
+            0
+        );
+        let err = run(&s(&[
+            "package-preview",
+            "--vault",
+            &root_str,
+            "--grant",
+            &grant_id,
+            "--request-id",
+            "req-after-revoke",
+        ]))
+        .unwrap_err();
+        assert!(format!("{err}").contains("revoked"));
 
         let _ = std::fs::remove_dir_all(&root);
     }

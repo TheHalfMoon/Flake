@@ -1,0 +1,19 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.09s
+     Running unittests src\lib.rs (target\debug\deps\fehrest-3169ee0784ab6f1d.exe)
+
+running 12 tests
+test disclosure::tests::revoked_grant_refuses_compilation ... ok
+test disclosure::tests::repeated_identical_request_id_yields_the_same_receipt ... ok
+test disclosure::tests::full_receipt_replay_verifies_exact_bytes ... ok
+test disclosure::tests::draft_only_decision_key_is_never_a_candidate ... ok
+test disclosure::tests::a_budget_too_small_for_even_the_header_is_a_clear_top_level_error ... ok
+test disclosure::tests::kind_restricted_grant_excludes_other_kinds ... ok
+test disclosure::tests::privacy_exclusion_is_rejected_with_a_clear_reason_never_disclosed ... ok
+test disclosure::tests::tiny_budget_omits_items_with_a_budget_reason_never_a_partial_leak ... ok
+test disclosure::tests::truncation_never_exceeds_the_byte_budget ... ok
+test disclosure::tests::relation_with_an_undisclosed_endpoint_is_rejected_not_leaked ... ok
+test disclosure::tests::a_clean_note_and_decision_are_fully_disclosed ... ok
+test disclosure::tests::mixed_project_fixture_never_discloses_the_other_project ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 292 filtered out; finished in 0.17s
+
