@@ -1,0 +1,23 @@
+fehrest binary: C:\Users\Shehr\work\Flake\target\debug\fehrest.exe
+scratch vault: C:\Users\Shehr\AppData\Local\Temp\fehrest-interchange-hrzaeesa\vault
+project_id=01a0a4de-dd11-7982-b258-6a803ef203d6
+note_id=01a0a4de-dd31-76d3-a053-3b7a4e69b9d4
+grant_id=01a0a4de-dd5e-7732-aff4-0d39b14f143a
+receipt_a=01a0a4de-dd88-79a3-b550-1d4ff2ea0a1c
+client_a: proposed note_edit for 01a0a4de-dd31-76d3-a053-3b7a4e69b9d4 (from revision 01a0a4de-dd31-76d3-a053-3b826a3571c5) -> C:\Users\Shehr\AppData\Local\Temp\fehrest-interchange-hrzaeesa\proposal_a.json
+proposal_a_id=01a0a4de-de11-7792-b2d1-d288193444fa status_line=01a0a4de-de11-7792-b2d1-d288193444fa 01a0a4de-de11-7792-b2d1-d29a77f882bf status=Pending operations=1 declared_agent=Some("interchange-client-a")
+accept_a: 01a0a4de-de11-7792-b2d1-d288193444fa 01a0a4de-de2f-7040-b2fa-43d8ed1fd49b status=Accepted accepted=[0]
+independent check: note body reflects client A's accepted edit (verified via canonical.sqlite)
+receipt_b=01a0a4de-de52-71c1-9343-c68108dc2ca8
+client_b: proposed draft_decision citing note 01a0a4de-dd31-76d3-a053-3b7a4e69b9d4 -> C:\Users\Shehr\AppData\Local\Temp\fehrest-interchange-hrzaeesa\proposal_b.json
+proposal_b_id=01a0a4de-dec1-7773-9dbc-3ab966bbbd58 status_line=01a0a4de-dec1-7773-9dbc-3ab966bbbd58 01a0a4de-dec1-7773-9dbc-3acd1cdde5dd status=Pending operations=1 declared_agent=Some("interchange-client-b")
+accept_b: 01a0a4de-dec1-7773-9dbc-3ab966bbbd58 01a0a4de-deda-7dd0-a353-93af638fcbf6 status=Accepted accepted=[0]
+independent check: draft decision from client B exists with basis=agent_proposal, lifecycle=draft (verified via canonical.sqlite)
+negative case [PASS] unknown_declared_identity: expected admission succeeds (exit 0), got exit_code=0
+negative case [PASS] unsupported_operation_kind: expected admission refused (nonzero exit, no Pending record created), got exit_code=1
+negative case [PASS] duplicate_delivery: expected both admissions succeed independently (exit 0 twice), got exit_code=(0, 0)
+independent check: the refused unsupported-kind proposal was never committed as any record (verified via canonical.sqlite)
+independent check: unknown-declared-identity proposal has declared_agent=null, never a guessed default (verified via canonical.sqlite)
+independent check: duplicate delivery produced exactly two distinct Pending proposals (verified via canonical.sqlite)
+head_hash_chain_verified=True command_count=16
+ALL CHECKS PASSED
