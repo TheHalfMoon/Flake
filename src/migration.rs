@@ -230,9 +230,9 @@ pub fn import_to_new_root(
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum ImportFaultPoint {
-    /// Stop after exactly one record has been successfully imported,
+    /// Stop after exactly `n` records have been successfully imported,
     /// simulating an interruption partway through a multi-record import.
-    AfterFirstRecord,
+    AfterNthRecord(usize),
 }
 
 pub(crate) fn import_to_new_root_with_fault(
@@ -315,8 +315,11 @@ pub(crate) fn import_to_new_root_with_fault(
                     break;
                 }
             }
-            if fault == Some(ImportFaultPoint::AfterFirstRecord) && imported.len() == 1 {
-                interrupt_reason = Some("injected fault: AfterFirstRecord".to_string());
+            if fault == Some(ImportFaultPoint::AfterNthRecord(imported.len())) {
+                interrupt_reason = Some(format!(
+                    "injected fault: AfterNthRecord({})",
+                    imported.len()
+                ));
                 break;
             }
         }
@@ -510,7 +513,7 @@ mod tests {
             &root,
             &new_root,
             ImportSelection::AllAdmittedOnly,
-            Some(ImportFaultPoint::AfterFirstRecord),
+            Some(ImportFaultPoint::AfterNthRecord(1)),
         )
         .unwrap_err();
         assert!(format!("{err}").contains("interrupted after 1 of 2"));
@@ -600,5 +603,80 @@ mod tests {
 
         cleanup(&root);
         cleanup(&new_root);
+    }
+
+    // -----------------------------------------------------------------
+    // T01-07 — D5 durability class: deterministic fault-schedule matrix
+    // -----------------------------------------------------------------
+
+    /// D5 ("interrupted backup/import/migration/export publication"): 100
+    /// genuinely distinct interruption schedules, each stopping
+    /// `import_to_new_root` after a different real record count (1
+    /// through 100) against a source legacy vault with exactly 100
+    /// admittable records — a natural per-record loop, not a padded
+    /// parameter sweep.
+    #[test]
+    fn d5_migration_interruption_fault_schedule_matrix() {
+        let root = tmp();
+        Vault::create(&root).unwrap();
+        let mut legacy_ids = Vec::new();
+        for i in 0..100 {
+            let id = uuid::Uuid::now_v7().to_string();
+            fs::write(
+                root.join(format!("f{i:03}.md")),
+                frontmatter(&id, &format!("title: File {i}\n")),
+            )
+            .unwrap();
+            legacy_ids.push(id);
+        }
+
+        let preview = preview_migration(&root).unwrap();
+        assert!(preview.is_complete());
+        assert_eq!(preview.admitted.len(), 100);
+
+        for n in 1..=100usize {
+            let new_root = tmp();
+            let err = import_to_new_root_with_fault(
+                &root,
+                &new_root,
+                ImportSelection::AllAdmittedOnly,
+                Some(ImportFaultPoint::AfterNthRecord(n)),
+            )
+            .unwrap_err();
+            assert!(
+                format!("{err}").contains(&format!("interrupted after {n} of 100")),
+                "schedule n={n}: got {err}"
+            );
+
+            let manifest: serde_json::Value = serde_json::from_str(
+                &fs::read_to_string(new_root.join(CONTROL_DIR).join(MIGRATION_MANIFEST_FILE))
+                    .unwrap(),
+            )
+            .unwrap();
+            assert_eq!(manifest["interrupted"], true, "schedule n={n}");
+            assert_eq!(
+                manifest["imported"].as_array().unwrap().len(),
+                n,
+                "schedule n={n}: manifest must record exactly the records that succeeded"
+            );
+
+            let opened = CanonicalStore::open(&new_root).unwrap();
+            assert_eq!(
+                opened.transaction_head().unwrap().0 as usize,
+                n,
+                "schedule n={n}: the new vault must contain exactly n committed records"
+            );
+
+            cleanup(&new_root);
+        }
+
+        // The source's own bytes are unaffected by 100 interrupted
+        // attempts against it.
+        for (i, id) in legacy_ids.iter().enumerate() {
+            let content = fs::read_to_string(root.join(format!("f{i:03}.md"))).unwrap();
+            assert!(content.contains(id));
+        }
+
+        cleanup(&root);
     }
 }

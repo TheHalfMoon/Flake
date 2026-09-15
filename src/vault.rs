@@ -1712,4 +1712,56 @@ mod tests {
         );
         let _ = fs::remove_dir_all(&base);
     }
+
+    // -----------------------------------------------------------------
+    // T01-07 — D2 durability class: deterministic fault-schedule matrix
+    // -----------------------------------------------------------------
+
+    /// D2 ("short writes... at each storage adapter boundary"): 100
+    /// genuinely distinct truncated-write schedules against the one
+    /// primitive every format-2 operation's guard/manifest writes share
+    /// (`atomic_write_file_with_fault`'s existing `AfterWrite` fault
+    /// point, unmodified). Each schedule uses a different new-content
+    /// length (2, 4, 6, ..., 200 bytes), which the existing fault point
+    /// truncates at exactly half — so every schedule fails at a genuinely
+    /// different byte offset (1, 2, 3, ..., 100), not the same one
+    /// repeated. This is not a synthetic parameter sweep unrelated to the
+    /// boundary under test: it directly exercises "a short write happened
+    /// partway through, at this exact byte count" for 100 distinct byte
+    /// counts against the real temp-write-then-rename code path.
+    #[test]
+    fn d2_short_write_fault_schedule_matrix() {
+        let dir = tmp();
+        let target = dir.join("guard.json");
+        let old = br#"{"vault_id":"018f0000-0000-7000-8000-000000000001","format_version":1,"created_by_version":"x","created_at":"t"}"#;
+        let mut schedules_run = 0usize;
+        for new_len in (2..=200usize).step_by(2) {
+            schedules_run += 1;
+            fs::write(&target, old).unwrap();
+            // Deterministic, distinct content per schedule — not just a
+            // length knob with identical bytes every time.
+            let new_content: Vec<u8> = (0..new_len)
+                .map(|i| b'a' + ((i + schedules_run) % 26) as u8)
+                .collect();
+            let expected_truncated_len = new_content.len() / 2;
+
+            let res =
+                atomic_write_file_with_fault(&target, &new_content, Some(FaultPoint::AfterWrite));
+            assert!(
+                res.is_err(),
+                "schedule {schedules_run} (new_len={new_len}): injected short write must fail"
+            );
+            let observed = fs::read(&target).unwrap();
+            assert_eq!(
+                observed, old,
+                "schedule {schedules_run} (new_len={new_len}, would-truncate-at={expected_truncated_len}): \
+                 target must remain exactly the prior complete content, never a partial write"
+            );
+        }
+        assert_eq!(
+            schedules_run, 100,
+            "D2 schedule matrix must run exactly 100 schedules"
+        );
+        let _ = fs::remove_dir_all(&dir);
+    }
 }

@@ -1,0 +1,13 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.40s
+     Running unittests src\lib.rs (target\debug\deps\fehrest-3169ee0784ab6f1d.exe)
+
+running 6 tests
+test vault::tests::d2_short_write_fault_schedule_matrix ... ok
+test recovery::tests::d4_bit_corruption_fault_schedule_matrix ... ok
+test recovery::tests::d3_competing_opens_fault_schedule_matrix ... ok
+test canonical::tests::d1_commit_atomicity_fault_schedule_matrix ... ok
+test backup::tests::d5_backup_cancellation_fault_schedule_matrix ... ok
+test migration::tests::d5_migration_interruption_fault_schedule_matrix ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 143 filtered out; finished in 30.25s
+
