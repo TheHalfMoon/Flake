@@ -1,0 +1,19 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.21s
+     Running unittests src\lib.rs (target\debug\deps\fehrest-3169ee0784ab6f1d.exe)
+
+running 12 tests
+test source_check::tests::recheck_reports_denied_when_the_path_becomes_a_directory ... ok
+test source_check::tests::recheck_refuses_a_symlink_swapped_in_after_admission ... ok
+test source_check::tests::recheck_reports_missing_when_the_file_is_deleted ... ok
+test source_check::tests::check_history_is_append_only_and_chronological ... ok
+test source_check::tests::reselect_source_accepts_a_move_with_identical_bytes ... ok
+test source_check::tests::check_refuses_a_manual_reference_with_no_local_file ... ok
+test source_check::tests::a_fault_during_check_commit_leaves_no_partial_admission ... ok
+test source_check::tests::recheck_reports_match_when_bytes_are_unchanged ... ok
+test source_check::tests::admit_changed_source_requires_the_correct_expected_revision ... ok
+test source_check::tests::admit_changed_source_replaces_the_capture_only_on_explicit_call ... ok
+test source_check::tests::reselect_source_refuses_a_move_with_different_bytes ... ok
+test source_check::tests::recheck_reports_changed_without_auto_replacing_the_capture ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 237 filtered out; finished in 0.11s
+

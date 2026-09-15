@@ -254,6 +254,9 @@ pub enum RecordPayload {
     /// `T02-03`. Defined in `crate::relation`, not here, for the same
     /// reason `Source` lives in `crate::capture`.
     Relation(Relation),
+    /// `T03-01`. Defined in `crate::source_check`, not here, for the same
+    /// reason `Source`/`Relation` live in their own modules.
+    SourceCheck(crate::source_check::SourceCheck),
 }
 
 impl RecordPayload {
@@ -265,6 +268,7 @@ impl RecordPayload {
             RecordPayload::Decision(_) => "decision",
             RecordPayload::Source(_) => "source",
             RecordPayload::Relation(_) => "relation",
+            RecordPayload::SourceCheck(_) => "source_check",
         }
     }
 
@@ -280,6 +284,7 @@ impl RecordPayload {
             RecordPayload::Decision(d) => Some(&d.project_id),
             RecordPayload::Source(s) => Some(&s.project_id),
             RecordPayload::Relation(r) => Some(&r.project_id),
+            RecordPayload::SourceCheck(c) => Some(&c.project_id),
         }
     }
 
@@ -291,6 +296,7 @@ impl RecordPayload {
             RecordPayload::Decision(d) => serde_json::to_value(d),
             RecordPayload::Source(s) => serde_json::to_value(s),
             RecordPayload::Relation(r) => serde_json::to_value(r),
+            RecordPayload::SourceCheck(c) => serde_json::to_value(c),
         }
         .map_err(|e| Error::Project(format!("cannot serialize record: {e}")))?;
         // The `kind` tag is Core-assigned here, at the one serialization
@@ -360,6 +366,10 @@ impl RecordPayload {
                 serde_json::from_value(value)
                     .map_err(|e| Error::Project(format!("malformed relation record: {e}")))?,
             )),
+            "source_check" => Ok(RecordPayload::SourceCheck(
+                serde_json::from_value(value)
+                    .map_err(|e| Error::Project(format!("malformed source_check record: {e}")))?,
+            )),
             other => Err(Error::Project(format!("unrecognized record kind: {other}"))),
         }
     }
@@ -409,6 +419,16 @@ impl RecordPayload {
             RecordPayload::Relation(r) => Ok(r),
             other => Err(Error::Project(format!(
                 "expected a relation record, found {}",
+                other.kind_str()
+            ))),
+        }
+    }
+
+    pub fn as_source_check(&self) -> Result<&crate::source_check::SourceCheck> {
+        match self {
+            RecordPayload::SourceCheck(c) => Ok(c),
+            other => Err(Error::Project(format!(
+                "expected a source_check record, found {}",
                 other.kind_str()
             ))),
         }
@@ -1389,12 +1409,14 @@ pub fn list_project_records(
             RecordPayload::Note(n) => n.project_id == project_id,
             RecordPayload::Action(a) => a.project_id == project_id,
             RecordPayload::Decision(d) => d.project_id == project_id,
-            // `Source` (`capture::list_project_sources`) and `Relation`
-            // (`relation::list_project_relations`) each have their own
-            // dedicated listing function.
-            RecordPayload::Source(_) | RecordPayload::Relation(_) | RecordPayload::Project(_) => {
-                false
-            }
+            // `Source` (`capture::list_project_sources`), `Relation`
+            // (`relation::list_project_relations`) and `SourceCheck`
+            // (`source_check::list_project_source_checks`) each have their
+            // own dedicated listing function.
+            RecordPayload::Source(_)
+            | RecordPayload::Relation(_)
+            | RecordPayload::Project(_)
+            | RecordPayload::SourceCheck(_) => false,
         };
         if belongs {
             out.push((object_id, record));

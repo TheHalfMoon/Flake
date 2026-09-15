@@ -172,7 +172,10 @@ fn searchable_text(record: &RecordPayload) -> Option<(&'static str, String, Stri
                 d.rationale.clone().unwrap_or_default()
             ),
         )),
-        RecordPayload::Project(_) | RecordPayload::Source(_) | RecordPayload::Relation(_) => None,
+        RecordPayload::Project(_)
+        | RecordPayload::Source(_)
+        | RecordPayload::Relation(_)
+        | RecordPayload::SourceCheck(_) => None,
     }
 }
 

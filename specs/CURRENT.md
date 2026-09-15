@@ -13,8 +13,8 @@ CANONICAL_BUILD_PLAN=docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md
 CANONICAL_BUILD_PLAN_SHA256=b555f83ff12882ae6f55f90bbeaa411de52b84661a7f3953350cbfc6bd789fb2
 CANONICAL_PLAN_REMOTE_STATUS=MIGRATED_TO_GITHUB
 CANONICAL_PLAN_LOCAL_DEPENDENCY=NONE
-ACTIVE_IMPLEMENTATION_UNIT=T03-01
-NEXT_DEPENDENCY_READY_UNIT=T03-01
+ACTIVE_IMPLEMENTATION_UNIT=T03-02
+NEXT_DEPENDENCY_READY_UNIT=T03-02
 P01_STATUS=CLOSED
 T00-01_STATUS=COMPLETE
 T00-01_EVIDENCE=docs/evidence/flake-v1/T00-01/REPORT.md
@@ -72,7 +72,10 @@ T02-06_EVIDENCE=docs/evidence/flake-v1/T02-06/REPORT.md
 T02-06_MERGE_COMMIT=dc2f1c16f8331be873937b6b6bc39888eedda9c1
 T02-07_STATUS=COMPLETE
 T02-07_EVIDENCE=docs/evidence/flake-v1/T02-07/REPORT.md
-T02-07_MERGE_COMMIT=PENDING_PR_MERGE
+T02-07_MERGE_COMMIT=e7d9445b87f48c99ad2ed0f59b32194255520af3
+T03-01_STATUS=COMPLETE
+T03-01_EVIDENCE=docs/evidence/flake-v1/T03-01/REPORT.md
+T03-01_MERGE_COMMIT=PENDING_PR_MERGE
 SPEC_003_AUTO_ACTIVATION=PROHIBITED
 PROJECT_COMPLETE=NO
 ```
@@ -88,7 +91,9 @@ The historical local-only planning SHAs `4246f6d...` and `852e44b...` are proven
 
 ## Next action
 
-`T03-01` — Track selected source revisions and relocation (`docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` T03-01 row, first task of `P03`). Objective: show whether saved evidence still matches a user-selected local source. Explicitly recheck previously authorized selected regular files; bind observed bytes through the opened handle. Record Match/Changed/Missing/Denied/Unchecked with time/digest; import changed bytes as a new revision only with owner admission. Reselection after move verifies digest and preserves source identity/history. Commit/URL labels are declared references unless exact local bytes independently establish the claim. No Git subprocess, remote fetch or watcher. Files/components: Source-check/revision/locator Core modules, CLI evidence commands and tests.
+`T03-02` — Resolve explicit temporal state and disagreement deterministically (`docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` T03-02 row, `P03`/`VS05`). Objective: compute current accepted project state without hiding conflict or negative evidence. Apply canonical project, lifecycle, recorded cutoff and valid interval to all applicable records; resolve only explicit accepted supersession, incomparable overlapping decisions with the same key produce Conflict, unknown/partial times are never invented as exact intervals, user override reason and negative evidence stay in the output, ordering is stable and deterministic across processes. Verification method requires a pure reference oracle kept separate from the production resolver. Files/components: `src/temporal.rs` and memory-value/successor decision resolver, Core state queries and tests. Depends on `T03-01` (complete).
+
+`T03-01` closed: a seventh `RecordPayload` kind, `SourceCheck` (`src/source_check.rs`), mirroring `Relation`'s architectural shape — an append-only observation of whether a previously admitted `Source`'s selected local file still matches, changed, went missing or became unreadable. `capture::import_file` now populates the previously-always-`None` `Source::claimed_path` locator hint. Three functions, deliberately separated: `check_source` (pure observation, never mutates `Source`), `reselect_source` (relocation, refused unless the new location's bytes are digest-identical to the last saved capture), `admit_changed_source` (explicit owner admission of changed bytes, always re-opening and re-hashing fresh). Both mutating functions require the caller's `expected_revision_id` (F21/I05). A symlink or any non-regular-file swapped in at the checked path is refused as `Denied`, never followed (S03). `export.rs`'s project-scope union, `import.rs`'s merge/rewrite passes and `index.rs` each got the minimal, mechanical extension a new `RecordPayload` kind structurally requires, matching every prior new-kind task's own precedent. `Unchecked` is a derived read-path label (zero rows in history), not a stored `CheckStatus` variant — recorded as a deliberate reading of §15, not an omission. 15 new tests, all passing (282/282 full suite); `fmt`/`clippy -D warnings`/`git diff --check` all clean. Full details: `docs/evidence/flake-v1/T03-01/REPORT.md`.
 
 `T02-07` closed: a standalone Python (stdlib-only, no Flake crate dependency) independent verifier under `tools/independent-verify/` proves Flake's canonical/exported state is reconstructable without Flake. Two genuinely separate raw readers — `sqlite_reader.py` (direct `canonical.sqlite` inspection via `sqlite3`, independently re-deriving `payload_sha256` and the full `resulting_head_hash` chain from the format document's own published algorithm) and `export_reader.py` (a `.fehrest-export/` package reader, independently recomputing `integrity_root` and every member/payload digest) — each build a semantic report (record counts, current state per object, relations, action dependencies, source byte digests, project membership) from a disposable fixture built through the real `fehrest` CLI's full create/capture/find/complete/export loop across two projects. The two independently-derived reports agree exactly on the full-store export and on the project-scoped subset (`crosscheck.py`), including after the derived FTS index (`derived-fts.sqlite`) is deleted and the vault is re-exported — proving canonical export does not depend on derived state. An 11-case adversarial suite (`adversarial.py`) hand-corrupts copies of a valid export (missing member, length/digest mismatch, tampered `integrity_root`, duplicate `(object_id, revision_id)`, broken relation endpoint, absent action dependency, truncated JSON, a fully-removed referenced object, an unrecognized manifest schema, and a source `capture.bytes_hex`/`capture.sha256` mismatch) and confirms the verifier detects and clearly reports every one — no product defect was found in `T02-05`/`T02-06` by this task. Full details: `docs/evidence/flake-v1/T02-07/REPORT.md`.
 

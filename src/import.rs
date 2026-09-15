@@ -324,6 +324,7 @@ fn validate_self_contained(package: &ParsedPackage) -> Result<()> {
                 ]
             }
             RecordPayload::Project(_) => vec![],
+            RecordPayload::SourceCheck(c) => vec![c.project_id.clone(), c.source_id.clone()],
         };
         for r in refs {
             if !package.objects.contains_key(&r) {
@@ -459,6 +460,15 @@ fn rewrite_references(
             // (needs a fresh store read of the already-imported endpoint's
             // current revision), not here.
         }
+        RecordPayload::SourceCheck(c) => {
+            c.project_id = remap(&c.project_id, id_map)?;
+            c.source_id = remap(&c.source_id, id_map)?;
+            // checked_revision_id is re-pinned by the caller, exactly like
+            // Relation's from_revision_id/to_revision_id above — the
+            // original revision_id it names cannot survive replay (T02-06's
+            // own already-documented boundary: revision_id is always
+            // freshly minted at the destination).
+        }
     }
     Ok(())
 }
@@ -537,6 +547,55 @@ pub fn import_selected_merge(
             id_map.insert(object_id.clone(), new_id);
             imported_revisions += revisions.len();
         }
+    }
+
+    // Source checks: reference a Source, which already has a destination
+    // identity from the pass above. `checked_revision_id` is re-pinned to
+    // the destination Source's *current* revision at import time — the
+    // exact same reasoning `rewrite_references` already documents for
+    // Relation's endpoint revisions: the original revision_id cannot
+    // survive replay, since the destination always mints a fresh one.
+    for (object_id, revisions) in &package.objects {
+        if latest_kind(revisions)?.kind_str() != "source_check" {
+            continue;
+        }
+        let source_new_id = match latest_kind(revisions)? {
+            RecordPayload::SourceCheck(c) => remap(&c.source_id, &id_map)?,
+            _ => unreachable!(),
+        };
+        let (source_current_rev, _) = store_current(&writer, &source_new_id)?;
+
+        let mut prev_dest_revision_id: Option<String> = None;
+        let mut new_object_id: Option<String> = None;
+        for (i, rev) in revisions.iter().enumerate() {
+            let mut record = RecordPayload::from_json(&rev.payload_raw)?;
+            rewrite_references(&mut record, &id_map, false)?;
+            if let RecordPayload::SourceCheck(c) = &mut record {
+                c.checked_revision_id = source_current_rev.clone();
+            }
+            let payload = record.to_json()?;
+            let target = if i == 0 {
+                CommandTarget::CreateObject { payload }
+            } else {
+                CommandTarget::UpdateObject {
+                    object_id: new_object_id.clone().unwrap(),
+                    expected_revision_id: prev_dest_revision_id.clone().unwrap(),
+                    payload,
+                }
+            };
+            let outcome = writer.commit(CommandInput {
+                command_id: uuid::Uuid::now_v7().to_string(),
+                actor: "import".to_string(),
+                origin: RecordOrigin::Import,
+                target,
+            })?;
+            if i == 0 {
+                new_object_id = Some(outcome.object_id.clone());
+            }
+            prev_dest_revision_id = Some(outcome.revision_id);
+            imported_revisions += 1;
+        }
+        id_map.insert(object_id.clone(), new_object_id.unwrap());
     }
 
     // Actions, subpass 1: create every action with dependency_ids cleared,
@@ -939,6 +998,64 @@ mod tests {
         let (dest_source_rev, _) = dest_store.read_current(new_source_id).unwrap().unwrap();
         assert_eq!(rel.from_revision_id, dest_decision_rev);
         assert_eq!(rel.to_revision_id, dest_source_rev);
+
+        cleanup(&root);
+        cleanup(&export_dest);
+        cleanup(&dest_root);
+    }
+
+    /// `T03-01`: a merge-imported `SourceCheck`'s `source_id` must follow
+    /// the same id_map rewrite every other cross-reference in this module
+    /// gets, and its `checked_revision_id` — which cannot survive replay,
+    /// since the destination always mints a fresh `revision_id` — must be
+    /// re-pinned to the destination `Source`'s actual current revision,
+    /// exactly like `Relation`'s own endpoint re-pinning above.
+    #[test]
+    fn merge_source_check_source_id_is_rewritten_and_checked_revision_repinned() {
+        let root = tmp();
+        let mut store = CanonicalStore::create(&root).unwrap();
+        let project_id = {
+            let mut writer = store.writer().unwrap();
+            project::create_project(&mut writer, "owner", "P", None)
+                .unwrap()
+                .0
+                .object_id
+        };
+        let file_path = root.join("f.txt");
+        std::fs::write(&file_path, b"hello").unwrap();
+        let source_id = {
+            let mut writer = store.writer().unwrap();
+            crate::capture::import_file(&mut writer, "owner", &project_id, "l", &file_path)
+                .unwrap()
+                .0
+                .object_id
+        };
+        crate::source_check::check_source(&mut store, "owner", &source_id).unwrap();
+
+        let export_dest = tmp();
+        crate::export::export_to_new_root(&store, Some(&project_id), &export_dest).unwrap();
+
+        let dest_root = tmp();
+        let mut dest_store = CanonicalStore::create(&dest_root).unwrap();
+        let report = import_selected_merge(&mut dest_store, &export_dest).unwrap();
+
+        let new_source_id = &report.id_map[&source_id];
+        let checks = crate::source_check::list_project_source_checks(
+            &dest_store,
+            &report.id_map[&project_id],
+        )
+        .unwrap();
+        assert_eq!(checks.len(), 1);
+        let (_, check) = &checks[0];
+        assert_eq!(
+            &check.source_id, new_source_id,
+            "source_id must be rewritten to the new destination source, never the original"
+        );
+        let (dest_source_rev, _) = dest_store.read_current(new_source_id).unwrap().unwrap();
+        assert_eq!(
+            check.checked_revision_id, dest_source_rev,
+            "checked_revision_id must be re-pinned to the destination's actual current revision"
+        );
 
         cleanup(&root);
         cleanup(&export_dest);

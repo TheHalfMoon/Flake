@@ -33,6 +33,7 @@ pub mod migration;
 pub mod project;
 pub mod recovery;
 pub mod relation;
+pub mod source_check;
 pub mod temporal;
 pub mod vault;
 
