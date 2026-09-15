@@ -13,8 +13,8 @@ CANONICAL_BUILD_PLAN=docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md
 CANONICAL_BUILD_PLAN_SHA256=b555f83ff12882ae6f55f90bbeaa411de52b84661a7f3953350cbfc6bd789fb2
 CANONICAL_PLAN_REMOTE_STATUS=MIGRATED_TO_GITHUB
 CANONICAL_PLAN_LOCAL_DEPENDENCY=NONE
-ACTIVE_IMPLEMENTATION_UNIT=T03-02
-NEXT_DEPENDENCY_READY_UNIT=T03-02
+ACTIVE_IMPLEMENTATION_UNIT=T03-03
+NEXT_DEPENDENCY_READY_UNIT=T03-03
 P01_STATUS=CLOSED
 T00-01_STATUS=COMPLETE
 T00-01_EVIDENCE=docs/evidence/flake-v1/T00-01/REPORT.md
@@ -75,7 +75,10 @@ T02-07_EVIDENCE=docs/evidence/flake-v1/T02-07/REPORT.md
 T02-07_MERGE_COMMIT=e7d9445b87f48c99ad2ed0f59b32194255520af3
 T03-01_STATUS=COMPLETE
 T03-01_EVIDENCE=docs/evidence/flake-v1/T03-01/REPORT.md
-T03-01_MERGE_COMMIT=PENDING_PR_MERGE
+T03-01_MERGE_COMMIT=07694d572c295940e933f51fd72cfeddffb92e6d
+T03-02_STATUS=COMPLETE
+T03-02_EVIDENCE=docs/evidence/flake-v1/T03-02/REPORT.md
+T03-02_MERGE_COMMIT=PENDING_PR_MERGE
 SPEC_003_AUTO_ACTIVATION=PROHIBITED
 PROJECT_COMPLETE=NO
 ```
@@ -91,7 +94,9 @@ The historical local-only planning SHAs `4246f6d...` and `852e44b...` are proven
 
 ## Next action
 
-`T03-02` — Resolve explicit temporal state and disagreement deterministically (`docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` T03-02 row, `P03`/`VS05`). Objective: compute current accepted project state without hiding conflict or negative evidence. Apply canonical project, lifecycle, recorded cutoff and valid interval to all applicable records; resolve only explicit accepted supersession, incomparable overlapping decisions with the same key produce Conflict, unknown/partial times are never invented as exact intervals, user override reason and negative evidence stay in the output, ordering is stable and deterministic across processes. Verification method requires a pure reference oracle kept separate from the production resolver. Files/components: `src/temporal.rs` and memory-value/successor decision resolver, Core state queries and tests. Depends on `T03-01` (complete).
+`T03-03` — Build the owner resume view and explicit checkpoint (`docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` T03-03 row, `P03`/`VS05`). Objective: let a returning owner see changed evidence, accepted decisions and next actions. Compose §12 ordering from canonical eligibility/resolution and bounded search support; show changes since an explicit reviewed-through sequence, current head, missing/changed evidence, unresolved conflicts and next actions; mark reviewed only on explicit owner command (opening/searching is never a checkpoint); resume output is stable at the same snapshot. Files/components: Core resume query, CLI resume/checkpoint/history commands and golden user scenarios. Depends on `T03-02` (complete).
+
+`T03-02` closed: a standalone module, `src/decision_state.rs` (`resolve_decision_state`), deterministically resolves "what decision is currently accepted" for one `(project, decision_key)` as of a caller-chosen valid-time instant and recorded-sequence cutoff — `CurrentSet`/`NeedsReview`/`NoAcceptedDecision`, with `considered` always listing every candidate decision and, for each excluded one, why (lifecycle, out-of-interval, or its own `withdrawal_reason`). Not a reuse of the historical Phase T `temporal.rs`/`memory.rs` (immutable evidence, `AGENTS.md` §3): `Decision`'s already-explicit lifecycle/supersession model needs none of Phase T's five-rung confidence ladder, so the only rule this resolver applies is "two independently-accepted decisions sharing a key with overlapping valid time are always `NeedsReview`, never silently ranked" — structurally forced by `supersede_decision` always demoting the loser's lifecycle in the same step that records the supersession edge. Verified against a from-scratch, independently-written reference oracle (`tests::reference_oracle`, using `CanonicalStore::history`/`revisions_since` rather than the production path's `all_revisions` fold) across 200 seeded random scenarios (seed `20260915`); all agree. CLI: `decision-state --project <uuid> --key K [--as-of-valid TS] [--as-of-recorded N]`. 13 new tests, all passing (295/295 full suite); `fmt`/`clippy -D warnings`/`git diff --check` all clean. Full details: `docs/evidence/flake-v1/T03-02/REPORT.md`.
 
 `T03-01` closed: a seventh `RecordPayload` kind, `SourceCheck` (`src/source_check.rs`), mirroring `Relation`'s architectural shape — an append-only observation of whether a previously admitted `Source`'s selected local file still matches, changed, went missing or became unreadable. `capture::import_file` now populates the previously-always-`None` `Source::claimed_path` locator hint. Three functions, deliberately separated: `check_source` (pure observation, never mutates `Source`), `reselect_source` (relocation, refused unless the new location's bytes are digest-identical to the last saved capture), `admit_changed_source` (explicit owner admission of changed bytes, always re-opening and re-hashing fresh). Both mutating functions require the caller's `expected_revision_id` (F21/I05). A symlink or any non-regular-file swapped in at the checked path is refused as `Denied`, never followed (S03). `export.rs`'s project-scope union, `import.rs`'s merge/rewrite passes and `index.rs` each got the minimal, mechanical extension a new `RecordPayload` kind structurally requires, matching every prior new-kind task's own precedent. `Unchecked` is a derived read-path label (zero rows in history), not a stored `CheckStatus` variant — recorded as a deliberate reading of §15, not an omission. 15 new tests, all passing (282/282 full suite); `fmt`/`clippy -D warnings`/`git diff --check` all clean. Full details: `docs/evidence/flake-v1/T03-01/REPORT.md`.
 

@@ -4,6 +4,7 @@
 use crate::canonical::CanonicalStore;
 use crate::capture;
 use crate::context::{self, CompileRequest, SourceItem};
+use crate::decision_state;
 use crate::derived::Derived;
 use crate::envelope::TrustLevel;
 use crate::events::{ChainStatus, EventKind, EventLog};
@@ -145,6 +146,9 @@ FORMAT-2 SOURCE-CHECK COMMANDS (T03-01):
   project-source-checks  List a project's check history              --project <uuid>
   source-reselect        Record a move; refuses if content changed  --id <uuid> --expect <revision-uuid> --path <new-local-path>
   source-admit-change    Admit changed bytes as a new revision       --id <uuid> --expect <revision-uuid> [--path <new-local-path>]
+
+FORMAT-2 TEMPORAL RESOLUTION COMMANDS (T03-02):
+  decision-state    Resolve a decision key's current accepted state, with reasons and negative evidence for every candidate     --project <uuid> --key K [--as-of-valid TS] [--as-of-recorded N]
 ";
 
 struct Args {
@@ -1078,6 +1082,45 @@ pub fn run(argv: &[String]) -> Result<i32> {
                 outcome.revision_id,
                 source.capture.map(|c| c.sha256)
             );
+            Ok(0)
+        }
+
+        "decision-state" => {
+            let store = CanonicalStore::open(args.vault_root()?)?;
+            let as_of_recorded = args
+                .get("as-of-recorded")
+                .map(|s| {
+                    s.parse::<i64>()
+                        .map_err(|_| Error::Project(format!("invalid --as-of-recorded: {s}")))
+                })
+                .transpose()?;
+            let resolution = decision_state::resolve_decision_state(
+                &store,
+                args.require("project")?,
+                args.require("key")?,
+                args.get("as-of-valid"),
+                as_of_recorded,
+            )?;
+            println!(
+                "project={} key={:?} as_of_valid={} as_of_recorded={} outcome={:?}",
+                resolution.project_id,
+                resolution.decision_key,
+                resolution.as_of_valid,
+                resolution.as_of_recorded,
+                resolution.outcome
+            );
+            println!("considered: {}", resolution.considered.len());
+            for c in &resolution.considered {
+                println!(
+                    "  {} admitted={} lifecycle={:?} valid_from={:?} valid_to={:?} exclusion_reason={:?}",
+                    c.decision_id,
+                    c.admitted,
+                    c.decision.lifecycle,
+                    c.decision.valid_from,
+                    c.decision.valid_to,
+                    c.exclusion_reason
+                );
+            }
             Ok(0)
         }
 
@@ -2303,6 +2346,197 @@ mod tests {
             "reselect itself is not a check observation"
         );
         drop(store);
+
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn decision_state_reports_no_accepted_then_current_set_then_needs_review_through_the_cli() {
+        let root = tmp();
+        let root_str = root.to_string_lossy().to_string();
+        assert_eq!(
+            run(&s(&["canonical-init", "--vault", &root_str])).unwrap(),
+            0
+        );
+        assert_eq!(
+            run(&s(&["project-create", "--vault", &root_str, "--name", "P"])).unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let project_id = store
+            .list_current_objects()
+            .unwrap()
+            .into_iter()
+            .find_map(|(id, _, payload)| {
+                project::RecordPayload::from_json(&payload)
+                    .ok()?
+                    .as_project()
+                    .ok()
+                    .map(|_| id)
+            })
+            .unwrap();
+        drop(store);
+
+        // Before any decision exists for this key: NoAcceptedDecision.
+        assert_eq!(
+            run(&s(&[
+                "decision-state",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--key",
+                "k"
+            ]))
+            .unwrap(),
+            0
+        );
+
+        assert_eq!(
+            run(&s(&[
+                "decision-create",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--key",
+                "k",
+                "--statement",
+                "first"
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let (decision_a_id, decision_a_rev) = project::list_project_records(&store, &project_id)
+            .unwrap()
+            .into_iter()
+            .find_map(|(id, r)| r.as_decision().ok().map(|_| id))
+            .map(|id| {
+                let rev = store.read_current(&id).unwrap().unwrap().0;
+                (id, rev)
+            })
+            .unwrap();
+        drop(store);
+
+        assert_eq!(
+            run(&s(&[
+                "decision-accept",
+                "--vault",
+                &root_str,
+                "--id",
+                &decision_a_id,
+                "--expect",
+                &decision_a_rev
+            ]))
+            .unwrap(),
+            0
+        );
+
+        // Exactly one accepted decision for this key: CurrentSet.
+        let resolution = decision_state::resolve_decision_state(
+            &CanonicalStore::open(&root).unwrap(),
+            &project_id,
+            "k",
+            None,
+            None,
+        )
+        .unwrap();
+        assert_eq!(
+            resolution.outcome,
+            decision_state::DecisionOutcome::CurrentSet(decision_a_id.clone())
+        );
+        assert_eq!(
+            run(&s(&[
+                "decision-state",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--key",
+                "k"
+            ]))
+            .unwrap(),
+            0
+        );
+
+        // A second, independently accepted decision for the same key with
+        // no supersession edge: NeedsReview (§: "incomparable overlapping
+        // decisions with same key produce Conflict").
+        assert_eq!(
+            run(&s(&[
+                "decision-create",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--key",
+                "k",
+                "--statement",
+                "second"
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let (decision_b_id, decision_b_rev) = project::list_project_records(&store, &project_id)
+            .unwrap()
+            .into_iter()
+            .find_map(|(id, r)| {
+                r.as_decision()
+                    .ok()
+                    .filter(|d| d.statement == "second")
+                    .map(|_| id)
+            })
+            .map(|id| {
+                let rev = store.read_current(&id).unwrap().unwrap().0;
+                (id, rev)
+            })
+            .unwrap();
+        drop(store);
+        assert_eq!(
+            run(&s(&[
+                "decision-accept",
+                "--vault",
+                &root_str,
+                "--id",
+                &decision_b_id,
+                "--expect",
+                &decision_b_rev
+            ]))
+            .unwrap(),
+            0
+        );
+
+        let resolution = decision_state::resolve_decision_state(
+            &CanonicalStore::open(&root).unwrap(),
+            &project_id,
+            "k",
+            None,
+            None,
+        )
+        .unwrap();
+        assert_eq!(
+            resolution.outcome,
+            decision_state::DecisionOutcome::NeedsReview
+        );
+        assert_eq!(
+            resolution.considered.iter().filter(|c| c.admitted).count(),
+            2
+        );
+        assert_eq!(
+            run(&s(&[
+                "decision-state",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--key",
+                "k"
+            ]))
+            .unwrap(),
+            0
+        );
 
         let _ = std::fs::remove_dir_all(&root);
     }
