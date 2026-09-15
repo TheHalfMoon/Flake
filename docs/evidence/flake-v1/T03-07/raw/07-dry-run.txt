@@ -1,0 +1,46 @@
+{
+  "analysis_full": {
+    "baseline_success_rate": 0.723404255319149,
+    "deficit_pp": -27.6595744680851,
+    "expected_pairs": 48,
+    "flake_success_rate": 1.0,
+    "high_consequence_miss_count": 0,
+    "median_baseline_total_seconds": 134.0,
+    "median_flake_total_seconds": 78.25,
+    "min_valid_pairs_required": 44,
+    "observed_pair_cells": 48,
+    "route": "PASS",
+    "tier_breakdown": {
+      "T1": {
+        "correct": 12,
+        "total": 12
+      },
+      "T2": {
+        "correct": 12,
+        "total": 12
+      },
+      "T3": {
+        "correct": 11,
+        "total": 11
+      },
+      "T4": {
+        "correct": 12,
+        "total": 12
+      }
+    },
+    "time_threshold_seconds": 107.2,
+    "valid_pairs": 47
+  },
+  "analysis_route": "PASS",
+  "dry_run_attempt_count": 96,
+  "injected_scenarios": [
+    "RESUME_TIMEOUT",
+    "FACILITATOR_PROTOCOL_ERROR exclusion",
+    "protocol_deviation (non-excluding)",
+    "simulated harness interruption/resume",
+    "duplicate-append refusal",
+    "dev_synthetic confirmatory-guard rejection"
+  ],
+  "producer_and_oracle_agree": true,
+  "verify_independent_route": "PASS"
+}

@@ -1,0 +1,4 @@
+git version 2.55.0.windows.5
+cargo 1.97.1 (c980f4866 2026-06-30)
+Python 3.14.7
+MINGW64_NT-10.0-26200 Abdulaziz 3.6.10-710e5275.x86_64 2026-07-28 09:32 UTC x86_64 Msys

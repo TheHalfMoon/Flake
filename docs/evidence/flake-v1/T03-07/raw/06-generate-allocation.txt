@@ -1,0 +1,46 @@
+allocation_confirmatory.json: 48 pair-rows, sha256=56e2bc1b23314ffd37e78639d709e8de5bb5f8dd677bbfa3d110b59e6bc62a6e
+{
+  "baseline_attempted_first": 24,
+  "flake_attempted_first": 24,
+  "flake_is_role_a": 24,
+  "flake_is_role_b": 24,
+  "tier_counts_per_participant": {
+    "P1": {
+      "T1": 2,
+      "T2": 2,
+      "T3": 2,
+      "T4": 2
+    },
+    "P2": {
+      "T1": 2,
+      "T2": 2,
+      "T3": 2,
+      "T4": 2
+    },
+    "P3": {
+      "T1": 2,
+      "T2": 2,
+      "T3": 2,
+      "T4": 2
+    },
+    "P4": {
+      "T1": 2,
+      "T2": 2,
+      "T3": 2,
+      "T4": 2
+    },
+    "P5": {
+      "T1": 2,
+      "T2": 2,
+      "T3": 2,
+      "T4": 2
+    },
+    "P6": {
+      "T1": 2,
+      "T2": 2,
+      "T3": 2,
+      "T4": 2
+    }
+  },
+  "total_pairs": 48
+}

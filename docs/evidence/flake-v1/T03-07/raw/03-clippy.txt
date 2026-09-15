@@ -1,0 +1,2 @@
+    Checking fehrest v0.0.1-phase-t (C:\Users\Shehr\work\Flake)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 11.17s
