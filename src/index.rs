@@ -176,7 +176,9 @@ fn searchable_text(record: &RecordPayload) -> Option<(&'static str, String, Stri
         | RecordPayload::Source(_)
         | RecordPayload::Relation(_)
         | RecordPayload::SourceCheck(_)
-        | RecordPayload::ReviewCheckpoint(_) => None,
+        | RecordPayload::ReviewCheckpoint(_)
+        | RecordPayload::ExportGrant(_)
+        | RecordPayload::DisclosureReceipt(_) => None,
     }
 }
 

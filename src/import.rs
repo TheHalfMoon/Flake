@@ -60,15 +60,18 @@
 //! or trusted beyond what the manifest names and this module independently
 //! re-hashes (S04).
 //!
-//! **Imported grants.** Nothing in the current canonical record model
-//! (`Project`/`Note`/`Action`/`Decision`/`Source`/`Relation`) is a
-//! disclosure grant — that entity (§15 `Export grant`) does not exist yet
-//! in this codebase. "Imported grants are inert history, all new grants
-//! require owner issuance" is therefore vacuously satisfied today: there is
-//! nothing to import that could carry disclosure authority. Recorded
-//! explicitly (matching `T02-05`'s own identical note about the current
-//! record model carrying no filesystem/grant authority) rather than left
-//! implicit.
+//! **Imported grants (updated at `T03-04`).** `crate::grant::ExportGrant`
+//! and `crate::disclosure::DisclosureReceipt` now exist, but
+//! [`import_selected_merge`] never admits either: `validate_self_contained`
+//! refuses a package containing one outright, before any reference
+//! rewriting or commit is attempted (§16: "no authority survives
+//! export/import" — a grant found inside an imported package is refused,
+//! not silently re-admitted as live authority in the destination vault).
+//! [`import_full_restore`] is unaffected — a full restore is a same-owner
+//! backup, not a shareable disclosure, so both kinds survive it unchanged
+//! like every other object (`crate::export`'s own project-scoped path is
+//! what actually omits them from a *shareable* package in the first
+//! place; a full/vault-wide export still includes both).
 
 use crate::canonical::{
     CanonicalStore, CanonicalWriter, CommandInput, CommandTarget, RecordOrigin,
@@ -307,6 +310,25 @@ fn validate_self_contained(package: &ParsedPackage) -> Result<()> {
             .last()
             .expect("every object has at least one revision");
         let record = RecordPayload::from_json(&latest.payload_raw)?;
+        // §16: "shareable project packages omit local-only locators, active
+        // grants and excluded sensitive fields." `export.rs`'s own
+        // project-scoped `project_scope_object_ids` never emits an
+        // `ExportGrant` or `DisclosureReceipt` (both are local disclosure
+        // *governance* state — who was authorized, what was actually sent
+        // — not project content), so a legitimate package never contains
+        // either. This is the defense-in-depth backstop against a
+        // hand-crafted or corrupted package trying to smuggle local grant
+        // authority, or another vault's disclosure history, into a
+        // different vault ("no authority survives export/import").
+        if matches!(
+            record,
+            RecordPayload::ExportGrant(_) | RecordPayload::DisclosureReceipt(_)
+        ) {
+            return Err(Error::Vault(format!(
+                "object {object_id} is a {}, which a selected-project merge never admits (§16: local-only disclosure governance state never survives export/import)",
+                record.kind_str()
+            )));
+        }
         let refs: Vec<String> = match &record {
             RecordPayload::Note(n) => vec![n.project_id.clone()],
             RecordPayload::Action(a) => {
@@ -326,6 +348,11 @@ fn validate_self_contained(package: &ParsedPackage) -> Result<()> {
             RecordPayload::Project(_) => vec![],
             RecordPayload::SourceCheck(c) => vec![c.project_id.clone(), c.source_id.clone()],
             RecordPayload::ReviewCheckpoint(c) => vec![c.project_id.clone()],
+            // Unreachable: refused above before this match runs. Kept
+            // exhaustive rather than a wildcard so a future new field on
+            // either kind cannot silently stop being checked here.
+            RecordPayload::ExportGrant(g) => vec![g.project_id.clone()],
+            RecordPayload::DisclosureReceipt(r) => vec![r.project_id.clone()],
         };
         for r in refs {
             if !package.objects.contains_key(&r) {
@@ -471,6 +498,11 @@ fn rewrite_references(
             // freshly minted at the destination).
         }
         RecordPayload::ReviewCheckpoint(c) => c.project_id = remap(&c.project_id, id_map)?,
+        // Unreachable in practice: `validate_self_contained` refuses any
+        // package containing either kind before this function is ever
+        // called on one. Exhaustiveness still requires real arms.
+        RecordPayload::ExportGrant(g) => g.project_id = remap(&g.project_id, id_map)?,
+        RecordPayload::DisclosureReceipt(r) => r.project_id = remap(&r.project_id, id_map)?,
     }
     Ok(())
 }
@@ -1103,6 +1135,94 @@ mod tests {
         cleanup(&root);
         cleanup(&export_dest);
         cleanup(&dest_root);
+    }
+
+    #[test]
+    fn selected_merge_refuses_a_package_containing_a_grant() {
+        // §16: "shareable project packages omit local-only locators, active
+        // grants and excluded sensitive fields" — `export.rs`'s own
+        // project-scoped export never emits an `ExportGrant`, so this test
+        // exercises the defense-in-depth backstop directly: point
+        // `import_selected_merge` at a *full* (vault-wide) export, which
+        // does include local grants, and confirm it is refused rather than
+        // silently admitted or silently dropped.
+        let root = tmp();
+        let mut store = CanonicalStore::create(&root).unwrap();
+        let project_id = {
+            let mut writer = store.writer().unwrap();
+            project::create_project(&mut writer, "owner", "P", None)
+                .unwrap()
+                .0
+                .object_id
+        };
+        {
+            let mut writer = store.writer().unwrap();
+            crate::grant::issue_grant(
+                &mut writer,
+                "owner",
+                &project_id,
+                &[],
+                None,
+                &[],
+                1024,
+                3600,
+            )
+            .unwrap();
+        }
+
+        let export_dest = tmp();
+        crate::export::export_to_new_root(&store, None, &export_dest).unwrap();
+
+        let dest_root = tmp();
+        let mut dest_store = CanonicalStore::create(&dest_root).unwrap();
+        let err = import_selected_merge(&mut dest_store, &export_dest).unwrap_err();
+        assert!(format!("{err}").contains("export_grant"));
+
+        cleanup(&root);
+        cleanup(&export_dest);
+        cleanup(&dest_root);
+    }
+
+    #[test]
+    fn full_restore_preserves_grants_unlike_selected_merge() {
+        let root = tmp();
+        let mut store = CanonicalStore::create(&root).unwrap();
+        let project_id = {
+            let mut writer = store.writer().unwrap();
+            project::create_project(&mut writer, "owner", "P", None)
+                .unwrap()
+                .0
+                .object_id
+        };
+        let grant_id = {
+            let mut writer = store.writer().unwrap();
+            crate::grant::issue_grant(
+                &mut writer,
+                "owner",
+                &project_id,
+                &[],
+                None,
+                &[],
+                1024,
+                3600,
+            )
+            .unwrap()
+            .0
+            .object_id
+        };
+
+        let export_dest = tmp();
+        crate::export::export_to_new_root(&store, None, &export_dest).unwrap();
+
+        let import_dest = tmp();
+        import_full_restore(&export_dest, &import_dest).unwrap();
+        let dest_store = CanonicalStore::open(&import_dest).unwrap();
+        let restored = crate::grant::current_grant(&dest_store, &grant_id).unwrap();
+        assert_eq!(restored.project_id, project_id, "full-restore is a same-owner backup, not a shareable disclosure — grant identity and scope survive unchanged");
+
+        cleanup(&root);
+        cleanup(&export_dest);
+        cleanup(&import_dest);
     }
 
     #[test]

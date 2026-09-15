@@ -154,6 +154,13 @@ fn project_scope_object_ids(store: &CanonicalStore, project_id: &str) -> Result<
     if let Some((id, _, _)) = crate::checkpoint::current_checkpoint(store, project_id)? {
         ids.insert(id);
     }
+    // `T03-04`: `ExportGrant`/`DisclosureReceipt` are deliberately never
+    // added to this union. §16: "shareable project packages omit
+    // local-only locators, active grants and excluded sensitive fields" —
+    // a grant's authority is local to this vault and must never survive
+    // export/import; a full (non-project-scoped) backup still includes
+    // both, via `compute_preview`'s own separate `list_current_objects`
+    // path below, which is unaffected by this function.
     Ok(ids)
 }
 
@@ -522,6 +529,61 @@ mod tests {
             saw_source_check,
             "expected a source_check revision file in the project export"
         );
+
+        cleanup(&root);
+        cleanup(&dest);
+    }
+
+    #[test]
+    fn project_export_never_includes_a_grant_or_receipt() {
+        // §16: "shareable project packages omit local-only locators, active
+        // grants and excluded sensitive fields." A grant and a receipt are
+        // both local disclosure-governance state, not project content —
+        // this proves the project-scoped export path never emits either,
+        // even though both exist in the vault and belong to this project.
+        let root = tmp();
+        let mut store = CanonicalStore::create(&root).unwrap();
+        let p1 = new_project(&mut store, "P1");
+        let grant_id = {
+            let mut writer = store.writer().unwrap();
+            crate::grant::issue_grant(&mut writer, "owner", &p1, &[], None, &[], 1024, 3600)
+                .unwrap()
+                .0
+                .object_id
+        };
+        let (receipt, _wire) =
+            crate::disclosure::compile_disclosure_package(&mut store, &grant_id, "req-1", "agent")
+                .unwrap();
+
+        let preview = preview_export(&store, Some(&p1)).unwrap();
+        // project only — the grant and the receipt are both excluded.
+        assert_eq!(preview.record_count, 1);
+
+        let dest = tmp();
+        export_to_new_root(&store, Some(&p1), &dest).unwrap();
+        let control = dest.join(".fehrest-export");
+        for entry in walk(&control) {
+            if entry.extension().and_then(|e| e.to_str()) != Some("json") {
+                continue;
+            }
+            if entry.file_name().and_then(|n| n.to_str()) == Some("export-manifest.json") {
+                continue;
+            }
+            let text = std::fs::read_to_string(&entry).unwrap();
+            let parsed: serde_json::Value = serde_json::from_str(&text).unwrap();
+            let kind = parsed.get("kind").and_then(|k| k.as_str());
+            assert_ne!(
+                kind,
+                Some("export_grant"),
+                "a grant must never appear in a project export"
+            );
+            assert_ne!(
+                kind,
+                Some("disclosure_receipt"),
+                "a receipt must never appear in a project export"
+            );
+        }
+        let _ = receipt;
 
         cleanup(&root);
         cleanup(&dest);
