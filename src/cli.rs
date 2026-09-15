@@ -1,14 +1,22 @@
 //! Minimal headless CLI. Hand dispatch — ten subcommands do not justify a
 //! command-line framework and its proc-macro tree (Ponytail DELETE: `clap`).
 
+use crate::canonical::CanonicalStore;
 use crate::context::{self, CompileRequest, SourceItem};
 use crate::derived::Derived;
 use crate::envelope::TrustLevel;
 use crate::events::{ChainStatus, EventKind, EventLog};
 use crate::memory::Scope;
+use crate::project;
 use crate::vault::Vault;
 use crate::{limits, Result};
 use std::path::PathBuf;
+
+/// Every format-2 CLI command runs as this fixed principal (T02-01: no
+/// authentication concept exists in this headless CLI). A future task that
+/// adds real actor identity replaces this constant at one call site each,
+/// not a redesign.
+const CLI_ACTOR: &str = "owner";
 
 pub const USAGE: &str = "\
 fehrest — Phase T headless thesis-proof (EXPERIMENTAL, not a product)
@@ -27,6 +35,19 @@ COMMANDS:
   manifest          Show the last package manifest
   events            Show the event log
   verify            Verify the event chain
+
+FORMAT-2 COMMANDS (T02-01; --vault names a separate format-2 store root):
+  canonical-init    Create a format-2 store
+  project-create    Create a project             --name N [--description D]
+  project-archive   Archive a project             --id <uuid>
+  project-unarchive Unarchive a project           --id <uuid>
+  project-show      Show a project                --id <uuid>
+  note-create       Create a note                 --project <uuid> --body T [--title T]
+  note-update       Replace a note's title/body   --id <uuid> --expect <revision-uuid> --body T [--title T]
+  action-create     Create an action              --project <uuid> --title T [--body T]
+  decision-create   Create a decision             --project <uuid> --key K --statement T [--rationale T]
+  record-show       Show any typed record          --id <uuid>
+  project-records   List a project's work records --project <uuid>
 ";
 
 struct Args {
@@ -294,6 +315,131 @@ pub fn run(argv: &[String]) -> Result<i32> {
             }
         }
 
+        "canonical-init" => {
+            let root = args.vault_root()?;
+            let store = CanonicalStore::create(root)?;
+            println!(
+                "format-2 store created: {} (vault_id {})",
+                root.display(),
+                store.vault_id()
+            );
+            Ok(0)
+        }
+
+        "project-create" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let mut writer = store.writer()?;
+            let (outcome, project) = project::create_project(
+                &mut writer,
+                CLI_ACTOR,
+                args.require("name")?,
+                args.get("description"),
+            )?;
+            println!("{} {}", outcome.object_id, project.name);
+            Ok(0)
+        }
+
+        "project-archive" | "project-unarchive" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let id = args.require("id")?;
+            let (_, project) = if cmd == "project-archive" {
+                project::archive_project(&mut store, CLI_ACTOR, id)?
+            } else {
+                project::unarchive_project(&mut store, CLI_ACTOR, id)?
+            };
+            println!("{id} active={}", project.active);
+            Ok(0)
+        }
+
+        "project-show" => {
+            let store = CanonicalStore::open(args.vault_root()?)?;
+            let project = project::open_project(&store, args.require("id")?)?;
+            println!("{project:?}");
+            Ok(0)
+        }
+
+        "note-create" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let mut writer = store.writer()?;
+            let (outcome, _note) = project::create_note(
+                &mut writer,
+                CLI_ACTOR,
+                args.require("project")?,
+                args.get("title"),
+                args.require("body")?,
+            )?;
+            println!("{} {}", outcome.object_id, outcome.revision_id);
+            Ok(0)
+        }
+
+        "note-update" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let mut writer = store.writer()?;
+            let (outcome, _note) = project::update_note(
+                &mut writer,
+                CLI_ACTOR,
+                args.require("id")?,
+                args.require("expect")?,
+                args.get("title"),
+                args.require("body")?,
+            )?;
+            println!("{} {}", outcome.object_id, outcome.revision_id);
+            Ok(0)
+        }
+
+        "action-create" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let mut writer = store.writer()?;
+            let (outcome, _action) = project::create_action(
+                &mut writer,
+                CLI_ACTOR,
+                args.require("project")?,
+                args.require("title")?,
+                args.get("body"),
+            )?;
+            println!("{} {}", outcome.object_id, outcome.revision_id);
+            Ok(0)
+        }
+
+        "decision-create" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let mut writer = store.writer()?;
+            let (outcome, _decision) = project::create_decision(
+                &mut writer,
+                CLI_ACTOR,
+                args.require("project")?,
+                args.require("key")?,
+                args.require("statement")?,
+                args.get("rationale"),
+            )?;
+            println!("{} {}", outcome.object_id, outcome.revision_id);
+            Ok(0)
+        }
+
+        "record-show" => {
+            let store = CanonicalStore::open(args.vault_root()?)?;
+            match project::read_record(&store, args.require("id")?)? {
+                Some(record) => {
+                    println!("{record:?}");
+                    Ok(0)
+                }
+                None => {
+                    eprintln!("no record with that id");
+                    Ok(2)
+                }
+            }
+        }
+
+        "project-records" => {
+            let store = CanonicalStore::open(args.vault_root()?)?;
+            let records = project::list_project_records(&store, args.require("project")?)?;
+            println!("records: {}", records.len());
+            for (object_id, record) in &records {
+                println!("  {object_id} {record:?}");
+            }
+            Ok(0)
+        }
+
         other => {
             eprintln!("unknown command: {other}\n\n{USAGE}");
             Ok(64)
@@ -365,6 +511,182 @@ mod tests {
             log.verify().unwrap(),
             ChainStatus::Intact { events: 3 }
         ));
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    /// `T02-01` acceptance criterion: "Create/open/archive/unarchive and
+    /// typed record CRUD-as-revision work through CLI." A full lifecycle
+    /// through the actual CLI dispatcher, not just the underlying
+    /// `project.rs` functions directly — proves the wiring itself, not only
+    /// the logic behind it. IDs are recovered via direct store inspection
+    /// between steps (this headless CLI's commands print to stdout, not a
+    /// programmatic return value), matching this task's own "CLI round-trip
+    /// fixtures" verification method.
+    #[test]
+    fn full_project_and_record_lifecycle_works_through_the_cli() {
+        let root = tmp();
+        let root_str = root.to_string_lossy().to_string();
+
+        assert_eq!(
+            run(&s(&["canonical-init", "--vault", &root_str])).unwrap(),
+            0
+        );
+        assert_eq!(
+            run(&s(&[
+                "project-create",
+                "--vault",
+                &root_str,
+                "--name",
+                "CLI Project",
+                "--description",
+                "made via the CLI"
+            ]))
+            .unwrap(),
+            0
+        );
+
+        let store = CanonicalStore::open(&root).unwrap();
+        let project_id = store
+            .list_current_objects()
+            .unwrap()
+            .into_iter()
+            .find_map(|(id, _, payload)| {
+                let record = project::RecordPayload::from_json(&payload).ok()?;
+                record.as_project().ok().map(|_| id)
+            })
+            .expect("the created project must be findable via list_current_objects");
+        drop(store);
+
+        assert_eq!(
+            run(&s(&[
+                "note-create",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--title",
+                "Hello",
+                "--body",
+                "Body text"
+            ]))
+            .unwrap(),
+            0
+        );
+        assert_eq!(
+            run(&s(&[
+                "action-create",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--title",
+                "Do the thing"
+            ]))
+            .unwrap(),
+            0
+        );
+        assert_eq!(
+            run(&s(&[
+                "decision-create",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--key",
+                "q1",
+                "--statement",
+                "We will do X"
+            ]))
+            .unwrap(),
+            0
+        );
+
+        // project-records lists exactly the 3 work records just created.
+        let store = CanonicalStore::open(&root).unwrap();
+        let records = project::list_project_records(&store, &project_id).unwrap();
+        assert_eq!(records.len(), 3);
+        drop(store);
+
+        // Archive, then unarchive, through the CLI.
+        assert_eq!(
+            run(&s(&[
+                "project-archive",
+                "--vault",
+                &root_str,
+                "--id",
+                &project_id
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        assert!(!project::open_project(&store, &project_id).unwrap().active);
+        drop(store);
+
+        assert_eq!(
+            run(&s(&[
+                "project-unarchive",
+                "--vault",
+                &root_str,
+                "--id",
+                &project_id
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        assert!(project::open_project(&store, &project_id).unwrap().active);
+
+        // record-show and project-show both exit 0 for a real ID, and
+        // record-show exits nonzero (not a panic) for an unknown one.
+        assert_eq!(
+            run(&s(&[
+                "project-show",
+                "--vault",
+                &root_str,
+                "--id",
+                &project_id
+            ]))
+            .unwrap(),
+            0
+        );
+        assert_eq!(
+            run(&s(&[
+                "record-show",
+                "--vault",
+                &root_str,
+                "--id",
+                &uuid::Uuid::now_v7().to_string()
+            ]))
+            .unwrap(),
+            2
+        );
+
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    /// A `note-create` referencing a nonexistent project must fail visibly
+    /// through the CLI (propagated as an `Err`, not a panic or a false
+    /// success exit code) — "invalid cross-project references... reject."
+    #[test]
+    fn cli_rejects_a_note_create_with_an_invalid_project_reference() {
+        let root = tmp();
+        let root_str = root.to_string_lossy().to_string();
+        assert_eq!(
+            run(&s(&["canonical-init", "--vault", &root_str])).unwrap(),
+            0
+        );
+        let err = run(&s(&[
+            "note-create",
+            "--vault",
+            &root_str,
+            "--project",
+            &uuid::Uuid::now_v7().to_string(),
+            "--body",
+            "x",
+        ]))
+        .unwrap_err();
+        assert!(format!("{err}").contains("invalid project reference"));
         let _ = std::fs::remove_dir_all(&root);
     }
 }

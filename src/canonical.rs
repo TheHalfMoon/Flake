@@ -426,6 +426,28 @@ impl CanonicalStore {
             .map_err(|e| Error::Canonical(format!("cannot read current object: {e}")))
     }
 
+    /// `T02-01`: every live object's `(object_id, revision_id, payload)`,
+    /// current-revision content only (immutable superseded history is not
+    /// included — use [`CanonicalStore::history`] for that). This is a
+    /// full scan, not an indexed lookup: acceptable at this task's own
+    /// "S/M project open/read" performance gate; a dedicated project-scoped
+    /// index is `T02-04`'s objective, not this one's.
+    pub fn list_current_objects(&self) -> Result<Vec<(String, String, String)>> {
+        let mut stmt = self
+            .conn
+            .prepare(
+                "SELECT c.object_id, r.revision_id, r.payload
+                 FROM current_object c JOIN revision r ON r.revision_id = c.current_revision_id
+                 ORDER BY c.object_id",
+            )
+            .map_err(|e| Error::Canonical(format!("cannot prepare object scan: {e}")))?;
+        let rows = stmt
+            .query_map([], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))
+            .map_err(|e| Error::Canonical(format!("cannot run object scan: {e}")))?;
+        rows.collect::<rusqlite::Result<Vec<_>>>()
+            .map_err(|e| Error::Canonical(format!("cannot read object scan rows: {e}")))
+    }
+
     /// Full revision history for `object_id`, oldest first: `(revision_id,
     /// parent_revision_id, payload)`. Reconstructed purely from the
     /// immutable `revision` table — independent of, and cross-checkable

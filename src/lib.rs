@@ -25,6 +25,7 @@ pub mod identity;
 pub mod locator;
 pub mod memory;
 pub mod migration;
+pub mod project;
 pub mod recovery;
 pub mod temporal;
 pub mod vault;
@@ -90,6 +91,11 @@ pub enum Error {
     /// or unrecognized explicit selection, or an import-time admission
     /// failure. See `migration.rs` module docs.
     Migration(String),
+    /// Typed record admission failure (`project.rs`, T02-01): a field-limit
+    /// violation, an invalid cross-project reference, a malformed or
+    /// unsupported record payload, or a wrong-kind object reference. See
+    /// `project.rs` module docs.
+    Project(String),
     Event(String),
     Memory(String),
     /// An invalid supersession edge. Never silently normalised (F §6.1).
@@ -133,6 +139,7 @@ impl std::fmt::Display for Error {
             Error::Recovery(m) => write!(f, "recovery error: {m}"),
             Error::Backup(m) => write!(f, "backup error: {m}"),
             Error::Migration(m) => write!(f, "migration error: {m}"),
+            Error::Project(m) => write!(f, "project error: {m}"),
             Error::Event(m) => write!(f, "event log error: {m}"),
             Error::Memory(m) => write!(f, "memory error: {m}"),
             Error::InvalidSupersession(m) => write!(f, "invalid supersession: {m}"),

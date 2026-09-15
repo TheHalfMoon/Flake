@@ -1,0 +1,9 @@
+rustc 1.97.1 (8bab26f4f 2026-07-14)
+cargo 1.97.1 (c980f4866 2026-06-30)
+OS: Microsoft Windows 11 Home, 10.0.26200 Build 26200 (MINGW64/MSYS shell)
+CPU: 13th Gen Intel(R) Core(TM) i5-13420H, 8 physical / 12 logical processors
+RAM: 16,106 MB total physical memory
+Vendored SQLite (rusqlite 0.37.0, libsqlite3-sys 0.35.0): 3.50.2 (unchanged; no Cargo.toml/Cargo.lock change this task)
+Build mode for functional test/fmt/clippy runs: dev (cargo test/fmt/clippy default)
+Build mode for timing measurement (raw/05): release (cargo run --release)
+Baseline / tested source commit: forked from origin/main 57de9bbd77bfec64a73c8c654a6d9d1459802d0c (PR #73, T01-07 merge, P01 closed)
