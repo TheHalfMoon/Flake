@@ -1,0 +1,19 @@
+{
+  "file_digests_sha256": {
+    "CONSENT.md": "6be8bbb6792def4c626722a8a5119f540a1090e3c6a517b64a93311da9741b84",
+    "PROTOCOL.md": "ea006ac659a5ec5e4e09c67ab4688e87cd808118dc4032e9a392eead32219e71",
+    "allocation.py": "0afd3255f4c4e7169e3b2bca8916aee2d6ac4c5283e802943c8ed71c8022d184",
+    "allocation_confirmatory.json": "56e2bc1b23314ffd37e78639d709e8de5bb5f8dd677bbfa3d110b59e6bc62a6e",
+    "analysis.py": "97831308f6e65c665aa2b39e10230e44d1c14413bde54f1d8755f4eeeefd1a5a",
+    "cases_confirmatory.json": "09c3cef71097d086a2f8798e31b25aaba3ca6f4066f8dfecf2aeaaf2703e4c08",
+    "cases_dev.json": "ad72cd9cf0db8949e6d8a258ccf381b08980d01d516bc70ebf333280a8e9add1",
+    "generate_allocation.py": "c3992a6c253a4fe68437d4ff2d0424ceebb4a023bc18c5d69b51fca1c0fdb6fe",
+    "generate_cases.py": "208f076781845d3c273029fef591b260c4097bf61c729141ffc95a745525b87a",
+    "harness.py": "0a9ed9e1b23bb56a94c873743c13f7edd39983b0ee80003adce59959597c973c",
+    "verify_independent.py": "7ec23fc8313fa7005e2f8786e38a001b9c9f9e9f72dc2297b20bbed2950ab127"
+  },
+  "product_commit": "29263249e17fbaf93bd6a2d764fed418da255feb",
+  "product_src_tree": "d237c5fd34119c45c3eb117144fe767e42fd3887",
+  "schema_version": "t03-07-seal-v1",
+  "sealed_at_note": "sealed before any confirmatory human observation exists"
+}

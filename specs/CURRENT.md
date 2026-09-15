@@ -13,8 +13,8 @@ CANONICAL_BUILD_PLAN=docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md
 CANONICAL_BUILD_PLAN_SHA256=b555f83ff12882ae6f55f90bbeaa411de52b84661a7f3953350cbfc6bd789fb2
 CANONICAL_PLAN_REMOTE_STATUS=MIGRATED_TO_GITHUB
 CANONICAL_PLAN_LOCAL_DEPENDENCY=NONE
-ACTIVE_IMPLEMENTATION_UNIT=T03-07
-NEXT_DEPENDENCY_READY_UNIT=T03-07
+ACTIVE_IMPLEMENTATION_UNIT=T03-08
+NEXT_DEPENDENCY_READY_UNIT=NONE_BLOCKED_ON_HUMAN_PARTICIPANTS
 P01_STATUS=CLOSED
 T00-01_STATUS=COMPLETE
 T00-01_EVIDENCE=docs/evidence/flake-v1/T00-01/REPORT.md
@@ -90,7 +90,15 @@ T03-05_EVIDENCE=docs/evidence/flake-v1/T03-05/REPORT.md
 T03-05_MERGE_COMMIT=5799539346e32047ef70dec7c2f9ec37ac4ff339
 T03-06_STATUS=COMPLETE
 T03-06_EVIDENCE=docs/evidence/flake-v1/T03-06/REPORT.md
-T03-06_MERGE_COMMIT=PENDING_PR_MERGE
+T03-06_MERGE_COMMIT=29263249e17fbaf93bd6a2d764fed418da255feb
+T03-07_STATUS=COMPLETE
+T03-07_EVIDENCE=docs/evidence/flake-v1/T03-07/REPORT.md
+T03-07_PREREG_PACKAGE=bench/flake-v1/T03-07/
+T03-07_SEAL=bench/flake-v1/T03-07/SEALS.json
+T03-07_MERGE_COMMIT=PENDING_PR_MERGE
+T03-08_STATUS=BLOCKED
+T03-08_BLOCKER_ID=T03-08-HUMAN-PARTICIPANTS
+T03-08_BLOCKER=docs/evidence/flake-v1/T03-07/REPORT.md#next-frontier
 SPEC_003_AUTO_ACTIVATION=PROHIBITED
 PROJECT_COMPLETE=NO
 ```
@@ -106,7 +114,22 @@ The historical local-only planning SHAs `4246f6d...` and `852e44b...` are proven
 
 ## Next action
 
-`T03-07` — Preregister the local continuity proof (`docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` T03-07 row, build plan lines 1117-1139). **Genuinely different in kind from every task completed so far**: a six-participant/eight-pair human-subject study design with consented evidence, held-out gold cases, counterbalancing, equal source/setup/access budgets, and sealed product/harness/case/analysis hashes before execution. Requires real recruited human participants and a consent process — resources no single executor session can itself supply. Reverify this task's exact scope from live plan text before attempting any part of it; if participant recruitment is a genuine blocker, document it explicitly as an external blocker with the exact operator action needed (per the founder's own directive's `EXTERNAL_BLOCKERS` protocol) rather than fabricating synthetic participants to force a green result. Depends on `T03-06` (complete).
+**`T03-08` is blocked on a genuine external dependency.** `T03-07`'s complete preregistration package (`bench/flake-v1/T03-07/`) already *is* the "preregistered local study runner/data/analysis" `T03-08`'s own files/components clause calls for — there is no separate repository-ownable code left to write for `T03-08`. What remains is exclusively execution: recruiting six real, eligible, consenting participants and running the sealed protocol with them, which a repository-execution agent cannot ethically fabricate, impersonate, or simulate as if it were real evidence.
+
+```text
+BLOCKER_ID=T03-08-HUMAN-PARTICIPANTS
+EXACT_GATE=Six target-group participants completing the preregistered eight matched interruption/resumption pairs each (96 total attempts) under the sealed T03-07 protocol.
+WHY_EXTERNAL=A repository execution agent cannot ethically create, recruit, or impersonate consenting human participants.
+CURRENT_EVIDENCE=bench/flake-v1/T03-07/SEALS.json (sealed protocol/case/allocation/analysis/harness hashes, product_commit=29263249e17fbaf93bd6a2d764fed418da255feb) plus a successful synthetic dry run recorded in docs/evidence/flake-v1/T03-07/REPORT.md and raw/07-dry-run.txt.
+MISSING_RESOURCE_OR_EVIDENCE=Six eligible, consenting participants matching PROTOCOL.md section 2/3, plus a facilitator to run the sealed sessions.
+EXACT_OPERATOR_ACTION=Recruit per PROTOCOL.md sections 3-4, obtain consent per CONSENT.md, then run each session exactly per PROTOCOL.md sections 8-9 (training, fixed condition order/case assignment from allocation_confirmatory.json, fixed budgets) without modifying cases, allocation, analysis, thresholds, or the product under test. Record every attempt via harness.py, including failures/timeouts/exclusions/deviations.
+SUCCESS_CRITERION=96 attempted observations accounted for under the sealed protocol (or a properly excluded/documented subset per PROTOCOL.md section 13.1), with every exclusion/timeout/failure retained and mechanically routed by analysis.py, cross-checked by verify_independent.py.
+WHAT_UNBLOCKS_AFTERWARD=T03-08's confirmatory analysis and P03 value-gate decision (Pass unlocks T04-01; Fail/Inconclusive blocks desktop entry per section 26).
+```
+
+No other dependency-ready repository work exists: the canonical dependency DAG (build plan section 31) is strictly sequential through `P03`, `T04-01` depends on `T03-08`, and Spec 003 auto-activation remains prohibited. `EXECUTABLE_REPOSITORY_WORK=ZERO`, `PROJECT_COMPLETE=NO`, and this blocker is genuinely external and precisely documented per the founder directive's stop condition.
+
+`T03-07` closed: the complete preregistration package for the Section 26 P03 value gate, under `bench/flake-v1/T03-07/` — `PROTOCOL.md` (research question, eligibility, recruitment, consent/withdrawal/privacy, training, exact-parity counterbalancing formulas, equal source/setup/access budgets, success/failure/timeout/exclusion definitions, class-loss route, one-permitted-repair-repeat, and a fixed seven-step mechanical Pass/Fail/Inconclusive decision route) and `CONSENT.md`, both structurally checked by `test_protocol.py`. `generate_cases.py`/`generate_allocation.py` deterministically produce the sealed, disjoint, held-out `cases_confirmatory.json` (96 cases, exactly matching the 6-participant×8-pair×2-condition design) and `allocation_confirmatory.json` (exact 24/24 counterbalancing, verified, not merely intended); re-running either script reproduces the sealed files byte-for-byte. `harness.py`'s append-only manifest was proven resumable under a simulated process interruption; `analysis.py` (producer) and a separately-written `verify_independent.py` (oracle, never importing the producer) independently agree on every one of the seven possible routing outcomes. `dry_run.py` exercised the entire machinery end to end using only non-confirmatory `cases_dev.json` data, including an injected timeout, exclusion, protocol deviation, and a simulated harness-restart. `SEALS.json` records SHA-256 digests of all 11 load-bearing files plus the exact qualified product commit (`29263249e17fbaf93bd6a2d764fed418da255feb`) this study is frozen against — sealed before any confirmatory human observation exists. No participant has been recruited and no human evidence of any kind exists in this package; `analysis.py` structurally refuses to treat dev/synthetic data as confirmatory (a runtime guard, not a convention). 53/53 Python tests pass across 7 suites; the full Rust suite (358/358) was re-run to confirm no regression, since this task touched no `src/` code. Full details: `docs/evidence/flake-v1/T03-07/REPORT.md`.
 
 `T03-06` closed: a versioned protocol document, `docs/formats/agent-disclosure-protocol-v1.md`, specifying both halves of §18's wire protocol (the line-oriented disclosure package; the single-JSON-document agent proposal) precisely enough for an independent implementer. Two independent, offline, stdlib-only Python client fixtures (`tools/interchange-clients/client_a.py`/`client_b.py`) were written directly from that document — never from `src/disclosure.rs`/`src/proposal.rs`, and never sharing code with each other (deliberately different internal styles, matching `T02-07`'s own established independence discipline). `run_interchange.py` drives the real `fehrest` CLI end to end: client A reads a real compiled package and proposes a note edit; the owner reviews/accepts through the real CLI; client B reads the *resulting* package and continues with a genuinely different, compatible proposal (a draft decision citing client A's own accepted edit); three adversarial cases (unknown declared identity, an unsupported operation kind, duplicate delivery) are run directly against the real CLI. Every content claim is independently verified by reading `canonical.sqlite` directly (reusing `T02-07`'s own already-independent `sqlite_reader.py`), never by trusting the CLI's own stdout. Designing the client fixtures surfaced and fixed a real protocol gap in already-merged `T03-04` code: `compile_disclosure_package` discarded its own committed receipt's `object_id`, leaving no way for an external agent to learn what `receipt_id` to cite in a proposal (structurally, the ID cannot be embedded in the wire bytes themselves without a self-hashing recursion) — fixed by returning it and having `package-export` print it out-of-band. Full Rust suite re-run after the fix, no regressions (358/358); the interchange run itself passes twice in a row (`ALL CHECKS PASSED`), including a full independent re-verification of the transaction head-hash chain across the whole 16-command sequence. Full details: `docs/evidence/flake-v1/T03-06/REPORT.md`.
 

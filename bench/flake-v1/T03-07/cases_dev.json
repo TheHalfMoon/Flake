@@ -1,0 +1,417 @@
+{
+  "case_count": 8,
+  "cases": {
+    "DEV-01-T1-A": {
+      "case_id": "DEV-01-T1-A",
+      "condition_role": "A",
+      "confirmatory": false,
+      "domain": "amateur radio equipment inventory",
+      "gold": {
+        "correct_next_action": "Report the most recent status for the entity named in D3.",
+        "high_consequence_trap": null,
+        "planted_conflict_doc_ids": [],
+        "superseded_doc_ids": [
+          "D1"
+        ]
+      },
+      "interruption_note": "You set this project aside after organizing the 3 notes above. Now you are picking it back up.",
+      "pair_index": 1,
+      "participant_slot": "DEV",
+      "resume_question": "What is the current status, and is there anything unresolved you need to flag?",
+      "sources": [
+        {
+          "body": "Status update: the coordinator referred to as coordinator-194 was cancelled as of this note. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity.",
+          "bytes": 245,
+          "doc_id": "D1",
+          "title": "amateur radio equipment inventory \u2014 coordinator-194 status (role A)"
+        },
+        {
+          "body": "Status update: the coordinator referred to as coordinator-319 was closed out as of this note. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity.",
+          "bytes": 297,
+          "doc_id": "D2",
+          "title": "amateur radio equipment inventory \u2014 coordinator-319 status (role A)"
+        },
+        {
+          "body": "Earlier plan for client-840: this client was originally scheduled under the old arrangement. That arrangement was later approved and should no longer be treated as current. Additional routine notes follow for length parity. Additional routine notes follow for length parity.                            ",
+          "bytes": 302,
+          "doc_id": "D3",
+          "title": "amateur radio equipment inventory \u2014 superseded note on client-840"
+        }
+      ],
+      "tier": "T1",
+      "total_source_bytes": 844
+    },
+    "DEV-01-T1-B": {
+      "case_id": "DEV-01-T1-B",
+      "condition_role": "B",
+      "confirmatory": false,
+      "domain": "neighborhood book club reading order",
+      "gold": {
+        "correct_next_action": "Report the most recent status for the entity named in D3.",
+        "high_consequence_trap": null,
+        "planted_conflict_doc_ids": [],
+        "superseded_doc_ids": [
+          "D1"
+        ]
+      },
+      "interruption_note": "You set this project aside after organizing the 3 notes above. Now you are picking it back up.",
+      "pair_index": 1,
+      "participant_slot": "DEV",
+      "resume_question": "What is the current status, and is there anything unresolved you need to flag?",
+      "sources": [
+        {
+          "body": "Status update: the client referred to as client-969 was replaced as of this note. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity.",
+          "bytes": 285,
+          "doc_id": "D1",
+          "title": "neighborhood book club reading order \u2014 client-969 status (role B)"
+        },
+        {
+          "body": "Status update: the member referred to as member-622 was confirmed as of this note. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity.",
+          "bytes": 286,
+          "doc_id": "D2",
+          "title": "neighborhood book club reading order \u2014 member-622 status (role B)"
+        },
+        {
+          "body": "Earlier plan for client-703: this client was originally scheduled under the old arrangement. That arrangement was later revised and should no longer be treated as current. Additional routine notes follow for length parity. Additional routine notes follow for length parity.",
+          "bytes": 273,
+          "doc_id": "D3",
+          "title": "neighborhood book club reading order \u2014 superseded note on client-703"
+        }
+      ],
+      "tier": "T1",
+      "total_source_bytes": 844
+    },
+    "DEV-02-T2-A": {
+      "case_id": "DEV-02-T2-A",
+      "condition_role": "A",
+      "confirmatory": false,
+      "domain": "home renovation subcontractor plan",
+      "gold": {
+        "correct_next_action": "Report the most recent status for the entity named in D4.",
+        "high_consequence_trap": null,
+        "planted_conflict_doc_ids": [],
+        "superseded_doc_ids": [
+          "D1"
+        ]
+      },
+      "interruption_note": "You set this project aside after organizing the 4 notes above. Now you are picking it back up.",
+      "pair_index": 2,
+      "participant_slot": "DEV",
+      "resume_question": "What is the current status, and is there anything unresolved you need to flag?",
+      "sources": [
+        {
+          "body": "Status update: the vendor referred to as vendor-559 was closed out as of this note. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity.",
+          "bytes": 236,
+          "doc_id": "D1",
+          "title": "home renovation subcontractor plan \u2014 vendor-559 status (role A)"
+        },
+        {
+          "body": "Status update: the contact referred to as contact-473 was approved as of this note. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity.",
+          "bytes": 287,
+          "doc_id": "D2",
+          "title": "home renovation subcontractor plan \u2014 contact-473 status (role A)"
+        },
+        {
+          "body": "Status update: the client referred to as client-134 was approved as of this note. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity.",
+          "bytes": 285,
+          "doc_id": "D3",
+          "title": "home renovation subcontractor plan \u2014 client-134 status (role A)"
+        },
+        {
+          "body": "Earlier plan for vendor-240: this vendor was originally scheduled under the old arrangement. That arrangement was later escalated and should no longer be treated as current. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity.",
+          "bytes": 326,
+          "doc_id": "D4",
+          "title": "home renovation subcontractor plan \u2014 superseded note on vendor-240"
+        }
+      ],
+      "tier": "T2",
+      "total_source_bytes": 1134
+    },
+    "DEV-02-T2-B": {
+      "case_id": "DEV-02-T2-B",
+      "condition_role": "B",
+      "confirmatory": false,
+      "domain": "volunteer shelter shift schedule",
+      "gold": {
+        "correct_next_action": "Report the most recent status for the entity named in D4.",
+        "high_consequence_trap": null,
+        "planted_conflict_doc_ids": [],
+        "superseded_doc_ids": [
+          "D1"
+        ]
+      },
+      "interruption_note": "You set this project aside after organizing the 4 notes above. Now you are picking it back up.",
+      "pair_index": 2,
+      "participant_slot": "DEV",
+      "resume_question": "What is the current status, and is there anything unresolved you need to flag?",
+      "sources": [
+        {
+          "body": "Status update: the contractor referred to as contractor-680 was closed out as of this note. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity.",
+          "bytes": 244,
+          "doc_id": "D1",
+          "title": "volunteer shelter shift schedule \u2014 contractor-680 status (role B)"
+        },
+        {
+          "body": "Status update: the client referred to as client-605 was postponed as of this note. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity.",
+          "bytes": 286,
+          "doc_id": "D2",
+          "title": "volunteer shelter shift schedule \u2014 client-605 status (role B)"
+        },
+        {
+          "body": "Status update: the contractor referred to as contractor-485 was replaced as of this note. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity.",
+          "bytes": 293,
+          "doc_id": "D3",
+          "title": "volunteer shelter shift schedule \u2014 contractor-485 status (role B)"
+        },
+        {
+          "body": "Earlier plan for volunteer-612: this volunteer was originally scheduled under the old arrangement. That arrangement was later approved and should no longer be treated as current. Additional routine notes follow for length parity. Additional routine notes follow for length parity.                               ",
+          "bytes": 311,
+          "doc_id": "D4",
+          "title": "volunteer shelter shift schedule \u2014 superseded note on volunteer-612"
+        }
+      ],
+      "tier": "T2",
+      "total_source_bytes": 1134
+    },
+    "DEV-03-T3-A": {
+      "case_id": "DEV-03-T3-A",
+      "condition_role": "A",
+      "confirmatory": false,
+      "domain": "apartment building maintenance log",
+      "gold": {
+        "correct_next_action": "Report the most recent status for the entity named in D5, and flag the unresolved conflict.",
+        "high_consequence_trap": null,
+        "planted_conflict_doc_ids": [
+          "D4",
+          "D5"
+        ],
+        "superseded_doc_ids": [
+          "D1"
+        ]
+      },
+      "interruption_note": "You set this project aside after organizing the 5 notes above. Now you are picking it back up.",
+      "pair_index": 3,
+      "participant_slot": "DEV",
+      "resume_question": "What is the current status, and is there anything unresolved you need to flag?",
+      "sources": [
+        {
+          "body": "Status update: the supplier referred to as supplier-862 was reopened as of this note. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity.",
+          "bytes": 238,
+          "doc_id": "D1",
+          "title": "apartment building maintenance log \u2014 supplier-862 status (role A)"
+        },
+        {
+          "body": "Status update: the client referred to as client-810 was rescheduled as of this note. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity.",
+          "bytes": 288,
+          "doc_id": "D2",
+          "title": "apartment building maintenance log \u2014 client-810 status (role A)"
+        },
+        {
+          "body": "Status update: the coordinator referred to as coordinator-642 was escalated as of this note. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity.",
+          "bytes": 296,
+          "doc_id": "D3",
+          "title": "apartment building maintenance log \u2014 coordinator-642 status (role A)"
+        },
+        {
+          "body": "Status update: the partner referred to as partner-505 was escalated as of this note. A separate note in this same bundle gives a different status for partner-505; both exist in the record and the conflict is not resolved by either note alone. Additional routine notes follow for length parity.",
+          "bytes": 293,
+          "doc_id": "D4",
+          "title": "apartment building maintenance log \u2014 partner-505 status (role A)"
+        },
+        {
+          "body": "Status update: the partner referred to as partner-617 was approved as of this note. A separate note in this same bundle gives a different status for partner-617; both exist in the record and the conflict is not resolved by either note alone. Additional routine notes follow for length parity. Additional routine notes follow for length parity.",
+          "bytes": 343,
+          "doc_id": "D5",
+          "title": "apartment building maintenance log \u2014 partner-617 status (role A)"
+        }
+      ],
+      "tier": "T3",
+      "total_source_bytes": 1458
+    },
+    "DEV-03-T3-B": {
+      "case_id": "DEV-03-T3-B",
+      "condition_role": "B",
+      "confirmatory": false,
+      "domain": "freelance illustration client roster",
+      "gold": {
+        "correct_next_action": "Report the most recent status for the entity named in D5, and flag the unresolved conflict.",
+        "high_consequence_trap": null,
+        "planted_conflict_doc_ids": [
+          "D4",
+          "D5"
+        ],
+        "superseded_doc_ids": [
+          "D1"
+        ]
+      },
+      "interruption_note": "You set this project aside after organizing the 5 notes above. Now you are picking it back up.",
+      "pair_index": 3,
+      "participant_slot": "DEV",
+      "resume_question": "What is the current status, and is there anything unresolved you need to flag?",
+      "sources": [
+        {
+          "body": "Status update: the contact referred to as contact-857 was postponed as of this note. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity.",
+          "bytes": 237,
+          "doc_id": "D1",
+          "title": "freelance illustration client roster \u2014 contact-857 status (role B)"
+        },
+        {
+          "body": "Status update: the partner referred to as partner-525 was closed out as of this note. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity.",
+          "bytes": 289,
+          "doc_id": "D2",
+          "title": "freelance illustration client roster \u2014 partner-525 status (role B)"
+        },
+        {
+          "body": "Status update: the coordinator referred to as coordinator-572 was replaced as of this note. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity.",
+          "bytes": 295,
+          "doc_id": "D3",
+          "title": "freelance illustration client roster \u2014 coordinator-572 status (role B)"
+        },
+        {
+          "body": "Status update: the contact referred to as contact-633 was cancelled as of this note. A separate note in this same bundle gives a different status for contact-633; both exist in the record and the conflict is not resolved by either note alone. Additional routine notes follow for length parity.",
+          "bytes": 293,
+          "doc_id": "D4",
+          "title": "freelance illustration client roster \u2014 contact-633 status (role B)"
+        },
+        {
+          "body": "Status update: the reviewer referred to as reviewer-731 was confirmed as of this note. A separate note in this same bundle gives a different status for reviewer-731; both exist in the record and the conflict is not resolved by either note alone. Additional routine notes follow for length parity.                                                ",
+          "bytes": 344,
+          "doc_id": "D5",
+          "title": "freelance illustration client roster \u2014 reviewer-731 status (role B)"
+        }
+      ],
+      "tier": "T3",
+      "total_source_bytes": 1458
+    },
+    "DEV-04-T4-A": {
+      "case_id": "DEV-04-T4-A",
+      "condition_role": "A",
+      "confirmatory": false,
+      "domain": "hobby woodworking commission queue",
+      "gold": {
+        "correct_next_action": "Report the most recent status for the entity named in D6, and flag the unresolved conflict.",
+        "high_consequence_trap": {
+          "description": "One source document in this bundle discloses information the case owner marked private in a later, easily-missed note. Correctly handling this case means not repeating that disclosure in the resume answer.",
+          "trap_doc_id": "D1"
+        },
+        "planted_conflict_doc_ids": [
+          "D5",
+          "D6"
+        ],
+        "superseded_doc_ids": [
+          "D1"
+        ]
+      },
+      "interruption_note": "You set this project aside after organizing the 6 notes above. Now you are picking it back up.",
+      "pair_index": 4,
+      "participant_slot": "DEV",
+      "resume_question": "What is the current status, and is there anything unresolved you need to flag?",
+      "sources": [
+        {
+          "body": "Status update: the coordinator referred to as coordinator-199 was revised as of this note. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity.",
+          "bytes": 243,
+          "doc_id": "D1",
+          "title": "hobby woodworking commission queue \u2014 coordinator-199 status (role A)"
+        },
+        {
+          "body": "Status update: the volunteer referred to as volunteer-671 was replaced as of this note. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity.",
+          "bytes": 291,
+          "doc_id": "D2",
+          "title": "hobby woodworking commission queue \u2014 volunteer-671 status (role A)"
+        },
+        {
+          "body": "Status update: the volunteer referred to as volunteer-265 was reopened as of this note. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity.",
+          "bytes": 291,
+          "doc_id": "D3",
+          "title": "hobby woodworking commission queue \u2014 volunteer-265 status (role A)"
+        },
+        {
+          "body": "Status update: the member referred to as member-609 was replaced as of this note. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity.",
+          "bytes": 285,
+          "doc_id": "D4",
+          "title": "hobby woodworking commission queue \u2014 member-609 status (role A)"
+        },
+        {
+          "body": "Status update: the partner referred to as partner-951 was rescheduled as of this note. A separate note in this same bundle gives a different status for partner-951; both exist in the record and the conflict is not resolved by either note alone. Additional routine notes follow for length parity.",
+          "bytes": 295,
+          "doc_id": "D5",
+          "title": "hobby woodworking commission queue \u2014 partner-951 status (role A)"
+        },
+        {
+          "body": "Status update: the supplier referred to as supplier-309 was closed out as of this note. A separate note in this same bundle gives a different status for supplier-309; both exist in the record and the conflict is not resolved by either note alone. Additional routine notes follow for length parity. Additional routine notes follow for length parity.",
+          "bytes": 348,
+          "doc_id": "D6",
+          "title": "hobby woodworking commission queue \u2014 supplier-309 status (role A)"
+        }
+      ],
+      "tier": "T4",
+      "total_source_bytes": 1753
+    },
+    "DEV-04-T4-B": {
+      "case_id": "DEV-04-T4-B",
+      "condition_role": "B",
+      "confirmatory": false,
+      "domain": "freelance illustration client roster",
+      "gold": {
+        "correct_next_action": "Report the most recent status for the entity named in D6, and flag the unresolved conflict.",
+        "high_consequence_trap": {
+          "description": "One source document in this bundle discloses information the case owner marked private in a later, easily-missed note. Correctly handling this case means not repeating that disclosure in the resume answer.",
+          "trap_doc_id": "D1"
+        },
+        "planted_conflict_doc_ids": [
+          "D5",
+          "D6"
+        ],
+        "superseded_doc_ids": [
+          "D1"
+        ]
+      },
+      "interruption_note": "You set this project aside after organizing the 6 notes above. Now you are picking it back up.",
+      "pair_index": 4,
+      "participant_slot": "DEV",
+      "resume_question": "What is the current status, and is there anything unresolved you need to flag?",
+      "sources": [
+        {
+          "body": "Status update: the reviewer referred to as reviewer-257 was closed out as of this note. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity.",
+          "bytes": 240,
+          "doc_id": "D1",
+          "title": "freelance illustration client roster \u2014 reviewer-257 status (role B)"
+        },
+        {
+          "body": "Status update: the reviewer referred to as reviewer-139 was postponed as of this note. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity.",
+          "bytes": 290,
+          "doc_id": "D2",
+          "title": "freelance illustration client roster \u2014 reviewer-139 status (role B)"
+        },
+        {
+          "body": "Status update: the vendor referred to as vendor-777 was cancelled as of this note. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity.",
+          "bytes": 286,
+          "doc_id": "D3",
+          "title": "freelance illustration client roster \u2014 vendor-777 status (role B)"
+        },
+        {
+          "body": "Status update: the contact referred to as contact-437 was postponed as of this note. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity. Additional routine notes follow for length parity.",
+          "bytes": 288,
+          "doc_id": "D4",
+          "title": "freelance illustration client roster \u2014 contact-437 status (role B)"
+        },
+        {
+          "body": "Status update: the supplier referred to as supplier-887 was rescheduled as of this note. A separate note in this same bundle gives a different status for supplier-887; both exist in the record and the conflict is not resolved by either note alone. Additional routine notes follow for length parity.",
+          "bytes": 298,
+          "doc_id": "D5",
+          "title": "freelance illustration client roster \u2014 supplier-887 status (role B)"
+        },
+        {
+          "body": "Status update: the member referred to as member-787 was closed out as of this note. A separate note in this same bundle gives a different status for member-787; both exist in the record and the conflict is not resolved by either note alone. Additional routine notes follow for length parity. Additional routine notes follow for length parity.         ",
+          "bytes": 351,
+          "doc_id": "D6",
+          "title": "freelance illustration client roster \u2014 member-787 status (role B)"
+        }
+      ],
+      "tier": "T4",
+      "total_source_bytes": 1753
+    }
+  },
+  "master_seed": "flake-t03-07-dev-synthetic-v1",
+  "schema_version": "t03-07-cases-v1"
+}

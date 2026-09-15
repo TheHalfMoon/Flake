@@ -1,0 +1,155 @@
+PASS: test_confirmatory_case_count_and_uniqueness
+PASS: test_confirmatory_covers_every_participant_pair_role
+PASS: test_equal_source_budget_within_each_pair
+PASS: test_tier_balance_per_participant
+PASS: test_no_duplicate_content_anywhere
+PASS: test_dev_cases_marked_non_confirmatory
+PASS: test_generation_is_deterministic
+PASS: test_gold_keys_present_for_conflict_tiers
+
+============================================================
+Results: 8 passed, 0 failed
+============================================================
+PASS: test_case_role_map_is_deterministic_and_balanced
+PASS: test_tier_balance_two_per_participant
+PASS: test_presentation_order_is_a_permutation_of_1_to_8
+PASS: test_presentation_order_differs_across_participants
+PASS: test_reconstructable_from_two_integers_alone
+PASS: test_full_table_is_deterministic_across_calls
+PASS: test_invalid_participant_slot_rejected
+
+============================================================
+Results: 7 passed, 0 failed
+============================================================
+PASS: test_valid_record_has_no_errors
+PASS: test_missing_field_detected
+PASS: test_invalid_condition_detected
+PASS: test_invalid_exclusion_code_detected
+PASS: test_negative_duration_detected
+PASS: test_append_and_read_back
+PASS: test_duplicate_cell_refused
+PASS: test_invalid_record_refused_before_write
+PASS: test_resume_after_simulated_restart
+PASS: test_corrupt_line_raises_manifest_error
+
+============================================================
+Results: 10 passed, 0 failed
+============================================================
+PASS: test_pass_route_on_strong_flake_result
+PASS: test_inconclusive_on_insufficient_valid_pairs
+PASS: test_fail_on_high_consequence_miss
+PASS: test_fail_on_class_loss
+PASS: test_fail_on_resume_success_below_90pct
+PASS: test_fail_on_deficit_exceeds_5pp
+PASS: test_fail_on_time_reduction_below_20pct
+PASS: test_dev_synthetic_forbidden_in_confirmatory_route
+PASS: test_decision_routing_order_safety_before_time
+
+============================================================
+Results: 9 passed, 0 failed
+============================================================
+PASS: test_median_of_matches_known_values
+PASS: test_agreement_on_pass
+PASS: test_agreement_on_inconclusive
+PASS: test_agreement_on_high_consequence_fail
+PASS: test_agreement_on_time_gate
+PASS: test_agreement_numeric_fields_match_exactly
+PASS: test_oracle_rejects_forbidden_case_source_independently
+
+============================================================
+Results: 7 passed, 0 failed
+============================================================
+PASS: test_generated_records_have_expected_shape
+PASS: test_all_records_are_dev_synthetic
+PASS: test_injected_scenarios_present
+PASS: test_simulated_interruption_resumes_without_duplication
+PASS: test_confirmatory_guard_rejects_dev_data
+{
+  "analysis_full": {
+    "baseline_success_rate": 0.723404255319149,
+    "deficit_pp": -27.6595744680851,
+    "expected_pairs": 48,
+    "flake_success_rate": 1.0,
+    "high_consequence_miss_count": 0,
+    "median_baseline_total_seconds": 134.0,
+    "median_flake_total_seconds": 78.25,
+    "min_valid_pairs_required": 44,
+    "observed_pair_cells": 48,
+    "route": "PASS",
+    "tier_breakdown": {
+      "T1": {
+        "correct": 12,
+        "total": 12
+      },
+      "T2": {
+        "correct": 12,
+        "total": 12
+      },
+      "T3": {
+        "correct": 11,
+        "total": 11
+      },
+      "T4": {
+        "correct": 12,
+        "total": 12
+      }
+    },
+    "time_threshold_seconds": 107.2,
+    "valid_pairs": 47
+  },
+  "analysis_route": "PASS",
+  "dry_run_attempt_count": 96,
+  "injected_scenarios": [
+    "RESUME_TIMEOUT",
+    "FACILITATOR_PROTOCOL_ERROR exclusion",
+    "protocol_deviation (non-excluding)",
+    "simulated harness interruption/resume",
+    "duplicate-append refusal",
+    "dev_synthetic confirmatory-guard rejection"
+  ],
+  "producer_and_oracle_agree": true,
+  "verify_independent_route": "PASS"
+}
+PASS: test_full_dry_run_main_reports_agreement
+
+============================================================
+Results: 6 passed, 0 failed
+============================================================
+PASS: test_protocol_covers_every_required_topic
+PASS: test_protocol_declares_exact_design_numbers
+PASS: test_protocol_states_mechanical_routing
+PASS: test_protocol_forbids_model_and_paid_api
+PASS: test_consent_covers_every_required_topic
+PASS: test_consent_never_requires_sensitive_content
+
+============================================================
+Results: 6 passed, 0 failed
+============================================================
+
+######################################################################
+# test_cases.py
+######################################################################
+
+######################################################################
+# test_allocation.py
+######################################################################
+
+######################################################################
+# test_harness.py
+######################################################################
+
+######################################################################
+# test_analysis.py
+######################################################################
+
+######################################################################
+# test_verify_independent.py
+######################################################################
+
+######################################################################
+# test_dry_run.py
+######################################################################
+
+######################################################################
+# test_protocol.py
+######################################################################
