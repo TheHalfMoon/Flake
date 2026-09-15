@@ -7,6 +7,7 @@ use crate::context::{self, CompileRequest, SourceItem};
 use crate::derived::Derived;
 use crate::envelope::TrustLevel;
 use crate::events::{ChainStatus, EventKind, EventLog};
+use crate::index;
 use crate::markdown;
 use crate::memory::Scope;
 use crate::project::{self, DecisionBasis, DecisionVerification};
@@ -119,6 +120,12 @@ FORMAT-2 DECISION/ACTION/RELATION COMMANDS (T02-03):
   relation-create       Link two records                   --project <uuid> --type supports|contradicts|depends_on|relates_to|supersedes --from <uuid> --to <uuid> [--note N]
   object-relations      List relations touching an object  --id <uuid>
   project-relations     List a project's relations        --project <uuid>
+
+FORMAT-2 SEARCH INDEX COMMANDS (T02-04):
+  fts-rebuild       Full rebuild of the derived search index  --vault <path>
+  fts-update        Incremental update (rebuilds if none exists yet) --vault <path>
+  fts-status        Show the index's own checkpoint            --vault <path>
+  fts-search        Search Notes/Actions/Decisions              --query T [--project <uuid>] [--limit N]
 ";
 
 struct Args {
@@ -688,6 +695,69 @@ pub fn run(argv: &[String]) -> Result<i32> {
             println!("relations: {}", relations.len());
             for (object_id, r) in &relations {
                 println!("  {object_id} {r:?}");
+            }
+            Ok(0)
+        }
+
+        "fts-rebuild" => {
+            let store = CanonicalStore::open(args.vault_root()?)?;
+            let status = index::rebuild_index(&store, &store.control_dir())?;
+            println!(
+                "rebuilt: {} records indexed, built_through_seq={}",
+                status.indexed_count, status.built_through_seq
+            );
+            Ok(0)
+        }
+
+        "fts-update" => {
+            let store = CanonicalStore::open(args.vault_root()?)?;
+            let status = index::ensure_index_current(&store, &store.control_dir())?;
+            println!(
+                "updated: {} records indexed, built_through_seq={}",
+                status.indexed_count, status.built_through_seq
+            );
+            Ok(0)
+        }
+
+        "fts-status" => {
+            let store = CanonicalStore::open(args.vault_root()?)?;
+            match index::status(&store.control_dir())? {
+                Some(status) => {
+                    let (current_seq, _) = store.transaction_head()?;
+                    println!(
+                        "built_through_seq={} built_at={} indexed_count={} current_seq={} lag={}",
+                        status.built_through_seq,
+                        status.built_at,
+                        status.indexed_count,
+                        current_seq,
+                        current_seq - status.built_through_seq
+                    );
+                }
+                None => println!("no index has been built yet"),
+            }
+            Ok(0)
+        }
+
+        "fts-search" => {
+            let store = CanonicalStore::open(args.vault_root()?)?;
+            let limit = args
+                .get("limit")
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(20usize);
+            let outcome = index::search(
+                &store,
+                &store.control_dir(),
+                args.get("project"),
+                args.require("query")?,
+                limit,
+            )?;
+            println!("status: {:?}", outcome.status);
+            println!("hits: {}", outcome.hits.len());
+            for hit in &outcome.hits {
+                println!(
+                    "  {} [{}] project={} title={:?}",
+                    hit.object_id, hit.kind, hit.project_id, hit.title
+                );
             }
             Ok(0)
         }
@@ -1586,6 +1656,111 @@ mod tests {
         assert_eq!(a_after.lifecycle, project::DecisionLifecycle::Superseded);
         let project_relations = relation::list_project_relations(&store, &project_id).unwrap();
         assert_eq!(project_relations.len(), 2); // the Supports link + the Supersedes edge
+        drop(store);
+
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    /// `T02-04` acceptance criterion: "CLI search/rebuild" — a full round
+    /// trip through the actual dispatcher: build, search, an incremental
+    /// update after a new mutation, and status reporting.
+    #[test]
+    fn fts_index_rebuild_search_and_status_work_through_the_cli() {
+        let root = tmp();
+        let root_str = root.to_string_lossy().to_string();
+        assert_eq!(
+            run(&s(&["canonical-init", "--vault", &root_str])).unwrap(),
+            0
+        );
+        assert_eq!(
+            run(&s(&["project-create", "--vault", &root_str, "--name", "P"])).unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let project_id = store
+            .list_current_objects()
+            .unwrap()
+            .into_iter()
+            .find_map(|(id, _, payload)| {
+                project::RecordPayload::from_json(&payload)
+                    .ok()?
+                    .as_project()
+                    .ok()
+                    .map(|_| id)
+            })
+            .unwrap();
+        drop(store);
+
+        assert_eq!(
+            run(&s(&[
+                "note-create",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--body",
+                "searchable content about waffles"
+            ]))
+            .unwrap(),
+            0
+        );
+
+        // Before any index exists, fts-status reports absence and
+        // fts-search still finds the record via canonical fallback.
+        assert_eq!(run(&s(&["fts-status", "--vault", &root_str])).unwrap(), 0);
+        assert_eq!(
+            run(&s(&[
+                "fts-search",
+                "--vault",
+                &root_str,
+                "--query",
+                "waffles"
+            ]))
+            .unwrap(),
+            0
+        );
+
+        assert_eq!(run(&s(&["fts-rebuild", "--vault", &root_str])).unwrap(), 0);
+        assert_eq!(
+            run(&s(&[
+                "fts-search",
+                "--vault",
+                &root_str,
+                "--query",
+                "waffles"
+            ]))
+            .unwrap(),
+            0
+        );
+        assert_eq!(run(&s(&["fts-status", "--vault", &root_str])).unwrap(), 0);
+
+        // A new mutation, then an incremental update through the CLI.
+        assert_eq!(
+            run(&s(&[
+                "note-create",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--body",
+                "second searchable note about pancakes"
+            ]))
+            .unwrap(),
+            0
+        );
+        assert_eq!(run(&s(&["fts-update", "--vault", &root_str])).unwrap(), 0);
+
+        let store = CanonicalStore::open(&root).unwrap();
+        let outcome = index::search(
+            &store,
+            &store.control_dir(),
+            Some(&project_id),
+            "pancakes",
+            10,
+        )
+        .unwrap();
+        assert_eq!(outcome.hits.len(), 1);
+        assert!(matches!(outcome.status, index::SearchStatus::Fresh { .. }));
         drop(store);
 
         let _ = std::fs::remove_dir_all(&root);

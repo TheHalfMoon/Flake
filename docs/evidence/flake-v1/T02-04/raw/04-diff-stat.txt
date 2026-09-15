@@ -1,0 +1,7 @@
+ src/canonical.rs |  30 ++++++++++
+ src/cli.rs       | 175 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ src/lib.rs       |   1 +
+ 3 files changed, 206 insertions(+)
+
+index.rs (new file):
+981 src/index.rs
