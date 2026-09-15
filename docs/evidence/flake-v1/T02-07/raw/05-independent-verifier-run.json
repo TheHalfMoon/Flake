@@ -1,0 +1,170 @@
+{
+  "sections": {
+    "fixture": {
+      "vault": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\t0207_evidence\\vault",
+      "export_full_dir": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\t0207_evidence\\export-full\\.fehrest-export",
+      "export_project_dir": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\t0207_evidence\\export-project-a\\.fehrest-export",
+      "project_a": "01a0a3cd-2379-7b83-8ff1-0379403d351d",
+      "project_b": "01a0a3cd-24f7-78d1-a9b6-ec48c8e82c44",
+      "project_a_object_ids": [
+        "01a0a3cd-2379-7b83-8ff1-0379403d351d",
+        "01a0a3cd-239d-7e61-a2b8-434e04c5ba33",
+        "01a0a3cd-23bc-7560-9a2c-458162471f73",
+        "01a0a3cd-23db-7660-9971-7357bd3b5b04",
+        "01a0a3cd-23ff-78e1-9c7d-aa61841a7f49",
+        "01a0a3cd-243e-7941-bdb0-2dd48db6db39",
+        "01a0a3cd-245a-79e2-988b-bcfe02d0e049"
+      ],
+      "project_b_object_ids": [
+        "01a0a3cd-24f7-78d1-a9b6-ec48c8e82c44",
+        "01a0a3cd-251a-7812-8433-a8f1efe7f851"
+      ],
+      "project_b_secret_marker": "SECRET-MARKER-PROJECT-B-CONTENT-9f3a",
+      "fts_search_hit_count_before_index_removed": "hits: 1",
+      "derived_index_removal_proof": {
+        "index_existed_before_removal": true,
+        "index_exists_after_removal": false,
+        "project_records_after_removal": "records: 4\n  01a0a3cd-239d-7e61-a2b8-434e04c5ba33 Note(Note { payload_schema_version: 1, project_id: \"01a0a3cd-2379-7b83-8ff1-0379403d351d\", title: None, body: \"Updated body after fixture edit\", tombstoned: false, unknown: {} })\n  01a0a3cd-23bc-7560-9a2c-458162471f73 Action(Action { payload_schema_version: 1, project_id: \"01a0a3cd-2379-7b83-8ff1-0379403d351d\", title: \"Fixture action root\", body: None, state: Done, dependency_ids: [], completion_summary: Some(\"done for fixture\"), completed_at: Some(\"2026-09-15T06:42:05Z\"), completed_by: Some(\"owner\"), last_transition: Some(ActionTransition { from: Doing, to: Done, reason: None, actor: \"owner\", at: \"2026-09-15T06:42:05Z\" }), unknown: {} })\n  01a0a3cd-23db-7660-9971-7357bd3b5b04 Action(Action { payload_schema_version: 1, project_id: \"01a0a3cd-2379-7b83-8ff1-0379403d351d\", title: \"Fixture action dependent\", body: None, state: Open, dependency_ids: [\"01a0a3cd-23bc-7560-9a2c-458162471f73\"], completion_summary: None, completed_at: None, completed_by: None, last_transition: None, unknown: {} })\n  01a0a3cd-23ff-78e1-9c7d-aa61841a7f49 Decision(Decision { payload_schema_version: 1, project_id: \"01a0a3cd-2379-7b83-8ff1-0379403d351d\", decision_key: \"fixture-decision\", statement: \"Use SQLite format-2 for T02-07\", rationale: None, basis: Evidence, verification: Unreviewed, lifecycle: Accepted, valid_from: None, valid_to: None, accepted_by: Some(\"owner\"), accepted_at: Some(\"2026-09-15T06:42:05Z\"), withdrawal_reason: None, unknown: {} })",
+        "export_after_index_removed_dir": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\t0207_evidence\\export-after-index-removed\\.fehrest-export",
+        "export_after_index_removed_output": "exported: kind=export-project records=7 revisions=11 integrity_root=e2094ca1e41ca817ee9b1192f409ceb3b60e8ab7e3ff69abb7d3610a0525965b -> C:\\Users\\Shehr\\AppData\\Local\\Temp\\t0207_evidence\\export-after-index-removed"
+      }
+    },
+    "sqlite": {
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0a3cd-233e-7983-9198-687569dadb30",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T24125Z",
+        "transaction_head_seq": 13,
+        "transaction_head_hash": "900a0b5d3650f7e1c396a9a658679d57eddeb1c4bc4ac182270485cfa26b15fa"
+      },
+      "command_count": 13,
+      "head_hash_chain_verified": true,
+      "semantic_record_count_by_kind": {
+        "project": 2,
+        "note": 2,
+        "action": 2,
+        "decision": 1,
+        "source": 1,
+        "relation": 1
+      },
+      "semantic_revision_count": 13
+    },
+    "export_full": {
+      "manifest_kind": "export-full",
+      "record_count": 9,
+      "revision_count": 13,
+      "integrity_root": "08396b572d494e1361e6c6d7e4267e91690132dd3217af8742fa928330b221d0",
+      "dangling_references": []
+    },
+    "export_project": {
+      "manifest_kind": "export-project",
+      "record_count": 7,
+      "revision_count": 11,
+      "integrity_root": "e2094ca1e41ca817ee9b1192f409ceb3b60e8ab7e3ff69abb7d3610a0525965b",
+      "dangling_references": []
+    },
+    "export_after_index_removed": {
+      "record_count": 7,
+      "revision_count": 11
+    },
+    "crosscheck_full": {
+      "problems": []
+    },
+    "crosscheck_project": {
+      "problems": []
+    },
+    "crosscheck_reexport_after_index_removed": {
+      "problems": []
+    },
+    "cross_project_byte_scan": {
+      "marker_hits": []
+    },
+    "find_loop": {
+      "fts_search_hits": "hits: 1"
+    },
+    "adversarial": [
+      {
+        "name": "missing_member",
+        "expected": "raises",
+        "detail": "missing declared member",
+        "passed": true,
+        "message": "missing declared member: C:\\Users\\Shehr\\AppData\\Local\\Temp\\t0207_evidence\\adversarial\\missing_member\\revisions\\01a0a3cd-2379-7b83-8ff1-0379403d351d\\1-01a0a3cd-2379-7b83-8ff1-038dfa755109.json"
+      },
+      {
+        "name": "member_length_mismatch",
+        "expected": "raises",
+        "detail": "declared length",
+        "passed": true,
+        "message": "member revisions/01a0a3cd-2379-7b83-8ff1-0379403d351d/1-01a0a3cd-2379-7b83-8ff1-038dfa755109.json: declared length 560 != actual 561"
+      },
+      {
+        "name": "member_digest_mismatch",
+        "expected": "raises",
+        "detail": "declared sha256",
+        "passed": true,
+        "message": "member revisions/01a0a3cd-2379-7b83-8ff1-0379403d351d/1-01a0a3cd-2379-7b83-8ff1-038dfa755109.json: declared sha256 d65fa50988fa4aa1b8bc441f91ea3f3ec94cc1d4fb24c768335dbf51299d877a != actual 5bcb2201a694ba04c04aa7a5b71b0d599821523fbb6003384a2de8594091b045"
+      },
+      {
+        "name": "tampered_integrity_root",
+        "expected": "raises",
+        "detail": "integrity_root mismatch",
+        "passed": true,
+        "message": "integrity_root mismatch: declared=08396b572d494e1361e6c6d7e4267e91690132dd3217af8742fa928330b221d0 recomputed=4fee67ab3679f780840050eb09bca647b2a34ae1898996b914ff0ad519fb6d39"
+      },
+      {
+        "name": "duplicate_object_revision_pair",
+        "expected": "raises",
+        "detail": "duplicate (object_id, revision_id)",
+        "passed": true,
+        "message": "duplicate (object_id, revision_id) pair: ('01a0a3cd-2379-7b83-8ff1-0379403d351d', '01a0a3cd-2379-7b83-8ff1-038dfa755109')"
+      },
+      {
+        "name": "broken_relation_endpoint",
+        "expected": "dangling",
+        "detail": "not in this package",
+        "passed": true,
+        "message": "relation 01a0a3cd-245a-79e2-988b-bcfe02d0e049.to_object_id=01a0a3c4-0000-7000-8000-000000000000 is not in this package"
+      },
+      {
+        "name": "action_dependency_absent",
+        "expected": "dangling",
+        "detail": "depends_on",
+        "passed": true,
+        "message": "action 01a0a3cd-23bc-7560-9a2c-458162471f73 depends_on 01a0a3c4-1111-7000-8000-000000000000, not in this package"
+      },
+      {
+        "name": "truncated_artifact",
+        "expected": "raises",
+        "detail": "not valid JSON",
+        "passed": true,
+        "message": "revision file revisions/01a0a3cd-2379-7b83-8ff1-0379403d351d/1-01a0a3cd-2379-7b83-8ff1-038dfa755109.json is not valid JSON: Unterminated string starting at: line 9 column 13 (char 275)"
+      },
+      {
+        "name": "missing_referenced_object",
+        "expected": "dangling",
+        "detail": "01a0a3cd-243e-7941-bdb0-2dd48db6db39",
+        "passed": true,
+        "message": "relation 01a0a3cd-245a-79e2-988b-bcfe02d0e049.to_object_id=01a0a3cd-243e-7941-bdb0-2dd48db6db39 is not in this package"
+      },
+      {
+        "name": "unrecognized_manifest_schema",
+        "expected": "raises",
+        "detail": "unexpected manifest schema",
+        "passed": true,
+        "message": "unexpected manifest schema: 'flake-export-manifest-v2-unknown'"
+      },
+      {
+        "name": "source_bytes_digest_mismatch",
+        "expected": "raises",
+        "detail": "capture.sha256",
+        "passed": true,
+        "message": "source 01a0a3cd-243e-7941-bdb0-2dd48db6db39: capture.sha256=6e31170af46048c2c3f8c187270b2073030eb0eca0c4d8c82b3701439d5ff762 != recomputed 68b3d8d22cd507b7fcad573603be787abd6536140d08d88631a5fa8152c9bfad (source evidence bytes do not match their own digest)"
+      }
+    ]
+  },
+  "failures": [],
+  "passed": true
+}

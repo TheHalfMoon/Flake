@@ -1,0 +1,6 @@
+Matches specs/002-post-r1-canonical-core-convergence/corrective-t01/reference-hardware.md's frozen development profile (Windows 11/NTFS, 13th Gen Intel i5-13420H).
+rustc: rustc 1.97.1 (8bab26f4f 2026-07-14)
+cargo: cargo 1.97.1 (c980f4866 2026-06-30)
+python3: Python 3.14.7
+python3 sqlite3 module version: 3.50.4
+git: git version 2.55.0.windows.5
