@@ -1,0 +1,19 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.20s
+     Running unittests src\lib.rs (target\debug\deps\fehrest-3169ee0784ab6f1d.exe)
+
+running 12 tests
+test decision_state::tests::no_accepted_decision_when_nothing_exists_for_the_key ... ok
+test decision_state::tests::no_accepted_decision_when_only_a_draft_exists ... ok
+test decision_state::tests::resolution_ordering_is_stable_across_repeated_calls ... ok
+test decision_state::tests::needs_review_when_two_independently_accepted_decisions_share_a_key_and_overlap ... ok
+test decision_state::tests::current_set_when_exactly_one_decision_is_accepted ... ok
+test decision_state::tests::as_of_recorded_out_of_range_is_refused ... ok
+test decision_state::tests::explicit_supersession_leaves_exactly_one_candidate_never_a_conflict ... ok
+test decision_state::tests::as_of_recorded_reconstructs_a_past_state_before_a_later_acceptance ... ok
+test decision_state::tests::non_overlapping_valid_intervals_for_the_same_key_are_not_a_conflict ... ok
+test decision_state::tests::withdrawal_reason_is_surfaced_as_negative_evidence ... ok
+test decision_state::tests::different_projects_with_the_same_key_never_collide ... ok
+test decision_state::tests::production_resolver_agrees_with_the_reference_oracle_across_random_scenarios ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 250 filtered out; finished in 16.02s
+

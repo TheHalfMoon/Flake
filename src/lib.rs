@@ -19,6 +19,7 @@ pub mod canonical;
 pub mod capture;
 pub mod cli;
 pub mod context;
+pub mod decision_state;
 pub mod derived;
 pub mod envelope;
 pub mod events;
