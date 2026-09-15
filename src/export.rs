@@ -192,7 +192,7 @@ fn sha256_hex(bytes: &[u8]) -> String {
     crate::events::hash_bytes(bytes)
 }
 
-fn compute_integrity_root(
+pub(crate) fn compute_integrity_root(
     schema: &str,
     kind: &str,
     vault_id: &str,

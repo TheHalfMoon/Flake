@@ -13,8 +13,8 @@ CANONICAL_BUILD_PLAN=docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md
 CANONICAL_BUILD_PLAN_SHA256=b555f83ff12882ae6f55f90bbeaa411de52b84661a7f3953350cbfc6bd789fb2
 CANONICAL_PLAN_REMOTE_STATUS=MIGRATED_TO_GITHUB
 CANONICAL_PLAN_LOCAL_DEPENDENCY=NONE
-ACTIVE_IMPLEMENTATION_UNIT=T02-06
-NEXT_DEPENDENCY_READY_UNIT=T02-06
+ACTIVE_IMPLEMENTATION_UNIT=T02-07
+NEXT_DEPENDENCY_READY_UNIT=T02-07
 P01_STATUS=CLOSED
 T00-01_STATUS=COMPLETE
 T00-01_EVIDENCE=docs/evidence/flake-v1/T00-01/REPORT.md
@@ -66,7 +66,10 @@ T02-04_MERGE_COMMIT=dd7ff40bec97d14d966ec1c6e9bd993e351bd366
 T02-05_STATUS=COMPLETE
 T02-05_EVIDENCE=docs/evidence/flake-v1/T02-05/REPORT.md
 T02-05_FORMAT_DOC=docs/formats/portable-export-v1.md
-T02-05_MERGE_COMMIT=PENDING_PR_MERGE
+T02-05_MERGE_COMMIT=a92dce62eca038cd643620bf158175f916acf394
+T02-06_STATUS=COMPLETE
+T02-06_EVIDENCE=docs/evidence/flake-v1/T02-06/REPORT.md
+T02-06_MERGE_COMMIT=PENDING_PR_MERGE
 SPEC_003_AUTO_ACTIVATION=PROHIBITED
 PROJECT_COMPLETE=NO
 ```
@@ -82,8 +85,8 @@ The historical local-only planning SHAs `4246f6d...` and `852e44b...` are proven
 
 ## Next action
 
-`T02-06` — Validate and import portable packages into a new vault (`docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` T02-06 row). The natural counterpart to `T02-05`'s exporter: import `docs/formats/portable-export-v1.md`'s own format back into a fresh canonical store, with the same admission discipline `T01-06`'s legacy-migration importer already established (no ambiguous "complete" import, exact preservation, omissions with reasons).
+`T02-07` — Prove project reconstruction without Flake (`docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` T02-07 row). Not a product-code task: "Have an independent executor/tool reconstruct from exported JSON/bytes and separately inspect canonical SQLite **without linking Core or using its importer**" — a standalone generic-reader verification tool (its own, deliberately not `crate::import`/`crate::export`), disposable project fixtures, and evidence that the whole create/capture/find/complete/export loop and an independent exit both hold, including running the CLI loop with the derived DB removed. "Why it exists: a product-owned export/import pair can share the same omission bug" — this task exists specifically to catch a bug `T02-05`/`T02-06`'s own tests structurally cannot, by construction, catch (both are this crate's own code, testing itself).
 
-`T02-05` closed: `src/export.rs` adds a new, independent portable exporter — deliberately not an extension of `backup.rs` (`T01-05`'s SQLite-snapshot backup is a different, restorable-only artifact; this task's own output is individual JSON/Markdown files a generic reader can validate with no Flake dependency, per `docs/formats/portable-export-v1.md`). `export-full`/`export-project` (never the same `kind` string `backup.rs` already uses for its own unrelated format), publishing atomically via the same staging/rename pattern, full revision history (not just current state) via a new `CanonicalStore::all_revisions` read method, exact raw payload bytes preserved (never re-serialized), and a manifest `integrity_root` proven independently recomputable from the format doc alone. New CLI: `export-preview`/`export-run`. Full details, including a non-compiling draft-assertion mistake this task's own build caught before any test ran: `docs/evidence/flake-v1/T02-05/REPORT.md`.
+`T02-06` closed: `src/import.rs` adds `import_full_restore` (brand-new empty vault, `object_id` preserved exactly via the same `ImportObject` exception `T01-06`'s migration established) and `import_selected_merge` (already-open destination, new Core-assigned identities, every internal cross-reference — `project_id`, `Action::dependency_ids`, `Relation` endpoints — rewritten via a returned `id_map`, in a fixed pass order that resolves forward references without a second staging mechanism). Every write is an ordinary, already-audited `CanonicalWriter::commit`; validation (member digests, manifest `integrity_root`, revision-chain consistency, duplicate-ID detection) always runs to completion *before* any canonical write, so a rejected import leaves zero destination side effects. Honestly documented fidelity boundary: `object_id` and payload bytes are preserved exactly; `revision_id`/`recorded_seq`/`recorded_at` are not (the destination store always mints these fresh — verified directly against `canonical.rs`'s own commit code, not assumed). New CLI: `import-preview`/`import-full-restore`/`import-merge`. Full details, including three test-construction bugs (not product defects) this task's own first test run caught: `docs/evidence/flake-v1/T02-06/REPORT.md`.
 
 Do not activate Spec 003 automatically. Do not invent a replacement roadmap. Do not use OpenAI API or a required paid AI/model service.
