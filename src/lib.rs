@@ -22,6 +22,7 @@ pub mod context;
 pub mod derived;
 pub mod envelope;
 pub mod events;
+pub mod export;
 pub mod identity;
 pub mod index;
 pub mod locator;

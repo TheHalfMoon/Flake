@@ -504,6 +504,41 @@ impl CanonicalStore {
             .map_err(|e| Error::Canonical(format!("cannot read revisions_since rows: {e}")))
     }
 
+    /// Every revision ever recorded, oldest first, with its full envelope —
+    /// unlike [`CanonicalStore::history`] (one object, three fields) or
+    /// [`CanonicalStore::revisions_since`] (all objects, four fields), this
+    /// returns every §15 common-envelope field the `revision` table stores.
+    /// `T02-05`'s portable exporter is the reason this exists: "an export
+    /// that omits source revisions... is not ownership" needs the complete,
+    /// unfiltered history, not just current state.
+    pub fn all_revisions(&self) -> Result<Vec<RevisionEnvelope>> {
+        let mut stmt = self
+            .conn
+            .prepare(
+                "SELECT revision_id, object_id, parent_revision_id, recorded_seq, recorded_at,
+                        actor, origin, payload, payload_sha256
+                 FROM revision ORDER BY recorded_seq ASC",
+            )
+            .map_err(|e| Error::Canonical(format!("cannot prepare all_revisions query: {e}")))?;
+        let rows = stmt
+            .query_map([], |r| {
+                Ok(RevisionEnvelope {
+                    revision_id: r.get(0)?,
+                    object_id: r.get(1)?,
+                    parent_revision_id: r.get(2)?,
+                    recorded_seq: r.get(3)?,
+                    recorded_at: r.get(4)?,
+                    actor: r.get(5)?,
+                    origin: r.get(6)?,
+                    payload: r.get(7)?,
+                    payload_sha256: r.get(8)?,
+                })
+            })
+            .map_err(|e| Error::Canonical(format!("cannot run all_revisions query: {e}")))?;
+        rows.collect::<rusqlite::Result<Vec<_>>>()
+            .map_err(|e| Error::Canonical(format!("cannot read all_revisions rows: {e}")))
+    }
+
     /// The stored, already-committed outcome for `command_id`, if any.
     /// Distinct from calling `commit` again with the same input: this never
     /// mutates, and is how a caller reconciles an outcome-unknown state
@@ -628,6 +663,21 @@ pub struct CommandOutcome {
     /// `command_id` + input digest was already committed, and this is that
     /// original result returned again (idempotent replay).
     pub replay: bool,
+}
+
+/// One revision's full §15 common-envelope fields, as stored — see
+/// [`CanonicalStore::all_revisions`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RevisionEnvelope {
+    pub revision_id: String,
+    pub object_id: String,
+    pub parent_revision_id: Option<String>,
+    pub recorded_seq: i64,
+    pub recorded_at: String,
+    pub actor: String,
+    pub origin: String,
+    pub payload: String,
+    pub payload_sha256: String,
 }
 
 /// A capability that structurally proves this process holds the OS-held
