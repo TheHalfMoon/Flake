@@ -128,10 +128,14 @@ pub struct ExportPreview {
 
 /// Every object ID that belongs in scope for `project_id`: the project
 /// itself plus every `Note`/`Action`/`Decision` (`project::
-/// list_project_records`), `Source` (`capture::list_project_sources`) and
-/// `Relation` (`relation::list_project_relations`) currently scoped to it —
-/// reusing each kind's own already-established listing function rather
-/// than re-deriving project membership here.
+/// list_project_records`), `Source` (`capture::list_project_sources`),
+/// `Relation` (`relation::list_project_relations`) and `SourceCheck`
+/// (`source_check::list_project_source_checks`, `T03-01`) currently scoped
+/// to it — reusing each kind's own already-established listing function
+/// rather than re-deriving project membership here. Every new record kind
+/// this crate ever adds must be added to this union too, or a
+/// project-scoped export would silently omit it (I06/I10) — exactly the
+/// class of omission `T02-07`'s independent verifier exists to catch.
 fn project_scope_object_ids(store: &CanonicalStore, project_id: &str) -> Result<HashSet<String>> {
     let mut ids = HashSet::new();
     ids.insert(project_id.to_string());
@@ -142,6 +146,9 @@ fn project_scope_object_ids(store: &CanonicalStore, project_id: &str) -> Result<
         ids.insert(id);
     }
     for (id, _) in crate::relation::list_project_relations(store, project_id)? {
+        ids.insert(id);
+    }
+    for (id, _) in crate::source_check::list_project_source_checks(store, project_id)? {
         ids.insert(id);
     }
     Ok(ids)
@@ -461,6 +468,57 @@ mod tests {
         assert_eq!(preview.record_count, 2); // the project itself + the note
         assert_eq!(preview.revision_count, 2); // one create revision each
         assert!(!dest.exists(), "preview must not write anything");
+
+        cleanup(&root);
+        cleanup(&dest);
+    }
+
+    /// `T03-01`: a project-scoped export must not silently drop the new
+    /// `SourceCheck` kind — the exact class of omission `T02-07`'s
+    /// independent verifier exists to catch, proven directly here rather
+    /// than only relying on that later, separate tool.
+    #[test]
+    fn project_export_includes_source_checks() {
+        let root = tmp();
+        let mut store = CanonicalStore::create(&root).unwrap();
+        let p1 = new_project(&mut store, "P1");
+        let file_path = root.join("f.txt");
+        std::fs::write(&file_path, b"hello").unwrap();
+        let source_id = {
+            let mut writer = store.writer().unwrap();
+            crate::capture::import_file(&mut writer, "owner", &p1, "l", &file_path)
+                .unwrap()
+                .0
+                .object_id
+        };
+        crate::source_check::check_source(&mut store, "owner", &source_id).unwrap();
+
+        let preview = preview_export(&store, Some(&p1)).unwrap();
+        // project + source + one source_check = 3 records.
+        assert_eq!(preview.record_count, 3);
+
+        let dest = tmp();
+        let report = export_to_new_root(&store, Some(&p1), &dest).unwrap();
+        assert_eq!(report.manifest.record_count, 3);
+        let control = dest.join(".fehrest-export");
+        let mut saw_source_check = false;
+        for entry in walk(&control) {
+            if entry.extension().and_then(|e| e.to_str()) != Some("json") {
+                continue;
+            }
+            if entry.file_name().and_then(|n| n.to_str()) == Some("export-manifest.json") {
+                continue;
+            }
+            let text = std::fs::read_to_string(&entry).unwrap();
+            let parsed: serde_json::Value = serde_json::from_str(&text).unwrap();
+            if parsed.get("kind").and_then(|k| k.as_str()) == Some("source_check") {
+                saw_source_check = true;
+            }
+        }
+        assert!(
+            saw_source_check,
+            "expected a source_check revision file in the project export"
+        );
 
         cleanup(&root);
         cleanup(&dest);

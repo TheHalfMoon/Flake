@@ -14,6 +14,7 @@ use crate::markdown;
 use crate::memory::Scope;
 use crate::project::{self, DecisionBasis, DecisionVerification};
 use crate::relation::{self, RelationType};
+use crate::source_check;
 use crate::vault::Vault;
 use crate::{limits, Error, Result};
 use std::path::PathBuf;
@@ -137,6 +138,13 @@ FORMAT-2 IMPORT COMMANDS (T02-06; --source names a published export root):
   import-preview       Validate a package, show scope/conflicts    --source <path>
   import-full-restore  Import into a brand-new empty vault          --source <path> --vault <path>
   import-merge          Import into this --vault, new identities    --source <path>
+
+FORMAT-2 SOURCE-CHECK COMMANDS (T03-01):
+  source-check          Recheck a file-backed source's bytes        --id <uuid>
+  source-checks          Show one source's full check history        --id <uuid>
+  project-source-checks  List a project's check history              --project <uuid>
+  source-reselect        Record a move; refuses if content changed  --id <uuid> --expect <revision-uuid> --path <new-local-path>
+  source-admit-change    Admit changed bytes as a new revision       --id <uuid> --expect <revision-uuid> [--path <new-local-path>]
 ";
 
 struct Args {
@@ -1000,6 +1008,76 @@ pub fn run(argv: &[String]) -> Result<i32> {
             for (object_id, source) in &sources {
                 println!("  {object_id} {source:?}");
             }
+            Ok(0)
+        }
+
+        "source-check" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let (outcome, check) =
+                source_check::check_source(&mut store, CLI_ACTOR, args.require("id")?)?;
+            println!(
+                "{} {} status={:?} observed_sha256={:?}",
+                outcome.object_id, outcome.revision_id, check.status, check.observed_sha256
+            );
+            Ok(0)
+        }
+
+        "source-checks" => {
+            let store = CanonicalStore::open(args.vault_root()?)?;
+            let checks = source_check::list_checks_for_source(&store, args.require("id")?)?;
+            println!("checks: {}", checks.len());
+            for (object_id, check) in &checks {
+                println!(
+                    "  {object_id} {:?} at={} sha256={:?}",
+                    check.status, check.observed_at, check.observed_sha256
+                );
+            }
+            Ok(0)
+        }
+
+        "project-source-checks" => {
+            let store = CanonicalStore::open(args.vault_root()?)?;
+            let checks =
+                source_check::list_project_source_checks(&store, args.require("project")?)?;
+            println!("checks: {}", checks.len());
+            for (object_id, check) in &checks {
+                println!("  {object_id} {check:?}");
+            }
+            Ok(0)
+        }
+
+        "source-reselect" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let (outcome, source) = source_check::reselect_source(
+                &mut store,
+                CLI_ACTOR,
+                args.require("id")?,
+                args.require("expect")?,
+                std::path::Path::new(args.require("path")?),
+            )?;
+            println!(
+                "{} {} claimed_path={:?}",
+                outcome.object_id, outcome.revision_id, source.claimed_path
+            );
+            Ok(0)
+        }
+
+        "source-admit-change" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let path_override = args.get("path").map(std::path::Path::new);
+            let (outcome, source) = source_check::admit_changed_source(
+                &mut store,
+                CLI_ACTOR,
+                args.require("id")?,
+                args.require("expect")?,
+                path_override,
+            )?;
+            println!(
+                "{} {} sha256={:?}",
+                outcome.object_id,
+                outcome.revision_id,
+                source.capture.map(|c| c.sha256)
+            );
             Ok(0)
         }
 
@@ -2069,5 +2147,163 @@ mod tests {
         let _ = std::fs::remove_dir_all(&export_dest);
         let _ = std::fs::remove_dir_all(&restore_dest);
         let _ = std::fs::remove_dir_all(&merge_dest);
+    }
+
+    /// `T03-01` acceptance criterion: "All four freshness states and
+    /// moved/deleted-source scenarios show correct immutable history" —
+    /// exercised end to end through the actual CLI dispatcher: import,
+    /// recheck (Match), edit the file behind Flake's back and recheck
+    /// again (Changed, unmutated until explicit admission), explicit
+    /// admission, then a verified relocation.
+    #[test]
+    fn source_check_reselect_and_admit_change_work_through_the_cli() {
+        let root = tmp();
+        let root_str = root.to_string_lossy().to_string();
+        assert_eq!(
+            run(&s(&["canonical-init", "--vault", &root_str])).unwrap(),
+            0
+        );
+        assert_eq!(
+            run(&s(&["project-create", "--vault", &root_str, "--name", "P"])).unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let project_id = store
+            .list_current_objects()
+            .unwrap()
+            .into_iter()
+            .find_map(|(id, _, payload)| {
+                project::RecordPayload::from_json(&payload)
+                    .ok()?
+                    .as_project()
+                    .ok()
+                    .map(|_| id)
+            })
+            .unwrap();
+        drop(store);
+
+        let file_path = root.join("evidence.txt");
+        std::fs::write(&file_path, b"original bytes").unwrap();
+        let file_path_str = file_path.to_string_lossy().to_string();
+        assert_eq!(
+            run(&s(&[
+                "source-import",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--label",
+                "l",
+                "--path",
+                &file_path_str,
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let source_id = capture::list_project_sources(&store, &project_id)
+            .unwrap()
+            .into_iter()
+            .next()
+            .unwrap()
+            .0;
+        drop(store);
+
+        assert_eq!(
+            run(&s(&[
+                "source-check",
+                "--vault",
+                &root_str,
+                "--id",
+                &source_id
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let history = source_check::list_checks_for_source(&store, &source_id).unwrap();
+        assert_eq!(history.len(), 1);
+        assert_eq!(history[0].1.status, source_check::CheckStatus::Match);
+        let current_revision = store.read_current(&source_id).unwrap().unwrap().0;
+        drop(store);
+
+        std::fs::write(&file_path, b"edited behind Flake's back").unwrap();
+        assert_eq!(
+            run(&s(&[
+                "source-check",
+                "--vault",
+                &root_str,
+                "--id",
+                &source_id
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let history = source_check::list_checks_for_source(&store, &source_id).unwrap();
+        assert_eq!(history.len(), 2);
+        assert_eq!(history[1].1.status, source_check::CheckStatus::Changed);
+        // Not auto-admitted: the current revision is unchanged.
+        assert_eq!(
+            store.read_current(&source_id).unwrap().unwrap().0,
+            current_revision
+        );
+        drop(store);
+
+        assert_eq!(
+            run(&s(&[
+                "source-admit-change",
+                "--vault",
+                &root_str,
+                "--id",
+                &source_id,
+                "--expect",
+                &current_revision,
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let (new_revision, payload) = store.read_current(&source_id).unwrap().unwrap();
+        assert_ne!(new_revision, current_revision);
+        let source = project::RecordPayload::from_json(&payload)
+            .unwrap()
+            .as_source()
+            .unwrap()
+            .clone();
+        assert_eq!(
+            source.capture.unwrap().sha256,
+            crate::events::hash_bytes(b"edited behind Flake's back")
+        );
+        drop(store);
+
+        let moved_path = root.join("moved-evidence.txt");
+        std::fs::rename(&file_path, &moved_path).unwrap();
+        let moved_path_str = moved_path.to_string_lossy().to_string();
+        assert_eq!(
+            run(&s(&[
+                "source-reselect",
+                "--vault",
+                &root_str,
+                "--id",
+                &source_id,
+                "--expect",
+                &new_revision,
+                "--path",
+                &moved_path_str,
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let checks = source_check::list_project_source_checks(&store, &project_id).unwrap();
+        assert_eq!(
+            checks.len(),
+            2,
+            "reselect itself is not a check observation"
+        );
+        drop(store);
+
+        let _ = std::fs::remove_dir_all(&root);
     }
 }

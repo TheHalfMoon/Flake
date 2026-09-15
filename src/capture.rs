@@ -372,7 +372,15 @@ fn sanitize_display_filename(path: &Path) -> Result<String> {
 /// No directory is ever read; no path other than `path` itself is ever
 /// touched. F08 "missing source" and S03 "reject symlinks" are both
 /// detected here, before any transaction opens.
-fn capture_file(path: &Path) -> Result<Capture> {
+///
+/// `pub(crate)`, not private: `T03-01`'s `crate::source_check` reuses this
+/// exact function (not a duplicate) whenever it needs to admit a *new*
+/// capture of already-fully-defended bytes (`admit_changed_source`) —
+/// direct counterpart reuse, the same choice `T02-06` already made for
+/// `export::compute_integrity_root`. Its own plain recheck-only path
+/// (`observe`) is a deliberate, separately-documented non-reuse — see
+/// `source_check.rs` module docs for why.
+pub(crate) fn capture_file(path: &Path) -> Result<Capture> {
     let meta = std::fs::symlink_metadata(path).map_err(|e| {
         Error::Capture(format!(
             "selected source is missing or unreachable: {}: {e}",
@@ -458,7 +466,14 @@ pub fn import_file(
         source_kind: SourceKind::File,
         claimed_repository: None,
         claimed_commit: None,
-        claimed_path: None,
+        // `T03-01`: the exact path the owner selected, retained as the
+        // "owner-selected locator hint" (§15) so a later explicit
+        // `source_check::check_source` has something to recheck against.
+        // Local-only metadata, same non-authoritative status
+        // `claimed_repository`/`claimed_commit` already document — never
+        // filesystem access on its own, never re-followed on another
+        // machine or without an explicit owner action.
+        claimed_path: Some(path.to_string_lossy().into_owned()),
         active: true,
         capture: Some(capture),
         unknown: JsonMap::new(),
@@ -707,6 +722,13 @@ mod tests {
         assert_eq!(capture.display_filename, "fixture.bin");
         assert_eq!(capture.origin_label, "unknown");
         assert!(capture.source_mtime.is_some());
+        // `T03-01`: the exact selected path is now retained as the source's
+        // own locator hint, so a later `source_check::check_source` has
+        // something to recheck against.
+        assert_eq!(
+            source.claimed_path.as_deref(),
+            Some(file_path.to_string_lossy()).as_deref()
+        );
 
         // Round-trips through read_current/from_json exactly.
         let (_, payload) = store.read_current(&outcome.object_id).unwrap().unwrap();

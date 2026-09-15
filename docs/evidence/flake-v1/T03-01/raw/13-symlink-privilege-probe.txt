@@ -1,0 +1,1 @@
+symlink creation FAILED: A required privilege is not held by the client. (os error 1314)
