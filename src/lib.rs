@@ -16,6 +16,7 @@
 
 pub mod backup;
 pub mod canonical;
+pub mod capture;
 pub mod cli;
 pub mod context;
 pub mod derived;
@@ -23,6 +24,7 @@ pub mod envelope;
 pub mod events;
 pub mod identity;
 pub mod locator;
+pub mod markdown;
 pub mod memory;
 pub mod migration;
 pub mod project;
@@ -52,6 +54,15 @@ pub mod limits {
     pub const MAX_QUERY_BYTES: usize = 1 << 10; // 1 KiB
     /// Largest number of candidates returned from lexical search.
     pub const MAX_SEARCH_RESULTS: usize = 200;
+    /// Largest raw serialized command payload `canonical::commit` accepts
+    /// before any transaction opens (`T02-02`). This is a transport-level
+    /// resource-safety backstop distinct from any specific record type's own
+    /// tighter product-facing field limit (`MAX_OBJECT_BYTES` for text
+    /// bodies, `capture::MAX_ARTIFACT_BYTES` for opaque artifacts — each
+    /// already checked earlier by their own module). Sized to admit a
+    /// hex-encoded `capture::MAX_ARTIFACT_BYTES` artifact (2x inflation)
+    /// plus JSON envelope overhead, with margin.
+    pub const MAX_COMMAND_PAYLOAD_BYTES: usize = 150 << 20; // 150 MiB
 }
 
 #[derive(Debug)]
@@ -96,6 +107,13 @@ pub enum Error {
     /// unsupported record payload, or a wrong-kind object reference. See
     /// `project.rs` module docs.
     Project(String),
+    /// Source/artifact admission failure (`capture.rs`, T02-02): a refused
+    /// symlink, non-regular-file, obviously-secret filename, oversized
+    /// artifact, or unreachable selected path. Distinct from `Project` so a
+    /// caller can tell "this record's fields are invalid" apart from "this
+    /// security boundary refused the selection" — see `capture.rs` module
+    /// docs.
+    Capture(String),
     Event(String),
     Memory(String),
     /// An invalid supersession edge. Never silently normalised (F §6.1).
@@ -140,6 +158,7 @@ impl std::fmt::Display for Error {
             Error::Backup(m) => write!(f, "backup error: {m}"),
             Error::Migration(m) => write!(f, "migration error: {m}"),
             Error::Project(m) => write!(f, "project error: {m}"),
+            Error::Capture(m) => write!(f, "capture error: {m}"),
             Error::Event(m) => write!(f, "event log error: {m}"),
             Error::Memory(m) => write!(f, "memory error: {m}"),
             Error::InvalidSupersession(m) => write!(f, "invalid supersession: {m}"),

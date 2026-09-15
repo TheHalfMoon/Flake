@@ -138,6 +138,10 @@ pub enum RecordPayload {
     Note(Note),
     Action(Action),
     Decision(Decision),
+    /// `T02-02`. Defined in `crate::capture`, not here — this enum only
+    /// dispatches on `kind`; source/artifact admission's own validation
+    /// rules live with the module that owns that security boundary.
+    Source(crate::capture::Source),
 }
 
 impl RecordPayload {
@@ -147,15 +151,17 @@ impl RecordPayload {
             RecordPayload::Note(_) => "note",
             RecordPayload::Action(_) => "action",
             RecordPayload::Decision(_) => "decision",
+            RecordPayload::Source(_) => "source",
         }
     }
 
-    fn to_json(&self) -> Result<String> {
+    pub(crate) fn to_json(&self) -> Result<String> {
         let mut value = match self {
             RecordPayload::Project(p) => serde_json::to_value(p),
             RecordPayload::Note(n) => serde_json::to_value(n),
             RecordPayload::Action(a) => serde_json::to_value(a),
             RecordPayload::Decision(d) => serde_json::to_value(d),
+            RecordPayload::Source(s) => serde_json::to_value(s),
         }
         .map_err(|e| Error::Project(format!("cannot serialize record: {e}")))?;
         // The `kind` tag is Core-assigned here, at the one serialization
@@ -217,6 +223,10 @@ impl RecordPayload {
                 serde_json::from_value(value)
                     .map_err(|e| Error::Project(format!("malformed decision record: {e}")))?,
             )),
+            "source" => Ok(RecordPayload::Source(
+                serde_json::from_value(value)
+                    .map_err(|e| Error::Project(format!("malformed source record: {e}")))?,
+            )),
             other => Err(Error::Project(format!("unrecognized record kind: {other}"))),
         }
     }
@@ -230,9 +240,19 @@ impl RecordPayload {
             ))),
         }
     }
+
+    pub fn as_source(&self) -> Result<&crate::capture::Source> {
+        match self {
+            RecordPayload::Source(s) => Ok(s),
+            other => Err(Error::Project(format!(
+                "expected a source record, found {}",
+                other.kind_str()
+            ))),
+        }
+    }
 }
 
-fn check_len(what: &'static str, s: &str, limit: usize) -> Result<()> {
+pub(crate) fn check_len(what: &'static str, s: &str, limit: usize) -> Result<()> {
     if s.len() > limit {
         return Err(Error::Project(format!(
             "{what} exceeds limit: {} > {limit} bytes",
@@ -249,7 +269,7 @@ fn check_len(what: &'static str, s: &str, limit: usize) -> Result<()> {
 /// invalidate the identity every one of its work records still legitimately
 /// carries (I05: archiving preserves history; §12 "project archive is
 /// reversible").
-fn require_project(store: &CanonicalStore, project_id: &str) -> Result<Project> {
+pub(crate) fn require_project(store: &CanonicalStore, project_id: &str) -> Result<Project> {
     let (_, payload) = store.read_current(project_id)?.ok_or_else(|| {
         Error::Project(format!(
             "invalid project reference: no object exists with id {project_id}"
@@ -265,7 +285,7 @@ fn require_project(store: &CanonicalStore, project_id: &str) -> Result<Project> 
         })
 }
 
-fn commit_create(
+pub(crate) fn commit_create(
     writer: &mut CanonicalWriter<'_>,
     actor: &str,
     origin: RecordOrigin,
@@ -281,7 +301,7 @@ fn commit_create(
     Ok((outcome, record))
 }
 
-fn commit_update(
+pub(crate) fn commit_update(
     writer: &mut CanonicalWriter<'_>,
     actor: &str,
     origin: RecordOrigin,
@@ -564,7 +584,10 @@ pub fn list_project_records(
             RecordPayload::Note(n) => n.project_id == project_id,
             RecordPayload::Action(a) => a.project_id == project_id,
             RecordPayload::Decision(d) => d.project_id == project_id,
-            RecordPayload::Project(_) => false,
+            // A `Source` also carries `project_id`, but is not a "work
+            // record" in this function's own documented sense (`T02-02`
+            // gives it a dedicated `capture::list_project_sources`).
+            RecordPayload::Source(_) | RecordPayload::Project(_) => false,
         };
         if belongs {
             out.push((object_id, record));

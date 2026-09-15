@@ -1,0 +1,4 @@
+rustc 1.97.1 (8bab26f4f 2026-07-14)
+cargo 1.97.1 (c980f4866 2026-06-30)
+MINGW64_NT-10.0-26200 Abdulaziz 3.6.10-710e5275.x86_64 2026-07-28 09:32 UTC x86_64 Msys
+Reference hardware: see specs/002-post-r1-canonical-core-convergence/corrective-t01/reference-hardware.md (unchanged since T01-07)

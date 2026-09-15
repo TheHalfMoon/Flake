@@ -2,10 +2,12 @@
 //! command-line framework and its proc-macro tree (Ponytail DELETE: `clap`).
 
 use crate::canonical::CanonicalStore;
+use crate::capture;
 use crate::context::{self, CompileRequest, SourceItem};
 use crate::derived::Derived;
 use crate::envelope::TrustLevel;
 use crate::events::{ChainStatus, EventKind, EventLog};
+use crate::markdown;
 use crate::memory::Scope;
 use crate::project;
 use crate::vault::Vault;
@@ -46,8 +48,17 @@ FORMAT-2 COMMANDS (T02-01; --vault names a separate format-2 store root):
   note-update       Replace a note's title/body   --id <uuid> --expect <revision-uuid> --body T [--title T]
   action-create     Create an action              --project <uuid> --title T [--body T]
   decision-create   Create a decision             --project <uuid> --key K --statement T [--rationale T]
-  record-show       Show any typed record          --id <uuid>
+  record-show       Show any typed record          --id <uuid> [--preview N]
   project-records   List a project's work records --project <uuid>
+
+FORMAT-2 CAPTURE COMMANDS (T02-02):
+  capture           Default-Note capture           --project <uuid> --body T [--kind note|action|decision] [--title T] [--key K] [--rationale R]
+  source-import     Import one selected file       --project <uuid> --label L --path <local-path>
+  source-reference  Register a manual reference     --project <uuid> --label L [--repository R] [--commit C] [--path P]
+  source-deactivate Mark a source unavailable       --id <uuid>
+  source-reactivate Mark a source available again   --id <uuid>
+  source-extract    Recover a source's exact bytes  --id <uuid> --out <local-path>
+  project-sources   List a project's sources        --project <uuid>
 ";
 
 struct Args {
@@ -419,6 +430,14 @@ pub fn run(argv: &[String]) -> Result<i32> {
         "record-show" => {
             let store = CanonicalStore::open(args.vault_root()?)?;
             match project::read_record(&store, args.require("id")?)? {
+                Some(project::RecordPayload::Note(note)) if args.get("preview").is_some() => {
+                    let max_chars = args
+                        .get("preview")
+                        .and_then(|s| s.parse().ok())
+                        .unwrap_or(200usize);
+                    println!("{}", markdown::preview(&note.body, max_chars));
+                    Ok(0)
+                }
                 Some(record) => {
                     println!("{record:?}");
                     Ok(0)
@@ -436,6 +455,113 @@ pub fn run(argv: &[String]) -> Result<i32> {
             println!("records: {}", records.len());
             for (object_id, record) in &records {
                 println!("  {object_id} {record:?}");
+            }
+            Ok(0)
+        }
+
+        "capture" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let mut writer = store.writer()?;
+            let project_id = args.require("project")?;
+            let kind = args.get("kind").unwrap_or("note");
+            match kind {
+                "note" => {
+                    let (outcome, _) = project::create_note(
+                        &mut writer,
+                        CLI_ACTOR,
+                        project_id,
+                        args.get("title"),
+                        args.require("body")?,
+                    )?;
+                    println!("{} {}", outcome.object_id, outcome.revision_id);
+                }
+                "action" => {
+                    let (outcome, _) = project::create_action(
+                        &mut writer,
+                        CLI_ACTOR,
+                        project_id,
+                        args.require("title")?,
+                        args.get("body"),
+                    )?;
+                    println!("{} {}", outcome.object_id, outcome.revision_id);
+                }
+                "decision" => {
+                    let (outcome, _) = project::create_decision(
+                        &mut writer,
+                        CLI_ACTOR,
+                        project_id,
+                        args.require("key")?,
+                        args.require("body")?,
+                        args.get("rationale"),
+                    )?;
+                    println!("{} {}", outcome.object_id, outcome.revision_id);
+                }
+                other => {
+                    eprintln!("unknown --kind {other} (expected note|action|decision)");
+                    return Ok(64);
+                }
+            }
+            Ok(0)
+        }
+
+        "source-import" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let mut writer = store.writer()?;
+            let (outcome, _source) = capture::import_file(
+                &mut writer,
+                CLI_ACTOR,
+                args.require("project")?,
+                args.require("label")?,
+                std::path::Path::new(args.require("path")?),
+            )?;
+            println!("{} {}", outcome.object_id, outcome.revision_id);
+            Ok(0)
+        }
+
+        "source-reference" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let mut writer = store.writer()?;
+            let (outcome, _source) = capture::create_manual_reference(
+                &mut writer,
+                CLI_ACTOR,
+                args.require("project")?,
+                args.require("label")?,
+                args.get("repository"),
+                args.get("commit"),
+                args.get("path"),
+            )?;
+            println!("{} {}", outcome.object_id, outcome.revision_id);
+            Ok(0)
+        }
+
+        "source-deactivate" | "source-reactivate" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let id = args.require("id")?;
+            let (_, source) = if cmd == "source-deactivate" {
+                capture::deactivate_source(&mut store, CLI_ACTOR, id)?
+            } else {
+                capture::reactivate_source(&mut store, CLI_ACTOR, id)?
+            };
+            println!("{id} active={}", source.active);
+            Ok(0)
+        }
+
+        "source-extract" => {
+            let store = CanonicalStore::open(args.vault_root()?)?;
+            let bytes = capture::extract_bytes(&store, args.require("id")?)?;
+            let out = args.require("out")?;
+            std::fs::write(out, &bytes)
+                .map_err(|e| crate::Error::Capture(format!("cannot write {out}: {e}")))?;
+            println!("wrote {} bytes to {out}", bytes.len());
+            Ok(0)
+        }
+
+        "project-sources" => {
+            let store = CanonicalStore::open(args.vault_root()?)?;
+            let sources = capture::list_project_sources(&store, args.require("project")?)?;
+            println!("sources: {}", sources.len());
+            for (object_id, source) in &sources {
+                println!("  {object_id} {source:?}");
             }
             Ok(0)
         }
@@ -687,6 +813,218 @@ mod tests {
         ]))
         .unwrap_err();
         assert!(format!("{err}").contains("invalid project reference"));
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    /// `T02-02` acceptance criterion: capture/source/artifact admission
+    /// "work through CLI" — a full round trip through the actual dispatcher:
+    /// default-Note `capture`, explicit `--kind decision`, a real file
+    /// import, extraction with exact byte fidelity, and the preview path.
+    #[test]
+    fn capture_and_source_lifecycle_works_through_the_cli() {
+        let root = tmp();
+        let root_str = root.to_string_lossy().to_string();
+        assert_eq!(
+            run(&s(&["canonical-init", "--vault", &root_str])).unwrap(),
+            0
+        );
+        assert_eq!(
+            run(&s(&[
+                "project-create",
+                "--vault",
+                &root_str,
+                "--name",
+                "Capture Project"
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let project_id = store
+            .list_current_objects()
+            .unwrap()
+            .into_iter()
+            .find_map(|(id, _, payload)| {
+                project::RecordPayload::from_json(&payload)
+                    .ok()?
+                    .as_project()
+                    .ok()
+                    .map(|_| id)
+            })
+            .unwrap();
+        drop(store);
+
+        // Default kind is Note.
+        assert_eq!(
+            run(&s(&[
+                "capture",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--body",
+                "captured by default as a note"
+            ]))
+            .unwrap(),
+            0
+        );
+        // Explicit kind selection.
+        assert_eq!(
+            run(&s(&[
+                "capture",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--kind",
+                "decision",
+                "--key",
+                "q1",
+                "--body",
+                "We will do X"
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        assert_eq!(
+            project::list_project_records(&store, &project_id)
+                .unwrap()
+                .len(),
+            2
+        );
+        drop(store);
+
+        // A real file import, through the CLI, with exact byte recovery.
+        let fixture_path = root.join("evidence.bin");
+        let fixture_bytes: Vec<u8> = (0u8..=255).collect();
+        std::fs::write(&fixture_path, &fixture_bytes).unwrap();
+        assert_eq!(
+            run(&s(&[
+                "source-import",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--label",
+                "evidence file",
+                "--path",
+                &fixture_path.to_string_lossy()
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let sources = capture::list_project_sources(&store, &project_id).unwrap();
+        assert_eq!(sources.len(), 1);
+        let source_id = sources[0].0.clone();
+        drop(store);
+
+        let out_path = root.join("recovered.bin");
+        assert_eq!(
+            run(&s(&[
+                "source-extract",
+                "--vault",
+                &root_str,
+                "--id",
+                &source_id,
+                "--out",
+                &out_path.to_string_lossy()
+            ]))
+            .unwrap(),
+            0
+        );
+        assert_eq!(std::fs::read(&out_path).unwrap(), fixture_bytes);
+
+        // A manual reference and the deactivate/reactivate lifecycle.
+        assert_eq!(
+            run(&s(&[
+                "source-reference",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--label",
+                "external doc",
+                "--repository",
+                "org/repo"
+            ]))
+            .unwrap(),
+            0
+        );
+        assert_eq!(
+            run(&s(&[
+                "source-deactivate",
+                "--vault",
+                &root_str,
+                "--id",
+                &source_id
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        assert!(
+            !capture::list_project_sources(&store, &project_id)
+                .unwrap()
+                .iter()
+                .find(|(id, _)| id == &source_id)
+                .unwrap()
+                .1
+                .active
+        );
+        drop(store);
+        assert_eq!(
+            run(&s(&[
+                "source-reactivate",
+                "--vault",
+                &root_str,
+                "--id",
+                &source_id
+            ]))
+            .unwrap(),
+            0
+        );
+
+        // record-show --preview truncates a note's body without altering it.
+        let store = CanonicalStore::open(&root).unwrap();
+        let note_id = project::list_project_records(&store, &project_id)
+            .unwrap()
+            .into_iter()
+            .find_map(|(id, r)| matches!(r, project::RecordPayload::Note(_)).then_some(id))
+            .unwrap();
+        drop(store);
+        assert_eq!(
+            run(&s(&[
+                "record-show",
+                "--vault",
+                &root_str,
+                "--id",
+                &note_id,
+                "--preview",
+                "5"
+            ]))
+            .unwrap(),
+            0
+        );
+
+        // An unrecognized capture kind is rejected, not silently defaulted.
+        assert_eq!(
+            run(&s(&[
+                "capture",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--kind",
+                "bogus",
+                "--body",
+                "x"
+            ]))
+            .unwrap(),
+            64
+        );
+
         let _ = std::fs::remove_dir_all(&root);
     }
 }

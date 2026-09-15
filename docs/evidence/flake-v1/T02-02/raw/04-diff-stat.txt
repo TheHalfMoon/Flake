@@ -1,0 +1,7 @@
+ src/canonical.rs |  20 +-
+ src/capture.rs   | 914 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ src/cli.rs       | 340 ++++++++++++++++++++-
+ src/lib.rs       |  19 ++
+ src/markdown.rs  |  75 +++++
+ src/project.rs   |  35 ++-
+ 6 files changed, 1393 insertions(+), 10 deletions(-)
