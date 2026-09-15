@@ -151,6 +151,9 @@ fn project_scope_object_ids(store: &CanonicalStore, project_id: &str) -> Result<
     for (id, _) in crate::source_check::list_project_source_checks(store, project_id)? {
         ids.insert(id);
     }
+    if let Some((id, _, _)) = crate::checkpoint::current_checkpoint(store, project_id)? {
+        ids.insert(id);
+    }
     Ok(ids)
 }
 
@@ -518,6 +521,44 @@ mod tests {
         assert!(
             saw_source_check,
             "expected a source_check revision file in the project export"
+        );
+
+        cleanup(&root);
+        cleanup(&dest);
+    }
+
+    #[test]
+    fn project_export_includes_a_review_checkpoint() {
+        let root = tmp();
+        let mut store = CanonicalStore::create(&root).unwrap();
+        let p1 = new_project(&mut store, "P1");
+        crate::checkpoint::mark_reviewed_through(&mut store, "owner", &p1, None, None).unwrap();
+
+        let preview = preview_export(&store, Some(&p1)).unwrap();
+        // project + one review_checkpoint = 2 records.
+        assert_eq!(preview.record_count, 2);
+
+        let dest = tmp();
+        let report = export_to_new_root(&store, Some(&p1), &dest).unwrap();
+        assert_eq!(report.manifest.record_count, 2);
+        let control = dest.join(".fehrest-export");
+        let mut saw_checkpoint = false;
+        for entry in walk(&control) {
+            if entry.extension().and_then(|e| e.to_str()) != Some("json") {
+                continue;
+            }
+            if entry.file_name().and_then(|n| n.to_str()) == Some("export-manifest.json") {
+                continue;
+            }
+            let text = std::fs::read_to_string(&entry).unwrap();
+            let parsed: serde_json::Value = serde_json::from_str(&text).unwrap();
+            if parsed.get("kind").and_then(|k| k.as_str()) == Some("review_checkpoint") {
+                saw_checkpoint = true;
+            }
+        }
+        assert!(
+            saw_checkpoint,
+            "expected a review_checkpoint revision file in the project export"
         );
 
         cleanup(&root);

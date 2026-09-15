@@ -17,6 +17,7 @@
 pub mod backup;
 pub mod canonical;
 pub mod capture;
+pub mod checkpoint;
 pub mod cli;
 pub mod context;
 pub mod decision_state;
@@ -34,6 +35,7 @@ pub mod migration;
 pub mod project;
 pub mod recovery;
 pub mod relation;
+pub mod resume;
 pub mod source_check;
 pub mod temporal;
 pub mod vault;

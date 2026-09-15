@@ -3,6 +3,7 @@
 
 use crate::canonical::CanonicalStore;
 use crate::capture;
+use crate::checkpoint;
 use crate::context::{self, CompileRequest, SourceItem};
 use crate::decision_state;
 use crate::derived::Derived;
@@ -15,6 +16,7 @@ use crate::markdown;
 use crate::memory::Scope;
 use crate::project::{self, DecisionBasis, DecisionVerification};
 use crate::relation::{self, RelationType};
+use crate::resume;
 use crate::source_check;
 use crate::vault::Vault;
 use crate::{limits, Error, Result};
@@ -149,6 +151,12 @@ FORMAT-2 SOURCE-CHECK COMMANDS (T03-01):
 
 FORMAT-2 TEMPORAL RESOLUTION COMMANDS (T03-02):
   decision-state    Resolve a decision key's current accepted state, with reasons and negative evidence for every candidate     --project <uuid> --key K [--as-of-valid TS] [--as-of-recorded N]
+
+FORMAT-2 RESUME/CHECKPOINT COMMANDS (T03-03):
+  resume              Show conflicts, stale evidence, current decisions, next actions, notes and changes since checkpoint    --project <uuid>
+  checkpoint-mark     Mark reviewed through a sequence (default: current head); --expect required after the first mark     --project <uuid> [--expect <revision-uuid>] [--through N]
+  checkpoint-reset    Explicitly move the checkpoint backward with a reason                                                  --project <uuid> --expect <revision-uuid> --through N --reason R
+  checkpoint-history  Show every checkpoint revision for a project                                                           --project <uuid>
 ";
 
 struct Args {
@@ -1119,6 +1127,113 @@ pub fn run(argv: &[String]) -> Result<i32> {
                     c.decision.valid_from,
                     c.decision.valid_to,
                     c.exclusion_reason
+                );
+            }
+            Ok(0)
+        }
+
+        "resume" => {
+            let store = CanonicalStore::open(args.vault_root()?)?;
+            let view = resume::resume(&store, args.require("project")?)?;
+            println!(
+                "project={} reviewed_through_seq={:?} head_seq={}",
+                view.project_id, view.reviewed_through_seq, view.head_seq
+            );
+            println!("conflicts: {}", view.conflicts.len());
+            for c in &view.conflicts {
+                println!(
+                    "  key={:?} candidates={}",
+                    c.decision_key,
+                    c.considered.len()
+                );
+            }
+            println!(
+                "stale_or_missing_evidence: {}",
+                view.stale_or_missing_evidence.len()
+            );
+            for e in &view.stale_or_missing_evidence {
+                println!(
+                    "  source={} status={:?} observed_at={}",
+                    e.source_id, e.latest_check.status, e.latest_check.observed_at
+                );
+            }
+            println!("current_decisions: {}", view.current_decisions.len());
+            for d in &view.current_decisions {
+                println!("  key={:?} outcome={:?}", d.decision_key, d.outcome);
+            }
+            println!("next_actions: {}", view.next_actions.len());
+            for (id, a) in &view.next_actions {
+                println!("  {id} state={:?} title={:?}", a.state, a.title);
+            }
+            println!("relevant_notes: {}", view.relevant_notes.len());
+            for (id, n) in &view.relevant_notes {
+                println!("  {id} title={:?}", n.title);
+            }
+            println!(
+                "changes_since_checkpoint: {}",
+                view.changes_since_checkpoint.len()
+            );
+            for c in &view.changes_since_checkpoint {
+                println!("  seq={} {} [{}]", c.recorded_seq, c.object_id, c.kind);
+            }
+            Ok(0)
+        }
+
+        "checkpoint-mark" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let through = args
+                .get("through")
+                .map(|s| {
+                    s.parse::<i64>()
+                        .map_err(|_| Error::Project(format!("invalid --through: {s}")))
+                })
+                .transpose()?;
+            let (outcome, checkpoint) = checkpoint::mark_reviewed_through(
+                &mut store,
+                CLI_ACTOR,
+                args.require("project")?,
+                args.get("expect"),
+                through,
+            )?;
+            println!(
+                "{} {} reviewed_through_seq={}",
+                outcome.object_id, outcome.revision_id, checkpoint.reviewed_through_seq
+            );
+            Ok(0)
+        }
+
+        "checkpoint-reset" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let through: i64 = args
+                .require("through")?
+                .parse()
+                .map_err(|_| Error::Project("invalid --through".to_string()))?;
+            let (outcome, checkpoint) = checkpoint::reset_checkpoint(
+                &mut store,
+                CLI_ACTOR,
+                args.require("project")?,
+                args.require("expect")?,
+                through,
+                args.require("reason")?,
+            )?;
+            println!(
+                "{} {} reviewed_through_seq={} reset_reason={:?}",
+                outcome.object_id,
+                outcome.revision_id,
+                checkpoint.reviewed_through_seq,
+                checkpoint.reset_reason
+            );
+            Ok(0)
+        }
+
+        "checkpoint-history" => {
+            let store = CanonicalStore::open(args.vault_root()?)?;
+            let history = checkpoint::checkpoint_history(&store, args.require("project")?)?;
+            println!("checkpoints: {}", history.len());
+            for c in &history {
+                println!(
+                    "  reviewed_through_seq={} reset_reason={:?}",
+                    c.reviewed_through_seq, c.reset_reason
                 );
             }
             Ok(0)
@@ -2533,6 +2648,187 @@ mod tests {
                 &project_id,
                 "--key",
                 "k"
+            ]))
+            .unwrap(),
+            0
+        );
+
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn resume_and_checkpoint_lifecycle_works_through_the_cli() {
+        let root = tmp();
+        let root_str = root.to_string_lossy().to_string();
+        assert_eq!(
+            run(&s(&["canonical-init", "--vault", &root_str])).unwrap(),
+            0
+        );
+        assert_eq!(
+            run(&s(&["project-create", "--vault", &root_str, "--name", "P"])).unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let project_id = store
+            .list_current_objects()
+            .unwrap()
+            .into_iter()
+            .find_map(|(id, _, payload)| {
+                project::RecordPayload::from_json(&payload)
+                    .ok()?
+                    .as_project()
+                    .ok()
+                    .map(|_| id)
+            })
+            .unwrap();
+        drop(store);
+
+        // No checkpoint yet: resume works, checkpoint-history is empty.
+        assert_eq!(
+            run(&s(&[
+                "resume",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id
+            ]))
+            .unwrap(),
+            0
+        );
+        assert_eq!(
+            run(&s(&[
+                "checkpoint-history",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        assert!(checkpoint::checkpoint_history(&store, &project_id)
+            .unwrap()
+            .is_empty());
+        drop(store);
+
+        // First mark: no --expect required.
+        assert_eq!(
+            run(&s(&[
+                "checkpoint-mark",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let (checkpoint_id, checkpoint_rev, first_checkpoint) =
+            checkpoint::current_checkpoint(&store, &project_id)
+                .unwrap()
+                .unwrap();
+        let head_after_first_mark = first_checkpoint.reviewed_through_seq;
+        drop(store);
+
+        // A note created after the mark is "relevant" in resume.
+        assert_eq!(
+            run(&s(&[
+                "note-create",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--body",
+                "after checkpoint"
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let view = resume::resume(&store, &project_id).unwrap();
+        assert_eq!(view.reviewed_through_seq, Some(head_after_first_mark));
+        assert_eq!(view.relevant_notes.len(), 1);
+        drop(store);
+
+        assert_eq!(
+            run(&s(&[
+                "resume",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id
+            ]))
+            .unwrap(),
+            0
+        );
+
+        // Second mark requires --expect.
+        let err = run(&s(&[
+            "checkpoint-mark",
+            "--vault",
+            &root_str,
+            "--project",
+            &project_id,
+        ]))
+        .unwrap_err();
+        assert!(format!("{err}").contains("already exists"));
+        assert_eq!(
+            run(&s(&[
+                "checkpoint-mark",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--expect",
+                &checkpoint_rev
+            ]))
+            .unwrap(),
+            0
+        );
+
+        // Explicit reset moves the checkpoint backward with a reason.
+        let store = CanonicalStore::open(&root).unwrap();
+        let (_, second_rev, _) = checkpoint::current_checkpoint(&store, &project_id)
+            .unwrap()
+            .unwrap();
+        drop(store);
+        assert_eq!(
+            run(&s(&[
+                "checkpoint-reset",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--expect",
+                &second_rev,
+                "--through",
+                "0",
+                "--reason",
+                "re-review everything"
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let history = checkpoint::checkpoint_history(&store, &project_id).unwrap();
+        assert_eq!(history.len(), 3);
+        assert_eq!(history[2].reviewed_through_seq, 0);
+        assert_eq!(
+            history[2].reset_reason.as_deref(),
+            Some("re-review everything")
+        );
+        let _ = checkpoint_id;
+        drop(store);
+
+        assert_eq!(
+            run(&s(&[
+                "checkpoint-history",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id
             ]))
             .unwrap(),
             0

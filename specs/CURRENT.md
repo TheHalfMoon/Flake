@@ -13,8 +13,8 @@ CANONICAL_BUILD_PLAN=docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md
 CANONICAL_BUILD_PLAN_SHA256=b555f83ff12882ae6f55f90bbeaa411de52b84661a7f3953350cbfc6bd789fb2
 CANONICAL_PLAN_REMOTE_STATUS=MIGRATED_TO_GITHUB
 CANONICAL_PLAN_LOCAL_DEPENDENCY=NONE
-ACTIVE_IMPLEMENTATION_UNIT=T03-03
-NEXT_DEPENDENCY_READY_UNIT=T03-03
+ACTIVE_IMPLEMENTATION_UNIT=T03-04
+NEXT_DEPENDENCY_READY_UNIT=T03-04
 P01_STATUS=CLOSED
 T00-01_STATUS=COMPLETE
 T00-01_EVIDENCE=docs/evidence/flake-v1/T00-01/REPORT.md
@@ -78,7 +78,10 @@ T03-01_EVIDENCE=docs/evidence/flake-v1/T03-01/REPORT.md
 T03-01_MERGE_COMMIT=07694d572c295940e933f51fd72cfeddffb92e6d
 T03-02_STATUS=COMPLETE
 T03-02_EVIDENCE=docs/evidence/flake-v1/T03-02/REPORT.md
-T03-02_MERGE_COMMIT=PENDING_PR_MERGE
+T03-02_MERGE_COMMIT=4325e505f31dc5bb5ae47282ea390b1bd623732e
+T03-03_STATUS=COMPLETE
+T03-03_EVIDENCE=docs/evidence/flake-v1/T03-03/REPORT.md
+T03-03_MERGE_COMMIT=PENDING_PR_MERGE
 SPEC_003_AUTO_ACTIVATION=PROHIBITED
 PROJECT_COMPLETE=NO
 ```
@@ -94,7 +97,9 @@ The historical local-only planning SHAs `4246f6d...` and `852e44b...` are proven
 
 ## Next action
 
-`T03-03` — Build the owner resume view and explicit checkpoint (`docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` T03-03 row, `P03`/`VS05`). Objective: let a returning owner see changed evidence, accepted decisions and next actions. Compose §12 ordering from canonical eligibility/resolution and bounded search support; show changes since an explicit reviewed-through sequence, current head, missing/changed evidence, unresolved conflicts and next actions; mark reviewed only on explicit owner command (opening/searching is never a checkpoint); resume output is stable at the same snapshot. Files/components: Core resume query, CLI resume/checkpoint/history commands and golden user scenarios. Depends on `T03-02` (complete).
+`T03-04` — Issue scoped grants and persist exact disclosure receipts (`docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` T03-04 row, `P03`/`VS06`). Objective: export a bounded package whose every byte has explicit scope and provenance. Implement §18 owner-issued grants, expiry/revocation, type/ID restrictions and privacy exclusions; every item type/referenced metadata uses canonical checks; persist the receipt and exact wire bytes before emission (deterministic byte accounting including envelope metadata); stage/verify package output; reconcile a lost result through the command ID; no raw agent read endpoint or imported live grant. Verification method: a byte-level disclosure oracle against a canonical allowlist and the persisted receipt, comparing exact UTF-8 wire length/digest. Files/components: Core grants/eligibility/compiler/receipt store, CLI package preview/export and tests. Depends on `T03-03` (complete).
+
+`T03-03` closed: an eighth `RecordPayload` kind, `ReviewCheckpoint` (`src/checkpoint.rs`), mirroring `Relation`'s shape — one canonical object per project recording an explicit, owner-driven "reviewed through this recorded sequence" marker, monotonic unless explicitly reset with a reason (`mark_reviewed_through`/`reset_checkpoint`). `src/resume.rs`'s `resume()` composes the owner resume view purely from already-canonical reads (never writes a checkpoint, so opening/computing resume can never itself mark reviewed — §12): conflicts (`NeedsReview` decision keys) and stale/missing evidence (non-`Match` latest source checks) precede current accepted decisions, next actions (non-terminal), relevant notes (changed since checkpoint) and the raw changes-since-checkpoint log, exactly §18's own priority-group ordering; the whole view is pinned to one fixed `head_seq` snapshot per call. CLI: `resume`, `checkpoint-mark`, `checkpoint-reset`, `checkpoint-history`. Self-review before commit caught a real gap: `import_selected_merge`'s explicit per-kind pass list initially omitted `review_checkpoint`, which would have silently dropped every checkpoint object during a merge-import — fixed (checkpoints now ride the same simple project_id-only pass as `Note`/`Decision`) and regression-tested (`merge_review_checkpoint_is_carried_through_with_its_project_id_rewritten`, `project_export_includes_a_review_checkpoint`). 19 new tests, all passing (314/314 full suite); `fmt`/`clippy -D warnings`/`git diff --check` all clean. Full details: `docs/evidence/flake-v1/T03-03/REPORT.md`.
 
 `T03-02` closed: a standalone module, `src/decision_state.rs` (`resolve_decision_state`), deterministically resolves "what decision is currently accepted" for one `(project, decision_key)` as of a caller-chosen valid-time instant and recorded-sequence cutoff — `CurrentSet`/`NeedsReview`/`NoAcceptedDecision`, with `considered` always listing every candidate decision and, for each excluded one, why (lifecycle, out-of-interval, or its own `withdrawal_reason`). Not a reuse of the historical Phase T `temporal.rs`/`memory.rs` (immutable evidence, `AGENTS.md` §3): `Decision`'s already-explicit lifecycle/supersession model needs none of Phase T's five-rung confidence ladder, so the only rule this resolver applies is "two independently-accepted decisions sharing a key with overlapping valid time are always `NeedsReview`, never silently ranked" — structurally forced by `supersede_decision` always demoting the loser's lifecycle in the same step that records the supersession edge. Verified against a from-scratch, independently-written reference oracle (`tests::reference_oracle`, using `CanonicalStore::history`/`revisions_since` rather than the production path's `all_revisions` fold) across 200 seeded random scenarios (seed `20260915`); all agree. CLI: `decision-state --project <uuid> --key K [--as-of-valid TS] [--as-of-recorded N]`. 13 new tests, all passing (295/295 full suite); `fmt`/`clippy -D warnings`/`git diff --check` all clean. Full details: `docs/evidence/flake-v1/T03-02/REPORT.md`.
 

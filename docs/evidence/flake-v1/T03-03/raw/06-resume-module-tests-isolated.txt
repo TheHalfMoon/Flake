@@ -1,0 +1,14 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running unittests src\lib.rs (target\debug\deps\fehrest-3169ee0784ab6f1d.exe)
+
+running 7 tests
+test resume::tests::resume_never_writes_a_checkpoint ... ok
+test resume::tests::resume_output_is_stable_across_repeated_calls_at_the_same_snapshot ... ok
+test resume::tests::empty_project_has_an_empty_resume_view ... ok
+test resume::tests::next_actions_excludes_terminal_states ... ok
+test resume::tests::stale_evidence_lists_only_non_match_latest_checks ... ok
+test resume::tests::checkpoint_narrows_relevant_notes_and_changes ... ok
+test resume::tests::current_decisions_and_conflicts_are_separated ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 274 filtered out; finished in 0.08s
+
