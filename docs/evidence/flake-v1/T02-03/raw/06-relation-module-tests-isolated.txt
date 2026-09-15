@@ -1,0 +1,17 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.10s
+     Running unittests src\lib.rs (target\debug\deps\fehrest-3169ee0784ab6f1d.exe)
+
+running 9 tests
+test relation::tests::rejects_a_project_or_relation_as_an_endpoint ... ok
+test relation::tests::rejects_a_cross_project_endpoint ... ok
+test relation::tests::rejects_a_self_loop ... ok
+test relation::tests::supersedes_requires_decision_endpoints ... ok
+test relation::tests::endpoints_are_pinned_to_the_revision_current_at_creation ... ok
+test relation::tests::supersedes_rejects_a_transitive_cycle ... ok
+test relation::tests::missing_endpoint_is_refused_before_any_mutation ... ok
+test relation::tests::links_a_decision_to_a_source_as_supporting_evidence ... ok
+test relation::tests::supersedes_rejects_a_direct_cycle ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 197 filtered out; finished in 0.11s
+
+exit=0

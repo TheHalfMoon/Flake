@@ -1,0 +1,14 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.09s
+     Running unittests src\lib.rs (target\debug\deps\fehrest-3169ee0784ab6f1d.exe)
+
+running 6 tests
+test cli::tests::init_appends_vault_created_event_via_writer_and_chain_verifies ... ok
+test cli::tests::cli_rejects_a_note_create_with_an_invalid_project_reference ... ok
+test cli::tests::compile_appends_context_compiled_event_via_writer_and_chain_verifies ... ok
+test cli::tests::capture_and_source_lifecycle_works_through_the_cli ... ok
+test cli::tests::full_project_and_record_lifecycle_works_through_the_cli ... ok
+test cli::tests::action_decision_relation_lifecycle_works_through_the_cli ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 200 filtered out; finished in 0.18s
+
+exit=0
