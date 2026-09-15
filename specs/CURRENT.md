@@ -13,8 +13,8 @@ CANONICAL_BUILD_PLAN=docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md
 CANONICAL_BUILD_PLAN_SHA256=b555f83ff12882ae6f55f90bbeaa411de52b84661a7f3953350cbfc6bd789fb2
 CANONICAL_PLAN_REMOTE_STATUS=MIGRATED_TO_GITHUB
 CANONICAL_PLAN_LOCAL_DEPENDENCY=NONE
-ACTIVE_IMPLEMENTATION_UNIT=T02-05
-NEXT_DEPENDENCY_READY_UNIT=T02-05
+ACTIVE_IMPLEMENTATION_UNIT=T02-06
+NEXT_DEPENDENCY_READY_UNIT=T02-06
 P01_STATUS=CLOSED
 T00-01_STATUS=COMPLETE
 T00-01_EVIDENCE=docs/evidence/flake-v1/T00-01/REPORT.md
@@ -62,7 +62,11 @@ T02-03_EVIDENCE=docs/evidence/flake-v1/T02-03/REPORT.md
 T02-03_MERGE_COMMIT=e8a285d2672fb6093125739f4307675ebc08195a
 T02-04_STATUS=COMPLETE
 T02-04_EVIDENCE=docs/evidence/flake-v1/T02-04/REPORT.md
-T02-04_MERGE_COMMIT=PENDING_PR_MERGE
+T02-04_MERGE_COMMIT=dd7ff40bec97d14d966ec1c6e9bd993e351bd366
+T02-05_STATUS=COMPLETE
+T02-05_EVIDENCE=docs/evidence/flake-v1/T02-05/REPORT.md
+T02-05_FORMAT_DOC=docs/formats/portable-export-v1.md
+T02-05_MERGE_COMMIT=PENDING_PR_MERGE
 SPEC_003_AUTO_ACTIVATION=PROHIBITED
 PROJECT_COMPLETE=NO
 ```
@@ -78,8 +82,8 @@ The historical local-only planning SHAs `4246f6d...` and `852e44b...` are proven
 
 ## Next action
 
-`T02-05` — Export complete owned state with a verified manifest (`docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` T02-05 row). "An export that omits source revisions, receipts or unknown payloads is not ownership" — full/selected-project export with a member manifest and integrity root, per §15's `Export/backup manifest` row.
+`T02-06` — Validate and import portable packages into a new vault (`docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` T02-06 row). The natural counterpart to `T02-05`'s exporter: import `docs/formats/portable-export-v1.md`'s own format back into a fresh canonical store, with the same admission discipline `T01-06`'s legacy-migration importer already established (no ambiguous "complete" import, exact preservation, omissions with reasons).
 
-`T02-04` closed: `src/index.rs` adds a new, independent FTS5 derived index (`derived-fts.sqlite`) over the format-2 canonical store's `Note`/`Action`/`Decision` records — deliberately not an extension of Phase T's own `derived.rs` (coupled to the unrelated format-1 `Vault`/`ObjectId` model). Full rebuild publishes atomically via the same staging-file/rename pattern `backup.rs`/`recovery.rs` already use; incremental update is checkpointed by a new `CanonicalStore::revisions_since` read method inside one SQLite transaction, proven equivalent to a full rebuild by a dedicated oracle test. `search` never lets a cached index field (project/kind/title) drive inclusion *or* exclusion — every hit is re-verified against fresh canonical state — and falls back to a bounded direct canonical scan (never a false empty result) when the index is missing or corrupt. New CLI: `fts-rebuild`/`fts-update`/`fts-status`/`fts-search`. Full details, including two design bugs this task's own first test run caught and fixed at the root cause (SQL-level project filtering letting a poisoned index *hide* legitimate results; a wrong cross-store UUID-equality assumption in the oracle test): `docs/evidence/flake-v1/T02-04/REPORT.md`.
+`T02-05` closed: `src/export.rs` adds a new, independent portable exporter — deliberately not an extension of `backup.rs` (`T01-05`'s SQLite-snapshot backup is a different, restorable-only artifact; this task's own output is individual JSON/Markdown files a generic reader can validate with no Flake dependency, per `docs/formats/portable-export-v1.md`). `export-full`/`export-project` (never the same `kind` string `backup.rs` already uses for its own unrelated format), publishing atomically via the same staging/rename pattern, full revision history (not just current state) via a new `CanonicalStore::all_revisions` read method, exact raw payload bytes preserved (never re-serialized), and a manifest `integrity_root` proven independently recomputable from the format doc alone. New CLI: `export-preview`/`export-run`. Full details, including a non-compiling draft-assertion mistake this task's own build caught before any test ran: `docs/evidence/flake-v1/T02-05/REPORT.md`.
 
 Do not activate Spec 003 automatically. Do not invent a replacement roadmap. Do not use OpenAI API or a required paid AI/model service.

@@ -7,6 +7,7 @@ use crate::context::{self, CompileRequest, SourceItem};
 use crate::derived::Derived;
 use crate::envelope::TrustLevel;
 use crate::events::{ChainStatus, EventKind, EventLog};
+use crate::export;
 use crate::index;
 use crate::markdown;
 use crate::memory::Scope;
@@ -126,6 +127,10 @@ FORMAT-2 SEARCH INDEX COMMANDS (T02-04):
   fts-update        Incremental update (rebuilds if none exists yet) --vault <path>
   fts-status        Show the index's own checkpoint            --vault <path>
   fts-search        Search Notes/Actions/Decisions              --query T [--project <uuid>] [--limit N]
+
+FORMAT-2 EXPORT COMMANDS (T02-05):
+  export-preview    Show scope/counts without writing       [--project <uuid>]
+  export-run        Write a portable export package         --out <path> [--project <uuid>]
 ";
 
 struct Args {
@@ -759,6 +764,35 @@ pub fn run(argv: &[String]) -> Result<i32> {
                     hit.object_id, hit.kind, hit.project_id, hit.title
                 );
             }
+            Ok(0)
+        }
+
+        "export-preview" => {
+            let store = CanonicalStore::open(args.vault_root()?)?;
+            let preview = export::preview_export(&store, args.get("project"))?;
+            println!(
+                "kind={} project={:?} records={} revisions={} snapshot_head_seq={}",
+                preview.kind,
+                preview.project_id,
+                preview.record_count,
+                preview.revision_count,
+                preview.snapshot_head_seq
+            );
+            Ok(0)
+        }
+
+        "export-run" => {
+            let store = CanonicalStore::open(args.vault_root()?)?;
+            let report =
+                export::export_to_new_root(&store, args.get("project"), args.require("out")?)?;
+            println!(
+                "exported: kind={} records={} revisions={} integrity_root={} -> {}",
+                report.manifest.kind,
+                report.manifest.record_count,
+                report.manifest.revision_count,
+                report.manifest.integrity_root,
+                report.dest_root.display()
+            );
             Ok(0)
         }
 
@@ -1764,5 +1798,109 @@ mod tests {
         drop(store);
 
         let _ = std::fs::remove_dir_all(&root);
+    }
+
+    /// `T02-05` acceptance criterion: "CLI export preview" — a full round
+    /// trip through the actual dispatcher: preview, then run, of both a
+    /// full export and a project-scoped export.
+    #[test]
+    fn export_preview_and_run_work_through_the_cli() {
+        let root = tmp();
+        let root_str = root.to_string_lossy().to_string();
+        assert_eq!(
+            run(&s(&["canonical-init", "--vault", &root_str])).unwrap(),
+            0
+        );
+        assert_eq!(
+            run(&s(&["project-create", "--vault", &root_str, "--name", "P"])).unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let project_id = store
+            .list_current_objects()
+            .unwrap()
+            .into_iter()
+            .find_map(|(id, _, payload)| {
+                project::RecordPayload::from_json(&payload)
+                    .ok()?
+                    .as_project()
+                    .ok()
+                    .map(|_| id)
+            })
+            .unwrap();
+        drop(store);
+        assert_eq!(
+            run(&s(&[
+                "note-create",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--body",
+                "exportable text"
+            ]))
+            .unwrap(),
+            0
+        );
+
+        assert_eq!(
+            run(&s(&["export-preview", "--vault", &root_str])).unwrap(),
+            0
+        );
+        assert_eq!(
+            run(&s(&[
+                "export-preview",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id
+            ]))
+            .unwrap(),
+            0
+        );
+
+        let full_dest = tmp();
+        let full_dest_str = full_dest.to_string_lossy().to_string();
+        assert_eq!(
+            run(&s(&[
+                "export-run",
+                "--vault",
+                &root_str,
+                "--out",
+                &full_dest_str
+            ]))
+            .unwrap(),
+            0
+        );
+        assert!(full_dest
+            .join(".fehrest-export")
+            .join("export-manifest.json")
+            .exists());
+
+        let project_dest = tmp();
+        let project_dest_str = project_dest.to_string_lossy().to_string();
+        assert_eq!(
+            run(&s(&[
+                "export-run",
+                "--vault",
+                &root_str,
+                "--out",
+                &project_dest_str,
+                "--project",
+                &project_id
+            ]))
+            .unwrap(),
+            0
+        );
+        let manifest_path = project_dest
+            .join(".fehrest-export")
+            .join("export-manifest.json");
+        let manifest: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(&manifest_path).unwrap()).unwrap();
+        assert_eq!(manifest["kind"], "export-project");
+
+        let _ = std::fs::remove_dir_all(&root);
+        let _ = std::fs::remove_dir_all(&full_dest);
+        let _ = std::fs::remove_dir_all(&project_dest);
     }
 }
