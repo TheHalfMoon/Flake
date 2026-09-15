@@ -13,8 +13,8 @@ CANONICAL_BUILD_PLAN=docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md
 CANONICAL_BUILD_PLAN_SHA256=b555f83ff12882ae6f55f90bbeaa411de52b84661a7f3953350cbfc6bd789fb2
 CANONICAL_PLAN_REMOTE_STATUS=MIGRATED_TO_GITHUB
 CANONICAL_PLAN_LOCAL_DEPENDENCY=NONE
-ACTIVE_IMPLEMENTATION_UNIT=T02-03
-NEXT_DEPENDENCY_READY_UNIT=T02-03
+ACTIVE_IMPLEMENTATION_UNIT=T02-04
+NEXT_DEPENDENCY_READY_UNIT=T02-04
 P01_STATUS=CLOSED
 T00-01_STATUS=COMPLETE
 T00-01_EVIDENCE=docs/evidence/flake-v1/T00-01/REPORT.md
@@ -56,7 +56,10 @@ T02-01_MERGE_COMMIT=06818675b6bc4b5ab2904e1f5e827c028da3586b
 T02-02_STATUS=COMPLETE
 T02-02_EVIDENCE=docs/evidence/flake-v1/T02-02/REPORT.md
 T02-02_FORMAT_DOC=docs/formats/typed-records.md
-T02-02_MERGE_COMMIT=PENDING_PR_MERGE
+T02-02_MERGE_COMMIT=bfff06c96917726ffff00881afc09c93dcd22599
+T02-03_STATUS=COMPLETE
+T02-03_EVIDENCE=docs/evidence/flake-v1/T02-03/REPORT.md
+T02-03_MERGE_COMMIT=PENDING_PR_MERGE
 SPEC_003_AUTO_ACTIVATION=PROHIBITED
 PROJECT_COMPLETE=NO
 ```
@@ -72,8 +75,8 @@ The historical local-only planning SHAs `4246f6d...` and `852e44b...` are proven
 
 ## Next action
 
-`T02-03` — Record decisions and complete actions with visible history. Builds the full `Action` state machine (`Doing`/`Blocked`/`Done`/`Cancelled`, "any reopening requires an event," ordered dependency-cycle rejection) and `Decision`'s evidence linkage, owner-only acceptance, override/supersession semantics, and valid-time intervals — including the `Relation` connecting a `Decision` to a `Source` `T02-02` introduced (`docs/evidence/flake-v1/T02-02/REPORT.md`, `docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` T02-03 row).
+`T02-04` — Find work with a disposable current lexical index (`docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` T02-04 row). Every `list_project_*`/dependency-graph/cycle-check function `T02-01`-`T02-03` added is a documented full scan (`CanonicalStore::list_current_objects`); this task builds the first real project-scoped index (§30/§15 F04 "derived corrupt/stale... discard candidate authority, keep canonical readable"; a replaceable, disposable FTS5 generation, never authoritative).
 
-`T02-02` closed: `src/capture.rs` adds `Source` as a fifth `RecordPayload` kind, entirely on the same already-audited transaction API `T02-01` established — no new `CommandTarget` variant, no schema change. A `capture` CLI command defaults to `Note` with explicit `Action`/`Decision` selection; `source-import` admits exactly one explicitly-selected regular file (no recursive scan, symlinks refused before opening, obvious-secret filenames refused with the limitation stated in the refusal itself, size enforced against actually-read bytes not `stat()` metadata); `source-reference` registers a reference-only source; `source-extract` recovers the exact original bytes. Origin is always honestly labeled `"unknown"`; a captured file's real modification time is rendered with a newly-added, dependency-free, arbitrary-past-correct UTC formatter (this codebase's prior "now"-only placeholder would have been an invented time here). `src/markdown.rs`'s `preview` is the Markdown "parser/preview contract" — a bounded, char-safe truncation, never an HTML renderer. One existing transport-level backstop constant (`canonical.rs`'s payload-size check) was necessarily widened from 1 MiB to 150 MiB to admit a hex-encoded 64 MiB artifact, documented in the evidence report; no product-facing field limit changed. Deliberately deferred: evidence linkage from a `Decision`/`Action` to a `Source` (`T02-03`'s own job) and project-scoped indexing of sources (`T02-04`'s).
+`T02-03` closed: `src/relation.rs` adds `Relation` as a sixth `RecordPayload` kind, entirely on the same already-audited transaction API — no new `CommandTarget` variant, no schema change. `Action` gained a real state machine (`action_allowed_transition`'s table covering `Open`/`Doing`/`Blocked`/`Done`/`Cancelled`), ordered cycle-checked `dependency_ids`, and a self-describing `last_transition` on every revision (the mechanism that makes "any reopening requires an event" and full history reconstruction hold without a new event store). `Decision` gained `basis`/`verification`, a half-open `[valid_from, valid_to)` interval (parsed/validated via new `capture::parse_rfc3339_utc`), owner-only `accept_decision` (the sole path to `Accepted`), `withdraw_decision`, and `supersede_decision` (two sequential atomic commands — a `Supersedes` `Relation` plus the old decision's lifecycle flip — cycle-checked, same-`decision_key`-required, preserving the prior `Accepted` revision in history). Evidence linkage (`Decision`/`Action` → `Source`) and supersession rationale both live solely on the `Relation` itself, never duplicated onto the record they describe (§15: "not a second copy"). Full details, including the two intentional non-product test-authoring fixes this task's own first test run caught: `docs/evidence/flake-v1/T02-03/REPORT.md`. Deliberately deferred: `Decision` tombstone/delete (`T04`'s UI-confirmation scope) and a floating (vs. pinned) `Relation` endpoint-revision policy.
 
 Do not activate Spec 003 automatically. Do not invent a replacement roadmap. Do not use OpenAI API or a required paid AI/model service.

@@ -1,0 +1,24 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.09s
+     Running unittests src\lib.rs (target\debug\deps\fehrest-3169ee0784ab6f1d.exe)
+
+running 16 tests
+test capture::tests::hex_round_trips_every_byte_value ... ok
+test capture::tests::parse_rfc3339_utc_rejects_malformed_and_impossible_dates ... ok
+test capture::tests::parse_rfc3339_utc_round_trips_known_fixed_points ... ok
+test capture::tests::rfc3339_formats_known_epoch_fixed_points ... ok
+test capture::tests::source_requires_an_existing_project ... ok
+test capture::tests::extract_bytes_refuses_a_manual_reference_with_no_captured_bytes ... ok
+test capture::tests::refuses_obvious_secret_filenames_but_admits_their_example_carve_out ... ok
+test capture::tests::manual_reference_source_carries_no_bytes ... ok
+test capture::tests::deactivate_and_reactivate_preserve_history_like_project_archive ... ok
+test capture::tests::imports_unicode_and_crlf_text_with_exact_byte_fidelity ... ok
+test capture::tests::refuses_a_symlink_without_ever_opening_the_target ... ok
+test capture::tests::imports_a_binary_fixture_with_exact_byte_fidelity ... ok
+test capture::tests::a_fault_during_source_commit_leaves_no_partial_admission ... ok
+test capture::tests::refuses_a_directory_and_a_missing_path ... ok
+test capture::tests::extract_bytes_recovers_the_exact_original_content ... ok
+test capture::tests::oversized_artifact_is_refused_before_any_mutation ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 190 filtered out; finished in 0.22s
+
+exit=0

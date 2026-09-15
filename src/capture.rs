@@ -230,7 +230,7 @@ fn from_hex(s: &str) -> Result<Vec<u8>> {
 /// Uses Howard Hinnant's `civil_from_days` algorithm (public domain;
 /// <https://howardhinnant.github.io/date_algorithms.html>), correct for the
 /// full `i64` range of days.
-fn rfc3339_utc_from_unix_seconds(total_secs: i64) -> String {
+pub(crate) fn rfc3339_utc_from_unix_seconds(total_secs: i64) -> String {
     let days = total_secs.div_euclid(86400);
     let secs_of_day = total_secs.rem_euclid(86400);
     let (y, m, d) = civil_from_days(days);
@@ -254,7 +254,76 @@ fn civil_from_days(z: i64) -> (i64, u32, u32) {
     (y, m, d)
 }
 
-fn now_rfc3339_utc() -> String {
+/// Inverse of [`civil_from_days`] (also Hinnant's algorithm, same source).
+/// Deliberately not range/validity-checked here — arithmetic only; the
+/// caller (`parse_rfc3339_utc`) proves validity by round-tripping the
+/// result back through [`rfc3339_utc_from_unix_seconds`] and comparing,
+/// rather than duplicating a days-in-month/leap-year table a second time.
+fn days_from_civil(y: i64, m: u32, d: u32) -> i64 {
+    let y = if m <= 2 { y - 1 } else { y };
+    let era = if y >= 0 { y } else { y - 399 } / 400;
+    let yoe = (y - era * 400) as u64; // [0, 399]
+    let m = m as u64;
+    let d = d as u64;
+    let doy = (153 * (if m > 2 { m - 3 } else { m + 9 }) + 2) / 5 + d - 1; // [0, 365]
+    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy; // [0, 146096]
+    era * 146097 + doe as i64 - 719468
+}
+
+/// Parse this module's own strict `YYYY-MM-DDTHH:MM:SSZ` UTC form back into
+/// Unix epoch seconds (`T02-03`: decision valid-time interval admission).
+/// Deliberately **not** a general RFC3339 parser — no fractional seconds, no
+/// non-`Z` offsets, no other separators — only the exact shape this crate's
+/// own `rfc3339_utc_from_unix_seconds` ever emits, matching this codebase's
+/// existing "reuse the formatter as the validity oracle" approach: the
+/// parsed value is re-formatted and compared byte-for-byte against the
+/// input, which rejects an impossible calendar date (e.g. February 30)
+/// without a separate days-in-month table (I11: no invented time — an
+/// unparseable or impossible timestamp is refused, never coerced).
+pub(crate) fn parse_rfc3339_utc(s: &str) -> Result<i64> {
+    let b = s.as_bytes();
+    let valid_shape = b.len() == 20
+        && b[4] == b'-'
+        && b[7] == b'-'
+        && b[10] == b'T'
+        && b[13] == b':'
+        && b[16] == b':'
+        && b[19] == b'Z';
+    if !valid_shape {
+        return Err(Error::Capture(format!(
+            "not a valid UTC timestamp, expected YYYY-MM-DDTHH:MM:SSZ: {s}"
+        )));
+    }
+    let field = |range: std::ops::Range<usize>| -> Result<i64> {
+        s.get(range.clone())
+            .and_then(|f| f.parse::<i64>().ok())
+            .ok_or_else(|| Error::Capture(format!("invalid timestamp field in {s}: {range:?}")))
+    };
+    let year = field(0..4)?;
+    let month = field(5..7)?;
+    let day = field(8..10)?;
+    let hour = field(11..13)?;
+    let minute = field(14..16)?;
+    let second = field(17..19)?;
+    if !(1..=12).contains(&month)
+        || !(1..=31).contains(&day)
+        || !(0..24).contains(&hour)
+        || !(0..60).contains(&minute)
+        || !(0..60).contains(&second)
+    {
+        return Err(Error::Capture(format!("timestamp field out of range: {s}")));
+    }
+    let days = days_from_civil(year, month as u32, day as u32);
+    let total_secs = days * 86400 + hour * 3600 + minute * 60 + second;
+    if rfc3339_utc_from_unix_seconds(total_secs) != s {
+        return Err(Error::Capture(format!(
+            "not a valid calendar date/time (failed round-trip check): {s}"
+        )));
+    }
+    Ok(total_secs)
+}
+
+pub(crate) fn now_rfc3339_utc() -> String {
     use std::time::{SystemTime, UNIX_EPOCH};
     let secs = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -571,6 +640,38 @@ mod tests {
             rfc3339_utc_from_unix_seconds(946_684_800 + (366 + 31 + 28) * 86400),
             "2001-03-01T00:00:00Z"
         );
+    }
+
+    #[test]
+    fn parse_rfc3339_utc_round_trips_known_fixed_points() {
+        for secs in [
+            0i64,
+            86399,
+            86400,
+            946_684_800,                     // 2000-01-01T00:00:00Z
+            946_684_800 + (31 + 29) * 86400, // 2000-03-01T00:00:00Z (leap Feb)
+            946_684_800 + 366 * 86400,       // 2001-01-01T00:00:00Z
+        ] {
+            let s = rfc3339_utc_from_unix_seconds(secs);
+            assert_eq!(parse_rfc3339_utc(&s).unwrap(), secs, "round trip for {s}");
+        }
+    }
+
+    #[test]
+    fn parse_rfc3339_utc_rejects_malformed_and_impossible_dates() {
+        for bad in [
+            "not-a-timestamp",
+            "2024-01-01 00:00:00Z", // wrong separator
+            "2024-01-01T00:00:00",  // missing Z
+            "2024-13-01T00:00:00Z", // month out of range
+            "2024-02-30T00:00:00Z", // impossible calendar date (round-trip mismatch)
+            "2024-01-01T24:00:00Z", // hour out of range
+        ] {
+            assert!(
+                parse_rfc3339_utc(bad).is_err(),
+                "expected {bad} to be rejected"
+            );
+        }
     }
 
     #[test]

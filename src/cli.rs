@@ -9,10 +9,56 @@ use crate::envelope::TrustLevel;
 use crate::events::{ChainStatus, EventKind, EventLog};
 use crate::markdown;
 use crate::memory::Scope;
-use crate::project;
+use crate::project::{self, DecisionBasis, DecisionVerification};
+use crate::relation::{self, RelationType};
 use crate::vault::Vault;
-use crate::{limits, Result};
+use crate::{limits, Error, Result};
 use std::path::PathBuf;
+
+/// Split a `--depends-on a,b,c`-style flag into individual IDs, trimming
+/// whitespace and dropping empty entries (so a bare `--depends-on` or a
+/// trailing comma means "no dependencies", not one empty-string ID).
+fn split_ids(raw: &str) -> Vec<String> {
+    raw.split(',')
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(str::to_string)
+        .collect()
+}
+
+fn parse_basis(s: &str) -> Result<DecisionBasis> {
+    match s {
+        "evidence" => Ok(DecisionBasis::Evidence),
+        "user-judgment" => Ok(DecisionBasis::UserJudgment),
+        "agent-proposal" => Ok(DecisionBasis::AgentProposal),
+        other => Err(Error::Project(format!(
+            "unknown --basis {other} (expected evidence|user-judgment|agent-proposal)"
+        ))),
+    }
+}
+
+fn parse_verification(s: &str) -> Result<DecisionVerification> {
+    match s {
+        "unreviewed" => Ok(DecisionVerification::Unreviewed),
+        "user-reviewed" => Ok(DecisionVerification::UserReviewed),
+        other => Err(Error::Project(format!(
+            "unknown --verification {other} (expected unreviewed|user-reviewed)"
+        ))),
+    }
+}
+
+fn parse_relation_type(s: &str) -> Result<RelationType> {
+    match s {
+        "supports" => Ok(RelationType::Supports),
+        "contradicts" => Ok(RelationType::Contradicts),
+        "depends_on" => Ok(RelationType::DependsOn),
+        "relates_to" => Ok(RelationType::RelatesTo),
+        "supersedes" => Ok(RelationType::Supersedes),
+        other => Err(Error::Project(format!(
+            "unknown --type {other} (expected supports|contradicts|depends_on|relates_to|supersedes)"
+        ))),
+    }
+}
 
 /// Every format-2 CLI command runs as this fixed principal (T02-01: no
 /// authentication concept exists in this headless CLI). A future task that
@@ -46,8 +92,8 @@ FORMAT-2 COMMANDS (T02-01; --vault names a separate format-2 store root):
   project-show      Show a project                --id <uuid>
   note-create       Create a note                 --project <uuid> --body T [--title T]
   note-update       Replace a note's title/body   --id <uuid> --expect <revision-uuid> --body T [--title T]
-  action-create     Create an action              --project <uuid> --title T [--body T]
-  decision-create   Create a decision             --project <uuid> --key K --statement T [--rationale T]
+  action-create     Create an action              --project <uuid> --title T [--body T] [--depends-on id1,id2]
+  decision-create   Create a decision             --project <uuid> --key K --statement T [--rationale T] [--basis evidence|user-judgment|agent-proposal] [--verification unreviewed|user-reviewed] [--valid-from TS] [--valid-to TS]
   record-show       Show any typed record          --id <uuid> [--preview N]
   project-records   List a project's work records --project <uuid>
 
@@ -59,6 +105,20 @@ FORMAT-2 CAPTURE COMMANDS (T02-02):
   source-reactivate Mark a source available again   --id <uuid>
   source-extract    Recover a source's exact bytes  --id <uuid> --out <local-path>
   project-sources   List a project's sources        --project <uuid>
+
+FORMAT-2 DECISION/ACTION/RELATION COMMANDS (T02-03):
+  action-start          Move an action to Doing         --id <uuid> --expect <revision-uuid>
+  action-block          Move an action to Blocked        --id <uuid> --expect <revision-uuid> [--reason R]
+  action-complete       Complete an action                --id <uuid> --expect <revision-uuid> --summary T [--override-reason R]
+  action-cancel         Cancel an action                   --id <uuid> --expect <revision-uuid> [--reason R]
+  action-reopen         Reopen a done/cancelled action   --id <uuid> --expect <revision-uuid> --reason R
+  action-set-dependencies  Replace an action's dependency list --id <uuid> --expect <revision-uuid> [--depends-on id1,id2]
+  decision-accept       Owner-accept a draft decision      --id <uuid> --expect <revision-uuid>
+  decision-withdraw     Withdraw a draft/accepted decision  --id <uuid> --expect <revision-uuid> --reason R
+  decision-supersede    Supersede an accepted decision      --new <uuid> --old <uuid> --expect <old-revision-uuid> --reason R
+  relation-create       Link two records                   --project <uuid> --type supports|contradicts|depends_on|relates_to|supersedes --from <uuid> --to <uuid> [--note N]
+  object-relations      List relations touching an object  --id <uuid>
+  project-relations     List a project's relations        --project <uuid>
 ";
 
 struct Args {
@@ -401,12 +461,14 @@ pub fn run(argv: &[String]) -> Result<i32> {
         "action-create" => {
             let mut store = CanonicalStore::open(args.vault_root()?)?;
             let mut writer = store.writer()?;
+            let dependency_ids = args.get("depends-on").map(split_ids).unwrap_or_default();
             let (outcome, _action) = project::create_action(
                 &mut writer,
                 CLI_ACTOR,
                 args.require("project")?,
                 args.require("title")?,
                 args.get("body"),
+                &dependency_ids,
             )?;
             println!("{} {}", outcome.object_id, outcome.revision_id);
             Ok(0)
@@ -415,6 +477,14 @@ pub fn run(argv: &[String]) -> Result<i32> {
         "decision-create" => {
             let mut store = CanonicalStore::open(args.vault_root()?)?;
             let mut writer = store.writer()?;
+            let basis = match args.get("basis") {
+                Some(s) => parse_basis(s)?,
+                None => DecisionBasis::UserJudgment,
+            };
+            let verification = match args.get("verification") {
+                Some(s) => parse_verification(s)?,
+                None => DecisionVerification::Unreviewed,
+            };
             let (outcome, _decision) = project::create_decision(
                 &mut writer,
                 CLI_ACTOR,
@@ -422,8 +492,203 @@ pub fn run(argv: &[String]) -> Result<i32> {
                 args.require("key")?,
                 args.require("statement")?,
                 args.get("rationale"),
+                basis,
+                verification,
+                args.get("valid-from"),
+                args.get("valid-to"),
             )?;
             println!("{} {}", outcome.object_id, outcome.revision_id);
+            Ok(0)
+        }
+
+        "action-start" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let mut writer = store.writer()?;
+            let (outcome, action) = project::start_action(
+                &mut writer,
+                CLI_ACTOR,
+                args.require("id")?,
+                args.require("expect")?,
+            )?;
+            println!(
+                "{} {} state={:?}",
+                outcome.object_id, outcome.revision_id, action.state
+            );
+            Ok(0)
+        }
+
+        "action-block" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let mut writer = store.writer()?;
+            let (outcome, action) = project::block_action(
+                &mut writer,
+                CLI_ACTOR,
+                args.require("id")?,
+                args.require("expect")?,
+                args.get("reason"),
+            )?;
+            println!(
+                "{} {} state={:?}",
+                outcome.object_id, outcome.revision_id, action.state
+            );
+            Ok(0)
+        }
+
+        "action-complete" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let mut writer = store.writer()?;
+            let (outcome, action) = project::complete_action(
+                &mut writer,
+                CLI_ACTOR,
+                args.require("id")?,
+                args.require("expect")?,
+                args.require("summary")?,
+                args.get("override-reason"),
+            )?;
+            println!(
+                "{} {} state={:?}",
+                outcome.object_id, outcome.revision_id, action.state
+            );
+            Ok(0)
+        }
+
+        "action-cancel" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let mut writer = store.writer()?;
+            let (outcome, action) = project::cancel_action(
+                &mut writer,
+                CLI_ACTOR,
+                args.require("id")?,
+                args.require("expect")?,
+                args.get("reason"),
+            )?;
+            println!(
+                "{} {} state={:?}",
+                outcome.object_id, outcome.revision_id, action.state
+            );
+            Ok(0)
+        }
+
+        "action-reopen" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let mut writer = store.writer()?;
+            let (outcome, action) = project::reopen_action(
+                &mut writer,
+                CLI_ACTOR,
+                args.require("id")?,
+                args.require("expect")?,
+                args.require("reason")?,
+            )?;
+            println!(
+                "{} {} state={:?}",
+                outcome.object_id, outcome.revision_id, action.state
+            );
+            Ok(0)
+        }
+
+        "action-set-dependencies" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let mut writer = store.writer()?;
+            let dependency_ids = args.get("depends-on").map(split_ids).unwrap_or_default();
+            let (outcome, _action) = project::set_action_dependencies(
+                &mut writer,
+                CLI_ACTOR,
+                args.require("id")?,
+                args.require("expect")?,
+                &dependency_ids,
+            )?;
+            println!("{} {}", outcome.object_id, outcome.revision_id);
+            Ok(0)
+        }
+
+        "decision-accept" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let mut writer = store.writer()?;
+            let (outcome, decision) = project::accept_decision(
+                &mut writer,
+                CLI_ACTOR,
+                args.require("id")?,
+                args.require("expect")?,
+            )?;
+            println!(
+                "{} {} lifecycle={:?}",
+                outcome.object_id, outcome.revision_id, decision.lifecycle
+            );
+            Ok(0)
+        }
+
+        "decision-withdraw" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let mut writer = store.writer()?;
+            let (outcome, decision) = project::withdraw_decision(
+                &mut writer,
+                CLI_ACTOR,
+                args.require("id")?,
+                args.require("expect")?,
+                args.require("reason")?,
+            )?;
+            println!(
+                "{} {} lifecycle={:?}",
+                outcome.object_id, outcome.revision_id, decision.lifecycle
+            );
+            Ok(0)
+        }
+
+        "decision-supersede" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let (relation_outcome, update_outcome, old_decision) = project::supersede_decision(
+                &mut store,
+                CLI_ACTOR,
+                args.require("new")?,
+                args.require("old")?,
+                args.require("expect")?,
+                args.require("reason")?,
+            )?;
+            println!(
+                "relation {} {} old-decision {} {} lifecycle={:?}",
+                relation_outcome.object_id,
+                relation_outcome.revision_id,
+                update_outcome.object_id,
+                update_outcome.revision_id,
+                old_decision.lifecycle
+            );
+            Ok(0)
+        }
+
+        "relation-create" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let mut writer = store.writer()?;
+            let relation_type = parse_relation_type(args.require("type")?)?;
+            let (outcome, _relation) = relation::create_relation(
+                &mut writer,
+                CLI_ACTOR,
+                args.require("project")?,
+                relation_type,
+                args.require("from")?,
+                args.require("to")?,
+                args.get("note"),
+            )?;
+            println!("{} {}", outcome.object_id, outcome.revision_id);
+            Ok(0)
+        }
+
+        "object-relations" => {
+            let store = CanonicalStore::open(args.vault_root()?)?;
+            let relations = relation::list_relations_for_object(&store, args.require("id")?)?;
+            println!("relations: {}", relations.len());
+            for (object_id, r) in &relations {
+                println!("  {object_id} {r:?}");
+            }
+            Ok(0)
+        }
+
+        "project-relations" => {
+            let store = CanonicalStore::open(args.vault_root()?)?;
+            let relations = relation::list_project_relations(&store, args.require("project")?)?;
+            println!("relations: {}", relations.len());
+            for (object_id, r) in &relations {
+                println!("  {object_id} {r:?}");
+            }
             Ok(0)
         }
 
@@ -476,16 +741,26 @@ pub fn run(argv: &[String]) -> Result<i32> {
                     println!("{} {}", outcome.object_id, outcome.revision_id);
                 }
                 "action" => {
+                    let dependency_ids = args.get("depends-on").map(split_ids).unwrap_or_default();
                     let (outcome, _) = project::create_action(
                         &mut writer,
                         CLI_ACTOR,
                         project_id,
                         args.require("title")?,
                         args.get("body"),
+                        &dependency_ids,
                     )?;
                     println!("{} {}", outcome.object_id, outcome.revision_id);
                 }
                 "decision" => {
+                    let basis = match args.get("basis") {
+                        Some(s) => parse_basis(s)?,
+                        None => DecisionBasis::UserJudgment,
+                    };
+                    let verification = match args.get("verification") {
+                        Some(s) => parse_verification(s)?,
+                        None => DecisionVerification::Unreviewed,
+                    };
                     let (outcome, _) = project::create_decision(
                         &mut writer,
                         CLI_ACTOR,
@@ -493,6 +768,10 @@ pub fn run(argv: &[String]) -> Result<i32> {
                         args.require("key")?,
                         args.require("body")?,
                         args.get("rationale"),
+                        basis,
+                        verification,
+                        args.get("valid-from"),
+                        args.get("valid-to"),
                     )?;
                     println!("{} {}", outcome.object_id, outcome.revision_id);
                 }
@@ -1024,6 +1303,290 @@ mod tests {
             .unwrap(),
             64
         );
+
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    /// `T02-03` acceptance criterion: the full `Action` state machine and
+    /// `Decision` evidence-linkage/acceptance/supersession "work through
+    /// CLI" — exercised end-to-end through the actual dispatcher, not the
+    /// underlying `project.rs`/`relation.rs` functions directly.
+    #[test]
+    fn action_decision_relation_lifecycle_works_through_the_cli() {
+        let root = tmp();
+        let root_str = root.to_string_lossy().to_string();
+        assert_eq!(
+            run(&s(&["canonical-init", "--vault", &root_str])).unwrap(),
+            0
+        );
+        assert_eq!(
+            run(&s(&["project-create", "--vault", &root_str, "--name", "P"])).unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let project_id = store
+            .list_current_objects()
+            .unwrap()
+            .into_iter()
+            .find_map(|(id, _, payload)| {
+                project::RecordPayload::from_json(&payload)
+                    .ok()?
+                    .as_project()
+                    .ok()
+                    .map(|_| id)
+            })
+            .unwrap();
+        drop(store);
+
+        // Action lifecycle: create -> start -> complete, through the CLI.
+        assert_eq!(
+            run(&s(&[
+                "action-create",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--title",
+                "Do it"
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let (action_id, action_rev) = store
+            .list_current_objects()
+            .unwrap()
+            .into_iter()
+            .find_map(|(id, rev, payload)| {
+                project::RecordPayload::from_json(&payload)
+                    .ok()?
+                    .as_action()
+                    .ok()
+                    .map(|_| (id, rev))
+            })
+            .unwrap();
+        drop(store);
+
+        assert_eq!(
+            run(&s(&[
+                "action-start",
+                "--vault",
+                &root_str,
+                "--id",
+                &action_id,
+                "--expect",
+                &action_rev
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let (action_rev, _) = store.read_current(&action_id).unwrap().unwrap();
+        drop(store);
+        assert_eq!(
+            run(&s(&[
+                "action-complete",
+                "--vault",
+                &root_str,
+                "--id",
+                &action_id,
+                "--expect",
+                &action_rev,
+                "--summary",
+                "finished"
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let action = project::read_record(&store, &action_id)
+            .unwrap()
+            .unwrap()
+            .as_action()
+            .unwrap()
+            .clone();
+        assert_eq!(action.state, project::ActionState::Done);
+        // Reopening without --reason is refused by the CLI-driven path too.
+        drop(store);
+        let store = CanonicalStore::open(&root).unwrap();
+        let (done_rev, _) = store.read_current(&action_id).unwrap().unwrap();
+        drop(store);
+        // A whitespace-only reason (nonempty at the CLI-arg-parsing layer,
+        // so it actually reaches `reopen_action`'s own validation) is
+        // refused, not silently treated as present.
+        let err = run(&s(&[
+            "action-reopen",
+            "--vault",
+            &root_str,
+            "--id",
+            &action_id,
+            "--expect",
+            &done_rev,
+            "--reason",
+            "   ",
+        ]))
+        .unwrap_err();
+        assert!(format!("{err}").contains("requires an explicit, non-empty reason"));
+
+        // Decision: create two competing decisions on the same key, accept
+        // one, import a source, link it as evidence, then supersede.
+        assert_eq!(
+            run(&s(&[
+                "decision-create",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--key",
+                "q1",
+                "--statement",
+                "Use approach A",
+                "--basis",
+                "user-judgment",
+                "--verification",
+                "unreviewed"
+            ]))
+            .unwrap(),
+            0
+        );
+        assert_eq!(
+            run(&s(&[
+                "decision-create",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--key",
+                "q1",
+                "--statement",
+                "Use approach B instead"
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let mut decisions: Vec<(String, String)> = store
+            .list_current_objects()
+            .unwrap()
+            .into_iter()
+            .filter_map(|(id, rev, payload)| {
+                project::RecordPayload::from_json(&payload)
+                    .ok()?
+                    .as_decision()
+                    .ok()
+                    .map(|_| (id, rev))
+            })
+            .collect();
+        decisions.sort();
+        drop(store);
+        assert_eq!(decisions.len(), 2);
+        let (decision_a, rev_a) = decisions[0].clone();
+        let (decision_b, rev_b) = decisions[1].clone();
+
+        assert_eq!(
+            run(&s(&[
+                "decision-accept",
+                "--vault",
+                &root_str,
+                "--id",
+                &decision_a,
+                "--expect",
+                &rev_a
+            ]))
+            .unwrap(),
+            0
+        );
+        assert_eq!(
+            run(&s(&[
+                "decision-accept",
+                "--vault",
+                &root_str,
+                "--id",
+                &decision_b,
+                "--expect",
+                &rev_b
+            ]))
+            .unwrap(),
+            0
+        );
+
+        // Link the accepted decision to a manually-referenced source as evidence.
+        assert_eq!(
+            run(&s(&[
+                "source-reference",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--label",
+                "benchmark results"
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let source_id = capture::list_project_sources(&store, &project_id)
+            .unwrap()
+            .into_iter()
+            .next()
+            .unwrap()
+            .0;
+        drop(store);
+        assert_eq!(
+            run(&s(&[
+                "relation-create",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--type",
+                "supports",
+                "--from",
+                &decision_a,
+                "--to",
+                &source_id,
+                "--note",
+                "cited"
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let (decision_a_rev, _) = store.read_current(&decision_a).unwrap().unwrap();
+        let linked = relation::list_relations_for_object(&store, &decision_a).unwrap();
+        drop(store);
+        assert_eq!(linked.len(), 1);
+        assert_eq!(linked[0].1.relation_type, RelationType::Supports);
+
+        // Supersede decision_a with decision_b (same key, both accepted).
+        assert_eq!(
+            run(&s(&[
+                "decision-supersede",
+                "--vault",
+                &root_str,
+                "--new",
+                &decision_b,
+                "--old",
+                &decision_a,
+                "--expect",
+                &decision_a_rev,
+                "--reason",
+                "benchmark favored B"
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let a_after = project::read_record(&store, &decision_a)
+            .unwrap()
+            .unwrap()
+            .as_decision()
+            .unwrap()
+            .clone();
+        assert_eq!(a_after.lifecycle, project::DecisionLifecycle::Superseded);
+        let project_relations = relation::list_project_relations(&store, &project_id).unwrap();
+        assert_eq!(project_relations.len(), 2); // the Supports link + the Supersedes edge
+        drop(store);
 
         let _ = std::fs::remove_dir_all(&root);
     }
