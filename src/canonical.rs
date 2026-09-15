@@ -474,6 +474,36 @@ impl CanonicalStore {
             .map_err(|e| Error::Canonical(format!("cannot read history rows: {e}")))
     }
 
+    /// Every revision recorded strictly after `since_seq`, oldest first:
+    /// `(recorded_seq, object_id, revision_id, payload)`. `T02-04`:
+    /// incremental derived-index maintenance uses this to discover exactly
+    /// which objects changed since its last checkpoint, without repeating a
+    /// full [`CanonicalStore::list_current_objects`] scan. Reads the
+    /// immutable `revision` table directly — the same source of truth
+    /// [`CanonicalStore::history`] already uses, just filtered by sequence
+    /// instead of by object.
+    pub fn revisions_since(&self, since_seq: i64) -> Result<Vec<(i64, String, String, String)>> {
+        let mut stmt = self
+            .conn
+            .prepare(
+                "SELECT recorded_seq, object_id, revision_id, payload FROM revision
+                 WHERE recorded_seq > ?1 ORDER BY recorded_seq ASC",
+            )
+            .map_err(|e| Error::Canonical(format!("cannot prepare revisions_since query: {e}")))?;
+        let rows = stmt
+            .query_map(rusqlite::params![since_seq], |r| {
+                Ok((
+                    r.get::<_, i64>(0)?,
+                    r.get::<_, String>(1)?,
+                    r.get::<_, String>(2)?,
+                    r.get::<_, String>(3)?,
+                ))
+            })
+            .map_err(|e| Error::Canonical(format!("cannot run revisions_since query: {e}")))?;
+        rows.collect::<rusqlite::Result<Vec<_>>>()
+            .map_err(|e| Error::Canonical(format!("cannot read revisions_since rows: {e}")))
+    }
+
     /// The stored, already-committed outcome for `command_id`, if any.
     /// Distinct from calling `commit` again with the same input: this never
     /// mutates, and is how a caller reconciles an outcome-unknown state

@@ -1,0 +1,32 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.18s
+     Running unittests src\lib.rs (target\debug\deps\fehrest-3169ee0784ab6f1d.exe)
+
+running 24 tests
+test canonical::tests::fault_after_sql_commit_reconciles_on_retry_instead_of_double_committing ... ok
+test canonical::tests::fault_before_sql_commit_leaves_zero_trace ... ok
+test canonical::tests::fresh_creation_publishes_guard_and_database_with_matching_identity ... ok
+test canonical::tests::full_history_reconstructs_current_state_independent_of_pointer ... ok
+test canonical::tests::duplicate_command_id_with_different_input_is_rejected ... ok
+test canonical::tests::guard_database_identity_mismatch_is_refused ... ok
+test canonical::tests::create_refuses_to_clobber_existing_control_dir ... ok
+test canonical::tests::create_object_commits_atomically_and_advances_head ... ok
+test canonical::tests::generic_sqlite_connection_can_inspect_published_schema ... ok
+test canonical::tests::interrupted_creation_at_each_fault_point_leaves_root_without_published_control_dir ... ok
+test canonical::tests::min_reader_capability_higher_than_supported_is_refused ... ok
+test canonical::tests::malformed_database_file_is_refused_not_panicking ... ok
+test canonical::tests::duplicate_command_id_with_identical_input_replays_the_original_result ... ok
+test canonical::tests::legacy_format1_reader_refuses_format2_store ... ok
+test canonical::tests::reopen_after_create_is_stable_and_pragmas_hold ... ok
+test canonical::tests::unrecognized_extra_table_in_schema_refuses_open ... ok
+test canonical::tests::second_creation_on_a_published_root_is_refused_and_first_is_untouched ... ok
+test canonical::tests::update_object_requires_matching_expected_revision ... ok
+test canonical::tests::reopened_store_independently_shows_the_committed_command_and_revision ... ok
+test canonical::tests::only_one_writer_capability_can_exist_at_a_time ... ok
+test canonical::tests::update_of_unknown_object_id_is_refused ... ok
+test canonical::tests::oversized_payload_is_refused_before_any_mutation ... ok
+test canonical::tests::repeated_creations_have_unique_vault_ids_and_all_reopen_correctly ... ok
+test canonical::tests::d1_commit_atomicity_fault_schedule_matrix ... ok
+
+test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 193 filtered out; finished in 26.46s
+
+exit=0

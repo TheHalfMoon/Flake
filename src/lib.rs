@@ -23,6 +23,7 @@ pub mod derived;
 pub mod envelope;
 pub mod events;
 pub mod identity;
+pub mod index;
 pub mod locator;
 pub mod markdown;
 pub mod memory;
