@@ -154,12 +154,13 @@ fn project_scope_object_ids(store: &CanonicalStore, project_id: &str) -> Result<
     if let Some((id, _, _)) = crate::checkpoint::current_checkpoint(store, project_id)? {
         ids.insert(id);
     }
-    // `T03-04`: `ExportGrant`/`DisclosureReceipt` are deliberately never
-    // added to this union. §16: "shareable project packages omit
-    // local-only locators, active grants and excluded sensitive fields" —
-    // a grant's authority is local to this vault and must never survive
+    // `T03-04`/`T03-05`: `ExportGrant`/`DisclosureReceipt`/`AgentProposal`
+    // are deliberately never added to this union. §16: "shareable project
+    // packages omit local-only locators, active grants and excluded
+    // sensitive fields" — this vault's own grant authority, disclosure
+    // history and inbound agent negotiation state must never survive
     // export/import; a full (non-project-scoped) backup still includes
-    // both, via `compute_preview`'s own separate `list_current_objects`
+    // all three, via `compute_preview`'s own separate `list_current_objects`
     // path below, which is unaffected by this function.
     Ok(ids)
 }
@@ -535,18 +536,27 @@ mod tests {
     }
 
     #[test]
-    fn project_export_never_includes_a_grant_or_receipt() {
+    fn project_export_never_includes_a_grant_receipt_or_proposal() {
         // §16: "shareable project packages omit local-only locators, active
-        // grants and excluded sensitive fields." A grant and a receipt are
-        // both local disclosure-governance state, not project content —
-        // this proves the project-scoped export path never emits either,
-        // even though both exist in the vault and belong to this project.
+        // grants and excluded sensitive fields." A grant, a receipt and an
+        // agent proposal are all local disclosure-governance state, not
+        // project content — this proves the project-scoped export path
+        // never emits any of them, even though all three exist in the
+        // vault and belong to this project.
         let root = tmp();
         let mut store = CanonicalStore::create(&root).unwrap();
         let p1 = new_project(&mut store, "P1");
+        let note_id = {
+            let mut writer = store.writer().unwrap();
+            project::create_note(&mut writer, "owner", &p1, None, "n")
+                .unwrap()
+                .0
+                .object_id
+        };
+        let note_rev = store.read_current(&note_id).unwrap().unwrap().0;
         let grant_id = {
             let mut writer = store.writer().unwrap();
-            crate::grant::issue_grant(&mut writer, "owner", &p1, &[], None, &[], 1024, 3600)
+            crate::grant::issue_grant(&mut writer, "owner", &p1, &[], None, &[], 65536, 3600)
                 .unwrap()
                 .0
                 .object_id
@@ -554,10 +564,27 @@ mod tests {
         let (receipt, _wire) =
             crate::disclosure::compile_disclosure_package(&mut store, &grant_id, "req-1", "agent")
                 .unwrap();
+        let receipt_id = store
+            .list_current_objects()
+            .unwrap()
+            .into_iter()
+            .find_map(|(id, _, payload)| {
+                RecordPayload::from_json(&payload)
+                    .ok()?
+                    .as_disclosure_receipt()
+                    .ok()
+                    .map(|_| id)
+            })
+            .unwrap();
+        let proposal_json = format!(
+            r#"{{"receipt_id":"{receipt_id}","operations":[{{"kind":"note_edit","note_id":"{note_id}","expected_revision_id":"{note_rev}","body":"b"}}]}}"#
+        );
+        crate::proposal::admit_proposal(&mut store, "owner", &p1, proposal_json.as_bytes())
+            .unwrap();
 
         let preview = preview_export(&store, Some(&p1)).unwrap();
-        // project only — the grant and the receipt are both excluded.
-        assert_eq!(preview.record_count, 1);
+        // project + note only — the grant, receipt and proposal are all excluded.
+        assert_eq!(preview.record_count, 2);
 
         let dest = tmp();
         export_to_new_root(&store, Some(&p1), &dest).unwrap();
@@ -581,6 +608,11 @@ mod tests {
                 kind,
                 Some("disclosure_receipt"),
                 "a receipt must never appear in a project export"
+            );
+            assert_ne!(
+                kind,
+                Some("agent_proposal"),
+                "an agent proposal must never appear in a project export"
             );
         }
         let _ = receipt;

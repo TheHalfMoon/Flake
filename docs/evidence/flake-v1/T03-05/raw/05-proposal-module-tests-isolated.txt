@@ -1,0 +1,26 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.14s
+     Running unittests src\lib.rs (target\debug\deps\fehrest-3169ee0784ab6f1d.exe)
+
+running 19 tests
+test proposal::tests::admit_refuses_an_unknown_receipt_id ... ok
+test proposal::tests::admit_refuses_zero_operations ... ok
+test proposal::tests::admit_refuses_too_many_operations ... ok
+test proposal::tests::admit_refuses_malformed_json ... ok
+test proposal::tests::admit_accepts_a_well_formed_note_edit_proposal ... ok
+test proposal::tests::admit_refuses_an_unrecognized_operation_kind ... ok
+test proposal::tests::accept_refuses_a_stale_expected_revision_leaving_the_proposal_pending ... ok
+test proposal::tests::admit_refuses_an_oversized_proposal ... ok
+test proposal::tests::agent_actor_is_used_for_content_commits_never_the_reviewing_owner ... ok
+test proposal::tests::accepting_an_already_accepted_proposal_is_refused_never_double_applied ... ok
+test proposal::tests::admit_refuses_an_operation_targeting_an_undisclosed_object ... ok
+test proposal::tests::duplicate_delivery_produces_two_independent_pending_proposals ... ok
+test proposal::tests::accept_applies_only_the_selected_operation_and_marks_accepted ... ok
+test proposal::tests::arbitrary_instruction_text_is_stored_inert_never_interpreted ... ok
+test proposal::tests::reject_requires_a_reason_and_transitions_state ... ok
+test proposal::tests::draft_decision_operation_uses_agent_proposal_basis ... ok
+test proposal::tests::expire_transitions_state_like_reject ... ok
+test proposal::tests::complete_action_operation_completes_the_action ... ok
+test proposal::tests::evidence_relation_operation_creates_a_relation ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 306 filtered out; finished in 0.25s
+

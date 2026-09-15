@@ -269,6 +269,9 @@ pub enum RecordPayload {
     /// by convention: no function anywhere in this crate ever issues a
     /// `CommandTarget::UpdateObject` against one.
     DisclosureReceipt(crate::disclosure::DisclosureReceipt),
+    /// `T03-05`. Defined in `crate::proposal`, not here, for the same
+    /// reason every other kind lives in its own module.
+    AgentProposal(crate::proposal::AgentProposal),
 }
 
 impl RecordPayload {
@@ -284,6 +287,7 @@ impl RecordPayload {
             RecordPayload::ReviewCheckpoint(_) => "review_checkpoint",
             RecordPayload::ExportGrant(_) => "export_grant",
             RecordPayload::DisclosureReceipt(_) => "disclosure_receipt",
+            RecordPayload::AgentProposal(_) => "agent_proposal",
         }
     }
 
@@ -303,6 +307,7 @@ impl RecordPayload {
             RecordPayload::ReviewCheckpoint(c) => Some(&c.project_id),
             RecordPayload::ExportGrant(g) => Some(&g.project_id),
             RecordPayload::DisclosureReceipt(r) => Some(&r.project_id),
+            RecordPayload::AgentProposal(p) => Some(&p.project_id),
         }
     }
 
@@ -318,6 +323,7 @@ impl RecordPayload {
             RecordPayload::ReviewCheckpoint(c) => serde_json::to_value(c),
             RecordPayload::ExportGrant(g) => serde_json::to_value(g),
             RecordPayload::DisclosureReceipt(r) => serde_json::to_value(r),
+            RecordPayload::AgentProposal(p) => serde_json::to_value(p),
         }
         .map_err(|e| Error::Project(format!("cannot serialize record: {e}")))?;
         // The `kind` tag is Core-assigned here, at the one serialization
@@ -404,6 +410,10 @@ impl RecordPayload {
                 serde_json::from_value(value).map_err(|e| {
                     Error::Project(format!("malformed disclosure_receipt record: {e}"))
                 })?,
+            )),
+            "agent_proposal" => Ok(RecordPayload::AgentProposal(
+                serde_json::from_value(value)
+                    .map_err(|e| Error::Project(format!("malformed agent_proposal record: {e}")))?,
             )),
             other => Err(Error::Project(format!("unrecognized record kind: {other}"))),
         }
@@ -504,6 +514,16 @@ impl RecordPayload {
             RecordPayload::DisclosureReceipt(r) => Ok(r),
             other => Err(Error::Project(format!(
                 "expected a disclosure_receipt record, found {}",
+                other.kind_str()
+            ))),
+        }
+    }
+
+    pub fn as_agent_proposal(&self) -> Result<&crate::proposal::AgentProposal> {
+        match self {
+            RecordPayload::AgentProposal(p) => Ok(p),
+            other => Err(Error::Project(format!(
+                "expected an agent_proposal record, found {}",
                 other.kind_str()
             ))),
         }
@@ -1487,10 +1507,11 @@ pub fn list_project_records(
             // `Source` (`capture::list_project_sources`), `Relation`
             // (`relation::list_project_relations`), `SourceCheck`
             // (`source_check::list_project_source_checks`),
-            // `ReviewCheckpoint` (`checkpoint::current_checkpoint`) and
+            // `ReviewCheckpoint` (`checkpoint::current_checkpoint`),
             // `ExportGrant` (`grant::current_grant`, via a caller-known ID
             // — grants have no dedicated project-scoped listing function
-            // since nothing yet needs "every grant for a project") each
+            // since nothing yet needs "every grant for a project") and
+            // `AgentProposal` (`proposal::list_project_proposals`) each
             // have their own dedicated listing function.
             RecordPayload::Source(_)
             | RecordPayload::Relation(_)
@@ -1498,7 +1519,8 @@ pub fn list_project_records(
             | RecordPayload::SourceCheck(_)
             | RecordPayload::ReviewCheckpoint(_)
             | RecordPayload::ExportGrant(_)
-            | RecordPayload::DisclosureReceipt(_) => false,
+            | RecordPayload::DisclosureReceipt(_)
+            | RecordPayload::AgentProposal(_) => false,
         };
         if belongs {
             out.push((object_id, record));
