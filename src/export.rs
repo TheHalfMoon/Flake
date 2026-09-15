@@ -561,7 +561,7 @@ mod tests {
                 .0
                 .object_id
         };
-        let (receipt, _wire) =
+        let (_receipt_id, receipt, _wire) =
             crate::disclosure::compile_disclosure_package(&mut store, &grant_id, "req-1", "agent")
                 .unwrap();
         let receipt_id = store

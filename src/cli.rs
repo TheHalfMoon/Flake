@@ -1312,6 +1312,8 @@ pub fn run(argv: &[String]) -> Result<i32> {
 
         "package-preview" => {
             let store = CanonicalStore::open(args.vault_root()?)?;
+            // No receipt is committed by a preview, so there is no real
+            // object_id to print — unlike `package-export` below.
             let (receipt, wire) = disclosure::preview_disclosure_package(
                 &store,
                 args.require("grant")?,
@@ -1334,7 +1336,7 @@ pub fn run(argv: &[String]) -> Result<i32> {
 
         "package-export" => {
             let mut store = CanonicalStore::open(args.vault_root()?)?;
-            let (receipt, wire) = disclosure::compile_disclosure_package(
+            let (receipt_id, receipt, wire) = disclosure::compile_disclosure_package(
                 &mut store,
                 args.require("grant")?,
                 args.require("request-id")?,
@@ -1359,7 +1361,8 @@ pub fn run(argv: &[String]) -> Result<i32> {
                 ));
             }
             println!(
-                "selected={} rejected={} emitted_byte_count={} emitted_sha256={} out={}",
+                "receipt_id={} selected={} rejected={} emitted_byte_count={} emitted_sha256={} out={}",
+                receipt_id,
                 receipt.selected.len(),
                 receipt.rejected.len(),
                 receipt.emitted_byte_count,

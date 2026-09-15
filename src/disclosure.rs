@@ -421,12 +421,23 @@ pub fn preview_disclosure_package(
 /// [`DisclosureReceipt`] before returning the wire bytes. Requires a
 /// mutable store (the receipt commit is itself a canonical write) even
 /// though every read in this function is otherwise read-only.
+/// Returns `(receipt_object_id, receipt, wire_bytes)`. The receipt's own
+/// `object_id` cannot be embedded in the wire bytes themselves (it is only
+/// Core-assigned by the commit below, which happens *after* the wire bytes
+/// and their digest are already finalized — embedding it would be exactly
+/// the self-hashing recursion §15 forbids). A caller that needs to tell an
+/// external agent which receipt a package corresponds to (so the agent can
+/// cite it as `receipt_id` in a proposal — see
+/// `docs/formats/agent-disclosure-protocol-v1.md`) must communicate this
+/// returned ID out of band, alongside the package file; the CLI's own
+/// `package-export`/`package-preview` commands print it for exactly this
+/// reason.
 pub fn compile_disclosure_package(
     store: &mut CanonicalStore,
     grant_id: &str,
     request_id: &str,
     principal_label: &str,
-) -> Result<(DisclosureReceipt, String)> {
+) -> Result<(String, DisclosureReceipt, String)> {
     if request_id.is_empty() || request_id.len() > MAX_REQUEST_ID_BYTES {
         return Err(Error::Project(format!(
             "request_id must be 1-{MAX_REQUEST_ID_BYTES} bytes, got {}",
@@ -453,13 +464,12 @@ pub fn compile_disclosure_package(
         origin: RecordOrigin::User,
         target: crate::canonical::CommandTarget::CreateObject { payload },
     })?;
-    let _ = outcome;
 
     let receipt = match record {
         RecordPayload::DisclosureReceipt(r) => r,
         _ => unreachable!(),
     };
-    Ok((receipt, wire))
+    Ok((outcome.object_id, receipt, wire))
 }
 
 /// The read-only half of compilation: select/reject every candidate,
@@ -737,7 +747,7 @@ mod tests {
         }
         let grant_id = make_grant(&mut store, &project_id, &[], &[], 65536);
 
-        let (receipt, wire) =
+        let (_receipt_id, receipt, wire) =
             compile_disclosure_package(&mut store, &grant_id, "req-1", "agent-x").unwrap();
         assert_eq!(receipt.selected.len(), 2);
         assert!(receipt.rejected.is_empty());
@@ -769,7 +779,7 @@ mod tests {
             .unwrap();
         }
         let grant_id = make_grant(&mut store, &project_id, &[], &[], 65536);
-        let (receipt, _wire) =
+        let (_receipt_id, receipt, _wire) =
             compile_disclosure_package(&mut store, &grant_id, "req-1", "agent-x").unwrap();
         assert!(receipt.selected.is_empty());
         assert!(
@@ -797,7 +807,7 @@ mod tests {
             std::slice::from_ref(&note_id),
             65536,
         );
-        let (receipt, wire) =
+        let (_receipt_id, receipt, wire) =
             compile_disclosure_package(&mut store, &grant_id, "req-1", "agent-x").unwrap();
         assert!(receipt.selected.is_empty());
         assert_eq!(receipt.rejected.len(), 1);
@@ -820,7 +830,7 @@ mod tests {
                 .unwrap();
         }
         let grant_a = make_grant(&mut store, &project_a, &[], &[], 65536);
-        let (receipt, wire) =
+        let (_receipt_id, receipt, wire) =
             compile_disclosure_package(&mut store, &grant_a, "req-1", "agent-x").unwrap();
         assert_eq!(receipt.selected.len(), 1);
         assert!(wire.contains("project A secret"));
@@ -839,7 +849,7 @@ mod tests {
             project::create_note(&mut writer, "owner", &project_id, None, "a note").unwrap();
         }
         let grant_id = make_grant(&mut store, &project_id, &["note".to_string()], &[], 65536);
-        let (receipt, wire) =
+        let (_receipt_id, receipt, wire) =
             compile_disclosure_package(&mut store, &grant_id, "req-1", "agent-x").unwrap();
         assert_eq!(receipt.selected.len(), 1);
         assert_eq!(receipt.selected[0].kind, "note");
@@ -861,7 +871,7 @@ mod tests {
         // Enough room for the header line but not for even this one note's
         // own empty envelope.
         let grant_id = make_grant(&mut store, &project_id, &[], &[], 260);
-        let (receipt, wire) =
+        let (_receipt_id, receipt, wire) =
             compile_disclosure_package(&mut store, &grant_id, "req-1", "agent-x").unwrap();
         assert!(receipt.selected.is_empty());
         assert_eq!(receipt.rejected.len(), 1);
@@ -880,7 +890,7 @@ mod tests {
                 .unwrap();
         }
         let grant_id = make_grant(&mut store, &project_id, &[], &[], 500);
-        let (receipt, wire) =
+        let (_receipt_id, receipt, wire) =
             compile_disclosure_package(&mut store, &grant_id, "req-1", "agent-x").unwrap();
         assert_eq!(receipt.selected.len(), 1);
         assert_eq!(receipt.selected[0].truncation, ItemTruncation::Truncated);
@@ -927,7 +937,7 @@ mod tests {
             &[],
             65536,
         );
-        let (receipt, wire) =
+        let (_receipt_id, receipt, wire) =
             compile_disclosure_package(&mut store, &grant_id, "req-1", "agent-x").unwrap();
         assert!(receipt.selected.iter().all(|s| s.kind != "relation"));
         let rel_reject = receipt
@@ -1016,27 +1026,27 @@ mod tests {
             project::create_note(&mut writer, "owner", &project_id, None, "n").unwrap();
         }
         let grant_id = make_grant(&mut store, &project_id, &[], &[], 65536);
-        let (receipt, wire) =
+        let (receipt_id, receipt, wire) =
             compile_disclosure_package(&mut store, &grant_id, "req-1", "agent-x").unwrap();
 
-        let reread = current_receipt(&store, &{
-            // Find the receipt's own object_id: the sole export_grant-free
-            // new object created by compile_disclosure_package beyond the
-            // grant itself.
-            store
-                .list_current_objects()
-                .unwrap()
-                .into_iter()
-                .find_map(|(id, _, payload)| {
-                    RecordPayload::from_json(&payload)
-                        .ok()?
-                        .as_disclosure_receipt()
-                        .ok()
-                        .map(|_| id)
-                })
-                .unwrap()
-        })
-        .unwrap();
+        // The returned `receipt_id` is the actual committed object's own
+        // ID — proven directly by an independent full-vault scan, not
+        // merely trusted from the return value.
+        let scanned_receipt_id = store
+            .list_current_objects()
+            .unwrap()
+            .into_iter()
+            .find_map(|(id, _, payload)| {
+                RecordPayload::from_json(&payload)
+                    .ok()?
+                    .as_disclosure_receipt()
+                    .ok()
+                    .map(|_| id)
+            })
+            .unwrap();
+        assert_eq!(receipt_id, scanned_receipt_id);
+
+        let reread = current_receipt(&store, &receipt_id).unwrap();
         assert_eq!(reread, receipt);
         assert_eq!(reread.emitted_sha256, hash_bytes(wire.as_bytes()));
         assert_eq!(reread.emitted_byte_count as usize, wire.len());
