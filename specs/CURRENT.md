@@ -13,8 +13,8 @@ CANONICAL_BUILD_PLAN=docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md
 CANONICAL_BUILD_PLAN_SHA256=b555f83ff12882ae6f55f90bbeaa411de52b84661a7f3953350cbfc6bd789fb2
 CANONICAL_PLAN_REMOTE_STATUS=MIGRATED_TO_GITHUB
 CANONICAL_PLAN_LOCAL_DEPENDENCY=NONE
-ACTIVE_IMPLEMENTATION_UNIT=T02-01
-NEXT_DEPENDENCY_READY_UNIT=T02-01
+ACTIVE_IMPLEMENTATION_UNIT=T02-02
+NEXT_DEPENDENCY_READY_UNIT=T02-02
 P01_STATUS=CLOSED
 T00-01_STATUS=COMPLETE
 T00-01_EVIDENCE=docs/evidence/flake-v1/T00-01/REPORT.md
@@ -48,7 +48,11 @@ T01-06_MERGE_COMMIT=7804f202921c3bb0f7b1dcce8b8db971c6e55ea6
 T01-07_STATUS=COMPLETE
 T01-07_EVIDENCE=docs/evidence/flake-v1/T01-07/REPORT.md
 T01-07_MUTATOR_AUDIT=docs/evidence/flake-v1/T01-07/mutator-audit.md
-T01-07_MERGE_COMMIT=PENDING_PR_MERGE
+T01-07_MERGE_COMMIT=57de9bbd77bfec64a73c8c654a6d9d1459802d0c
+T02-01_STATUS=COMPLETE
+T02-01_EVIDENCE=docs/evidence/flake-v1/T02-01/REPORT.md
+T02-01_FORMAT_DOC=docs/formats/typed-records.md
+T02-01_MERGE_COMMIT=PENDING_PR_MERGE
 SPEC_003_AUTO_ACTIVATION=PROHIBITED
 PROJECT_COMPLETE=NO
 ```
@@ -64,8 +68,8 @@ The historical local-only planning SHAs `4246f6d...` and `852e44b...` are proven
 
 ## Next action
 
-`T02-01` — first task of `P02`. Create and manage the four project record types (`Project`/`Note`/`Action`/`Decision`) through the transaction API section 15 defines: the common envelope, field/record limits, project membership, immutable IDs, archive/tombstone history preservation, and CLI typed commands (`docs/evidence/flake-v1/T01-07/REPORT.md`, `docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` T02-01 row). This is the first task to build product-visible typed records on top of the format-2 store `P01` closed.
+`T02-02` — Capture exact notes and selected local evidence. Save a note or selected file snapshot with clear origin and recoverable bytes: Note default with explicit Action/Decision selection, title/body bounds, import only selected regular files through validated handles (no recursive scan, symlinks, or secret-file defaults), original bytes/digest/time and unknown-origin label preserved, no HTML execution/network fetch/auto-promotion, binary artifacts opaque and bounded (`docs/evidence/flake-v1/T02-01/REPORT.md`, `docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` T02-02 row).
 
-**`P01` is closed.** `T01-07` re-audited every canonical mutator/reader introduced since `T00-02`'s original inventory against the code as actually shipped (`docs/evidence/flake-v1/T01-07/mutator-audit.md`), ran 600 genuine deterministic fault schedules across durability classes D1–D5 (100 each; D6 explicitly deferred to `T05-02`, never claimed as passed), and found and fixed two real defects along the way rather than papering over them: (1) `EventLog::open` still unconditionally created its control directory despite `T00-02`'s own inventory naming this as a required `T01-01` fix that was never actually applied (not exploitable in any current call site, but the contract now matches its documented disposition — `docs/evidence/flake-v1/T01-01/CORRECTIVE-ADDENDUM-T01-07.md`); (2) `canonical::verify_recovery_candidate` (built by `T01-04`, reused by `T01-05`'s restore path) never cross-checked a revision's stored payload against its own `payload_sha256`, so payload-content corruption was invisible to both recovery and restore verification — found directly by this task's own D4 fault-schedule matrix (25/100 refused before the fix), root-caused, and closed. `specs/002-post-r1-canonical-core-convergence/corrective-t01/checklist.md` now has every `T01-01`–`T01-07` box checked with linked evidence.
+`T02-01` closed: `src/project.rs` adds the typed `Project`/`Note`/`Action`/`Decision` record layer entirely on top of the existing, already-audited format-2 transaction API — no new `CommandTarget` variant, no schema change beyond one read-only helper (`CanonicalStore::list_current_objects`). Every typed mutation inherits `T01-03`/`T01-07`'s atomicity and fault-schedule proof unchanged. Project archive/unarchive preserves history as a new revision; work records validate their `project_id` against a live project before any transaction opens; field limits are enforced pre-transaction; unknown fields round-trip through a read-then-write (§15). 11 new CLI subcommands wire the typed layer end to end, proven by a full lifecycle test through the actual CLI dispatcher. Deliberately deferred, recorded in the evidence report: `Note` evidence/source linkage (`T02-02`'s own job), `Action`/`Decision` full lifecycle semantics (`T02-03`'s), and project-scoped indexing (`T02-04`'s).
 
 Do not activate Spec 003 automatically. Do not invent a replacement roadmap. Do not use OpenAI API or a required paid AI/model service.

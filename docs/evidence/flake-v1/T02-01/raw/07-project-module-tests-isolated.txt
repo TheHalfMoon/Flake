@@ -1,0 +1,15 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.18s
+     Running unittests src\lib.rs (target\debug\deps\fehrest-3169ee0784ab6f1d.exe)
+
+running 8 tests
+test project::tests::a_payload_schema_version_newer_than_supported_is_refused ... ok
+test project::tests::field_limits_are_rejected_before_any_transaction_opens ... ok
+test project::tests::note_requires_an_existing_project_and_rejects_wrong_kind_reference ... ok
+test project::tests::unknown_fields_survive_a_read_then_write_round_trip ... ok
+test project::tests::action_starts_open_and_decision_starts_draft ... ok
+test project::tests::create_open_archive_unarchive_project_round_trips ... ok
+test project::tests::list_project_records_scopes_correctly_and_excludes_other_projects ... ok
+test project::tests::note_update_conflicts_exactly_like_any_other_typed_record ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 151 filtered out; finished in 0.08s
+

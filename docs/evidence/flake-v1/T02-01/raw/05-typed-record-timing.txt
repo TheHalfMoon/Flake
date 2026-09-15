@@ -1,0 +1,18 @@
+Throwaway harness (deleted before commit; not part of the shipped diff):
+examples/project_timing.rs: one project plus 30 notes created sequentially,
+then list_project_records over all 30, release build.
+
+Command: cargo run --release --example project_timing
+Output:
+typed-record create: n=31 p50=2883us p95=6218us max=6379us
+list_project_records (30 records): 249us
+
+Interpretation (S-scale only; not a plan §27 M/L release measurement — see
+REPORT.md "Performance gate"): typed-record creation p95 6.2ms is
+consistent with T01-03's own untyped commit() measurement (p95 6.0ms),
+confirming the typed layer adds negligible overhead over the underlying
+transaction it wraps (one JSON serialize/deserialize per call). The
+full-scan list_project_records at 249us for 30 records is well inside
+this task's own "S/M project open/read" performance gate; no claim is
+made about scaling to M/L record counts, which is T02-04's own future
+indexing objective.

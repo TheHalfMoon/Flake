@@ -1,0 +1,230 @@
+   Compiling fehrest v0.0.1-phase-t (C:\Users\Shehr\work\Flake)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.36s
+     Running unittests src\lib.rs (target\debug\deps\fehrest-3169ee0784ab6f1d.exe)
+
+running 159 tests
+test canonical::tests::create_refuses_to_clobber_existing_control_dir ... ok
+test backup::tests::cancellation_before_publication_leaves_no_published_backup ... ok
+test canonical::tests::create_object_commits_atomically_and_advances_head ... ok
+test canonical::tests::duplicate_command_id_with_different_input_is_rejected ... ok
+test backup::tests::restore_refuses_when_a_member_digest_does_not_match_manifest ... ok
+test backup::tests::restore_refuses_when_manifest_head_disagrees_with_database ... ok
+test backup::tests::concurrent_legitimate_commits_during_backup_do_not_produce_mixed_state ... ok
+test canonical::tests::full_history_reconstructs_current_state_independent_of_pointer ... ok
+test canonical::tests::duplicate_command_id_with_identical_input_replays_the_original_result ... ok
+test backup::tests::backup_destination_no_clobber ... ok
+test canonical::tests::fault_before_sql_commit_leaves_zero_trace ... ok
+test canonical::tests::fault_after_sql_commit_reconciles_on_retry_instead_of_double_committing ... ok
+test backup::tests::backup_then_restore_round_trips_exact_state ... ok
+test canonical::tests::guard_database_identity_mismatch_is_refused ... ok
+test canonical::tests::malformed_database_file_is_refused_not_panicking ... ok
+test canonical::tests::interrupted_creation_at_each_fault_point_leaves_root_without_published_control_dir ... ok
+test canonical::tests::generic_sqlite_connection_can_inspect_published_schema ... ok
+test canonical::tests::legacy_format1_reader_refuses_format2_store ... ok
+test canonical::tests::fresh_creation_publishes_guard_and_database_with_matching_identity ... ok
+test canonical::tests::only_one_writer_capability_can_exist_at_a_time ... ok
+test canonical::tests::min_reader_capability_higher_than_supported_is_refused ... ok
+test cli::tests::cli_rejects_a_note_create_with_an_invalid_project_reference ... ok
+test canonical::tests::oversized_payload_is_refused_before_any_mutation ... ok
+test canonical::tests::reopen_after_create_is_stable_and_pragmas_hold ... ok
+test canonical::tests::reopened_store_independently_shows_the_committed_command_and_revision ... ok
+test context::tests::budget_pressure_omits_rather_than_strips_metadata ... ok
+test context::tests::compiles_deterministically ... ok
+test context::tests::hostile_content_cannot_inflate_the_manifest ... ok
+test context::tests::manifest_records_exactly_what_was_emitted ... ok
+test cli::tests::compile_appends_context_compiled_event_via_writer_and_chain_verifies ... ok
+test context::tests::out_of_scope_memory_is_never_emitted ... ok
+test canonical::tests::unrecognized_extra_table_in_schema_refuses_open ... ok
+test canonical::tests::update_of_unknown_object_id_is_refused ... ok
+test context::tests::package_stays_within_budget ... ok
+test canonical::tests::update_object_requires_matching_expected_revision ... ok
+test cli::tests::init_appends_vault_created_event_via_writer_and_chain_verifies ... ok
+test context::tests::pending_memory_never_reaches_an_authoritative_section ... ok
+test context::tests::superseded_items_are_labelled_and_name_their_replacement ... ok
+test context::tests::truncation_shortens_content_but_never_the_envelope ... ok
+test canonical::tests::second_creation_on_a_published_root_is_refused_and_first_is_untouched ... ok
+test derived::tests::literal_query_cannot_activate_fts_syntax ... ok
+test envelope::tests::content_cannot_create_a_second_machine_owned_item ... ok
+test envelope::tests::content_cannot_forge_trust_or_provenance_fields ... ok
+test derived::tests::empty_query_returns_nothing ... ok
+test derived::tests::extension_loading_is_unavailable ... ok
+test derived::tests::hardening_pragmas_are_applied ... ok
+test envelope::tests::content_containing_a_length_prefix_is_inert ... ok
+test envelope::tests::instruction_shaped_content_remains_evidence ... ok
+test envelope::tests::metadata_size_excludes_content ... ok
+test envelope::tests::round_trips_ordinary_content ... ok
+test envelope::tests::superseded_items_name_their_replacement ... ok
+test cli::tests::full_project_and_record_lifecycle_works_through_the_cli ... ok
+test events::tests::append_after_historical_v1_preserves_chain_mixed_versions ... ok
+test derived::tests::hostile_query_returns_no_results_rather_than_erroring ... ok
+test events::tests::hash_freeze_is_versioned ... ok
+test events::tests::open_never_creates_a_missing_control_directory ... ok
+test events::tests::oversized_event_detail_is_rejected ... ok
+test events::tests::consistent_full_rewrite_is_not_detected_and_we_say_so ... ok
+test events::tests::historical_v1_golden_fixture_upcasts_without_rewrite ... ok
+test identity::tests::body_line_endings_survive ... ok
+test identity::tests::generates_distinct_time_ordered_ids ... ok
+test identity::tests::rejects_missing_or_malformed_frontmatter ... ok
+test identity::tests::round_trips_and_preserves_unknown_fields_verbatim ... ok
+test locator::tests::accepts_ordinary_relative_paths ... ok
+test events::tests::current_v2_fixture_is_typed_and_verifies ... ok
+test derived::tests::rebuild_is_deterministic_across_independent_builds ... ok
+test locator::tests::open_confined_rejects_traversal_even_when_target_exists ... ok
+test locator::tests::rejects_absolute_and_traversal_and_prefix ... ok
+test memory::tests::different_projects_are_incomparable_not_ordered ... ok
+test memory::tests::oversized_statement_is_rejected ... ok
+test events::tests::typed_payload_participates_in_hash ... ok
+test memory::tests::pending_is_not_authoritative ... ok
+test memory::tests::project_local_is_strictly_more_specific_than_vault_global ... ok
+test memory::tests::unresolved_evidence_cannot_participate ... ok
+test memory::tests::vault_global_applies_everywhere_project_local_does_not ... ok
+test locator::tests::post_open_identity_mismatch_fails_closed ... ok
+test locator::tests::post_open_verification_accepts_matching_identity ... ok
+test events::tests::truncation_and_removal_are_detected ... ok
+test events::tests::single_record_edit_is_detected ... ok
+test locator::tests::file_without_identity_is_a_mismatch_not_a_pass ... ok
+test migration::tests::malformed_file_blocks_complete_but_selected_import_still_works ... ok
+test migration::tests::duplicate_identity_is_omitted_and_blocks_a_complete_migration ... ok
+test migration::tests::interrupted_migration_writes_a_manifest_and_leaves_source_untouched ... ok
+test events::tests::chain_is_intact_after_appends ... ok
+test project::tests::a_payload_schema_version_newer_than_supported_is_refused ... ok
+test migration::tests::new_root_no_clobber ... ok
+test migration::tests::requesting_an_unadmittable_id_is_refused_not_silently_skipped ... ok
+test migration::tests::gold_fixtures_with_crlf_unicode_and_unknown_fields_migrate_byte_identically ... ok
+test derived::tests::query_and_result_bounds_are_enforced ... ok
+test project::tests::action_starts_open_and_decision_starts_draft ... ok
+test project::tests::note_update_conflicts_exactly_like_any_other_typed_record ... ok
+test migration::tests::complete_migration_of_a_clean_vault_preserves_exact_bytes_and_identity ... ok
+test recovery::tests::a_new_normal_open_is_blocked_while_recovery_holds_exclusive_access ... ok
+test project::tests::unknown_fields_survive_a_read_then_write_round_trip ... ok
+test project::tests::field_limits_are_rejected_before_any_transaction_opens ... ok
+test canonical::tests::repeated_creations_have_unique_vault_ids_and_all_reopen_correctly ... ok
+test project::tests::list_project_records_scopes_correctly_and_excludes_other_projects ... ok
+test project::tests::note_requires_an_existing_project_and_rejects_wrong_kind_reference ... ok
+test project::tests::create_open_archive_unarchive_project_round_trips ... ok
+test recovery::tests::missing_database_with_guard_present_is_refused_before_any_preservation ... ok
+test recovery::tests::destination_already_published_is_refused_without_touching_the_original ... ok
+test temporal::tests::confidence_cannot_break_a_tie_that_evidence_cannot ... ok
+test temporal::tests::confidence_cannot_change_outcome ... ok
+test recovery::tests::successful_recovery_writes_a_verified_incident_manifest ... ok
+test temporal::tests::current_and_historical_truth_differ ... ok
+test temporal::tests::incomparable_scopes_yield_contradiction_not_a_winner ... ok
+test recovery::tests::clean_store_recovers_to_new_root_with_matching_state ... ok
+test temporal::tests::no_answer_when_nothing_matches ... ok
+test recovery::tests::refused_recovery_writes_a_refusal_incident_manifest_and_preserves_evidence ... ok
+test recovery::tests::tampered_resulting_head_hash_is_irrecoverable_and_original_untouched ... ok
+test temporal::tests::recorded_time_bounds_what_was_known ... ok
+test temporal::tests::pending_is_excluded_from_resolution ... ok
+test temporal::tests::rejects_all_five_invalid_supersession_classes ... ok
+test temporal::tests::unverified_cannot_supersede_user_confirmed ... ok
+test temporal::tests::superseded_without_valid_until_is_excluded_at_every_point_in_time ... ok
+test recovery::tests::recovery_is_refused_while_a_normal_connection_holds_shared_access ... ok
+test temporal::tests::retracted_is_never_admissible_even_with_a_valid_interval ... ok
+test temporal::tests::superseded_cannot_reactivate ... ok
+test temporal::tests::superseded_with_valid_until_answers_for_the_interval_it_governed ... ok
+test temporal::tests::valid_supersession_is_accepted ... ok
+test temporal::tests::vault_global_never_outranks_conflicting_project_local ... ok
+test temporal::tests::verification_outranks_basis ... ok
+test vault::tests::allowlist_admits_only_supported_extensions ... ok
+test vault::tests::atomic_write_preserves_unknown_frontmatter ... ok
+test vault::tests::atomic_write_fault_matrix_proves_no_partial_success ... ok
+test vault::tests::corrupt_vault_json_fails_visibly ... ok
+test vault::tests::corrupt_bad_uuid_fails_visibly ... ok
+test recovery::tests::second_crash_during_recovery_itself_never_loses_the_preserved_original ... ok
+test vault::tests::event_append_for_writer_requires_matching_vault ... ok
+test vault::tests::duplicate_uuid_is_surfaced_as_conflict_and_both_retained ... ok
+test vault::tests::hash_chain_break_fails_closed ... ok
+test vault::tests::forensic_preserved_before_destructive_cleanup_mid_log_malformed_not_repaired ... ok
+test vault::tests::legacy_missing_vault_json_is_upgraded_atomically ... ok
+test vault::tests::legacy_write_requires_lock_still_fails_without_writer ... ok
+test vault::tests::losing_writer_performs_no_mutation_before_lock_denial ... ok
+test vault::tests::open_read_never_creates_metadata_on_legacy_vault ... ok
+test vault::tests::mid_log_gap_fails_closed_and_not_repaired_as_torn ... ok
+test vault::tests::open_read_on_vault_with_existing_metadata_is_still_byte_identical ... ok
+test vault::tests::control_dir_reparse_point_is_refused_not_followed ... ok
+test vault::tests::kill_and_restart_spanning_canonical_write_and_event_append ... ok
+test vault::tests::reserved_dirs_are_excluded_from_knowledge ... ok
+test vault::tests::readers_do_not_need_the_lock ... ok
+test vault::tests::stale_lock_diagnostics_not_used_as_auth ... ok
+test vault::tests::second_writer_fails_visibly ... ok
+test vault::tests::torn_final_record_is_detected_preserved_and_repaired_before_writable_open ... ok
+test vault::tests::second_writer_still_fails_visibly_and_no_auto_steal ... ok
+test vault::tests::vault_add_object_via_writer_preserves_allowlists ... ok
+test vault::tests::unsupported_newer_format_fails_visibly ... ok
+test vault::tests::open_write_acquires_lock_before_any_startup_mutation_no_split_brain_identity ... ok
+test vault::tests::write_rejects_reserved_and_unsupported_and_traversal ... ok
+test vault::tests::vault_meta_uses_atomic_write_not_direct_write ... ok
+test vault::tests::vault_meta_created_and_validated ... ok
+test vault::tests::vault_writer_requires_lock_read_only_cannot_mint_writer ... ok
+test vault::tests::d2_short_write_fault_schedule_matrix ... ok
+test recovery::tests::d4_bit_corruption_fault_schedule_matrix ... ok
+test canonical::tests::d1_commit_atomicity_fault_schedule_matrix ... ok
+test recovery::tests::d3_competing_opens_fault_schedule_matrix ... ok
+test backup::tests::d5_backup_cancellation_fault_schedule_matrix ... ok
+test migration::tests::d5_migration_interruption_fault_schedule_matrix ... ok
+
+test result: ok. 159 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 38.71s
+
+     Running unittests src\main.rs (target\debug\deps\fehrest-3b3634d8090b8900.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests bench\V0\harness.rs (target\debug\deps\fehrest_bench_v0-5458270aa2dc20d4.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests bench\R1\harness\main.rs (target\debug\deps\fehrest_r1-97b5c896d5abce14.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\integration.rs (target\debug\deps\integration-5a46b5095613186e.exe)
+
+running 10 tests
+test as2_as_of_past_reflects_what_was_true_then ... ok
+test as4_no_memory_yields_no_answer_not_a_guess ... ok
+test content_claiming_to_be_verified_is_not_verified ... ok
+test as1_current_decision_is_current_and_superseded_is_labelled ... ok
+test as7_manifest_lists_exactly_what_was_emitted ... ok
+test as6_budget_is_respected_omissions_recorded_envelopes_intact ... ok
+test as3_inseparable_candidates_report_contradiction ... ok
+test as5_project_a_memory_never_appears_for_project_b ... ok
+test compilation_is_deterministic_for_identical_inputs ... ok
+test as8_deleting_derived_state_entirely_and_rebuilding_is_equivalent ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.14s
+
+     Running tests\kill_tests.rs (target\debug\deps\kill_tests-54668002cbc0a883.exe)
+
+running 23 tests
+test k07_cross_project_contamination_blocked ... ok
+test k06_package_manifest_mismatch_fails ... ok
+test k08_vault_global_cannot_outrank_project_local ... ok
+test k02_instruction_shaped_vault_content_remains_evidence ... ok
+test k04_in_scope_but_not_served_is_not_observed_evidence ... ok
+test k10_superseded_cannot_reactivate ... ok
+test k09_pending_never_becomes_authoritative_and_flooding_does_not_help ... ok
+test k20_budget_pressure_never_strips_security_metadata ... ok
+test k21_agent_path_cannot_mint_user_authority ... ok
+test k12_symlink_escape_fails ... ok
+test k23_content_cannot_forge_envelope_fields ... ok
+test k22_derived_locator_cannot_escape_the_vault ... ok
+test k17_oversized_query_is_bounded ... ok
+test k14_authorize_then_swap_fails_closed ... ok
+test k11_duplicate_uuid_is_a_conflict ... ok
+test k18_reorder_and_replay_are_surfaced ... ok
+test k24_concurrent_writer_is_rejected_visibly ... ok
+test k24b_permanent_state_amplification_is_bounded ... ok
+test k15_identity_survives_rename_and_case_rename ... ok
+test k05_partial_tamper_is_detected ... ok
+test k13_windows_directory_reparse_escape_fails ... ok
+test k16_poisoned_derived_index_cannot_grant_authority ... ok
+test k17_fts_syntax_in_user_text_is_literal ... ok
+
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.23s
+
