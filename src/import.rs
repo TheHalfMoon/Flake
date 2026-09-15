@@ -60,18 +60,20 @@
 //! or trusted beyond what the manifest names and this module independently
 //! re-hashes (S04).
 //!
-//! **Imported grants (updated at `T03-04`).** `crate::grant::ExportGrant`
-//! and `crate::disclosure::DisclosureReceipt` now exist, but
-//! [`import_selected_merge`] never admits either: `validate_self_contained`
-//! refuses a package containing one outright, before any reference
-//! rewriting or commit is attempted (§16: "no authority survives
-//! export/import" — a grant found inside an imported package is refused,
-//! not silently re-admitted as live authority in the destination vault).
-//! [`import_full_restore`] is unaffected — a full restore is a same-owner
-//! backup, not a shareable disclosure, so both kinds survive it unchanged
-//! like every other object (`crate::export`'s own project-scoped path is
-//! what actually omits them from a *shareable* package in the first
-//! place; a full/vault-wide export still includes both).
+//! **Imported grants (updated at `T03-04`/`T03-05`).**
+//! `crate::grant::ExportGrant`, `crate::disclosure::DisclosureReceipt` and
+//! `crate::proposal::AgentProposal` now exist, but
+//! [`import_selected_merge`] never admits any of the three:
+//! `validate_self_contained` refuses a package containing one outright,
+//! before any reference rewriting or commit is attempted (§16: "no
+//! authority survives export/import" — local disclosure-governance state
+//! found inside an imported package is refused, not silently re-admitted
+//! as live authority in the destination vault). [`import_full_restore`]
+//! is unaffected — a full restore is a same-owner backup, not a shareable
+//! disclosure, so all three survive it unchanged like every other object
+//! (`crate::export`'s own project-scoped path is what actually omits them
+//! from a *shareable* package in the first place; a full/vault-wide
+//! export still includes all three).
 
 use crate::canonical::{
     CanonicalStore, CanonicalWriter, CommandInput, CommandTarget, RecordOrigin,
@@ -313,16 +315,20 @@ fn validate_self_contained(package: &ParsedPackage) -> Result<()> {
         // §16: "shareable project packages omit local-only locators, active
         // grants and excluded sensitive fields." `export.rs`'s own
         // project-scoped `project_scope_object_ids` never emits an
-        // `ExportGrant` or `DisclosureReceipt` (both are local disclosure
-        // *governance* state — who was authorized, what was actually sent
-        // — not project content), so a legitimate package never contains
-        // either. This is the defense-in-depth backstop against a
+        // `ExportGrant`, `DisclosureReceipt` or `AgentProposal` (all three
+        // are local disclosure *governance* state — who was authorized,
+        // what was actually sent, what an external agent proposed back —
+        // not project content), so a legitimate package never contains any
+        // of them. This is the defense-in-depth backstop against a
         // hand-crafted or corrupted package trying to smuggle local grant
-        // authority, or another vault's disclosure history, into a
-        // different vault ("no authority survives export/import").
+        // authority, another vault's disclosure history, or another
+        // vault's inbound agent negotiation state into a different vault
+        // ("no authority survives export/import").
         if matches!(
             record,
-            RecordPayload::ExportGrant(_) | RecordPayload::DisclosureReceipt(_)
+            RecordPayload::ExportGrant(_)
+                | RecordPayload::DisclosureReceipt(_)
+                | RecordPayload::AgentProposal(_)
         ) {
             return Err(Error::Vault(format!(
                 "object {object_id} is a {}, which a selected-project merge never admits (§16: local-only disclosure governance state never survives export/import)",
@@ -353,6 +359,7 @@ fn validate_self_contained(package: &ParsedPackage) -> Result<()> {
             // either kind cannot silently stop being checked here.
             RecordPayload::ExportGrant(g) => vec![g.project_id.clone()],
             RecordPayload::DisclosureReceipt(r) => vec![r.project_id.clone()],
+            RecordPayload::AgentProposal(p) => vec![p.project_id.clone()],
         };
         for r in refs {
             if !package.objects.contains_key(&r) {
@@ -499,10 +506,12 @@ fn rewrite_references(
         }
         RecordPayload::ReviewCheckpoint(c) => c.project_id = remap(&c.project_id, id_map)?,
         // Unreachable in practice: `validate_self_contained` refuses any
-        // package containing either kind before this function is ever
-        // called on one. Exhaustiveness still requires real arms.
+        // package containing any of these three kinds before this
+        // function is ever called on one. Exhaustiveness still requires
+        // real arms.
         RecordPayload::ExportGrant(g) => g.project_id = remap(&g.project_id, id_map)?,
         RecordPayload::DisclosureReceipt(r) => r.project_id = remap(&r.project_id, id_map)?,
+        RecordPayload::AgentProposal(p) => p.project_id = remap(&p.project_id, id_map)?,
     }
     Ok(())
 }
@@ -1223,6 +1232,89 @@ mod tests {
         cleanup(&root);
         cleanup(&export_dest);
         cleanup(&import_dest);
+    }
+
+    #[test]
+    fn selected_merge_refuses_a_package_containing_an_agent_proposal() {
+        // §16 extended to `T03-05`'s own new kind: an `AgentProposal` is
+        // local disclosure-negotiation state (bound to a receipt in *this*
+        // vault), never shareable project content.
+        let root = tmp();
+        let mut store = CanonicalStore::create(&root).unwrap();
+        let project_id = {
+            let mut writer = store.writer().unwrap();
+            project::create_project(&mut writer, "owner", "P", None)
+                .unwrap()
+                .0
+                .object_id
+        };
+        let note_id = {
+            let mut writer = store.writer().unwrap();
+            project::create_note(&mut writer, "owner", &project_id, None, "n")
+                .unwrap()
+                .0
+                .object_id
+        };
+        let note_rev = store.read_current(&note_id).unwrap().unwrap().0;
+        let grant_id = {
+            let mut writer = store.writer().unwrap();
+            crate::grant::issue_grant(
+                &mut writer,
+                "owner",
+                &project_id,
+                &[],
+                None,
+                &[],
+                65536,
+                3600,
+            )
+            .unwrap()
+            .0
+            .object_id
+        };
+        crate::disclosure::compile_disclosure_package(&mut store, &grant_id, "req-1", "agent")
+            .unwrap();
+        let receipt_id = store
+            .list_current_objects()
+            .unwrap()
+            .into_iter()
+            .find_map(|(id, _, payload)| {
+                RecordPayload::from_json(&payload)
+                    .ok()?
+                    .as_disclosure_receipt()
+                    .ok()
+                    .map(|_| id)
+            })
+            .unwrap();
+        let json = format!(
+            r#"{{"receipt_id":"{receipt_id}","operations":[{{"kind":"note_edit","note_id":"{note_id}","expected_revision_id":"{note_rev}","body":"b"}}]}}"#
+        );
+        crate::proposal::admit_proposal(&mut store, "owner", &project_id, json.as_bytes()).unwrap();
+
+        let export_dest = tmp();
+        crate::export::export_to_new_root(&store, None, &export_dest).unwrap();
+
+        let dest_root = tmp();
+        let mut dest_store = CanonicalStore::create(&dest_root).unwrap();
+        let err = import_selected_merge(&mut dest_store, &export_dest).unwrap_err();
+        // `validate_self_contained` refuses on the *first* governance-state
+        // object it encounters (`BTreeMap<object_id, _>` order, not kind
+        // order) — a proposal cannot exist without the grant/receipt it
+        // references, so this vault necessarily contains all three, and
+        // the refusal may legitimately name any one of them. What matters
+        // is that the whole batch is refused, not silently admitted or
+        // silently thinned down to "just the parts we recognize".
+        let msg = format!("{err}");
+        assert!(
+            msg.contains("export_grant")
+                || msg.contains("disclosure_receipt")
+                || msg.contains("agent_proposal"),
+            "expected refusal naming a local governance-state kind, got: {msg}"
+        );
+
+        cleanup(&root);
+        cleanup(&export_dest);
+        cleanup(&dest_root);
     }
 
     #[test]

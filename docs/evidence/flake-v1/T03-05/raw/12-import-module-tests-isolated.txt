@@ -1,0 +1,19 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running unittests src\lib.rs (target\debug\deps\fehrest-3169ee0784ab6f1d.exe)
+
+running 12 tests
+test import::tests::selected_merge_refuses_a_package_containing_a_grant ... ok
+test import::tests::merge_review_checkpoint_is_carried_through_with_its_project_id_rewritten ... ok
+test import::tests::merge_source_check_source_id_is_rewritten_and_checked_revision_repinned ... ok
+test import::tests::preview_reports_scope_without_writing_anything ... ok
+test import::tests::full_restore_refuses_an_already_existing_destination ... ok
+test import::tests::selected_merge_refuses_a_package_containing_an_agent_proposal ... ok
+test import::tests::selected_merge_assigns_new_ids_and_rewrites_references ... ok
+test import::tests::tampered_manifest_integrity_root_is_refused ... ok
+test import::tests::full_restore_is_all_or_nothing_on_a_corrupt_member ... ok
+test import::tests::full_restore_preserves_grants_unlike_selected_merge ... ok
+test import::tests::merge_relation_endpoints_are_rewritten_and_repinned ... ok
+test import::tests::full_restore_preserves_object_ids_and_all_payload_bytes ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 313 filtered out; finished in 0.25s
+

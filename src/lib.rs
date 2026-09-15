@@ -35,6 +35,7 @@ pub mod markdown;
 pub mod memory;
 pub mod migration;
 pub mod project;
+pub mod proposal;
 pub mod recovery;
 pub mod relation;
 pub mod resume;

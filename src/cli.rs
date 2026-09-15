@@ -17,6 +17,7 @@ use crate::index;
 use crate::markdown;
 use crate::memory::Scope;
 use crate::project::{self, DecisionBasis, DecisionVerification};
+use crate::proposal;
 use crate::relation::{self, RelationType};
 use crate::resume;
 use crate::source_check;
@@ -165,6 +166,14 @@ FORMAT-2 DISCLOSURE COMMANDS (T03-04):
   grant-revoke     Revoke an active grant                                                          --id <uuid> --expect <revision-uuid>
   package-preview  Compile a disclosure package without persisting a receipt                       --grant <uuid> --request-id R [--principal P]
   package-export   Compile, persist the receipt, and write the package to a staged file            --grant <uuid> --request-id R --out <path> [--principal P]
+
+FORMAT-2 AGENT PROPOSAL COMMANDS (T03-05):
+  propose-import      Admit a bounded inbound proposal file as Pending          --project <uuid> --file <path>
+  propose-show        Show one proposal's exact operations and review state     --id <uuid>
+  project-proposals   List a project's proposals                                --project <uuid>
+  propose-accept      Apply selected operation indices and mark Accepted        --id <uuid> --expect <revision-uuid> --select i1,i2,...
+  propose-reject      Reject a pending proposal with a reason                   --id <uuid> --expect <revision-uuid> --reason R
+  propose-expire      Mark a pending proposal Expired with a reason             --id <uuid> --expect <revision-uuid> --reason R
 ";
 
 struct Args {
@@ -1356,6 +1365,117 @@ pub fn run(argv: &[String]) -> Result<i32> {
                 receipt.emitted_byte_count,
                 receipt.emitted_sha256,
                 out_path.display()
+            );
+            Ok(0)
+        }
+
+        "propose-import" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let file_path = std::path::Path::new(args.require("file")?);
+            let raw_bytes = std::fs::read(file_path)
+                .map_err(|e| Error::Project(format!("cannot read proposal file: {e}")))?;
+            let (outcome, p) = proposal::admit_proposal(
+                &mut store,
+                CLI_ACTOR,
+                args.require("project")?,
+                &raw_bytes,
+            )?;
+            println!(
+                "{} {} status={:?} operations={} declared_agent={:?}",
+                outcome.object_id,
+                outcome.revision_id,
+                p.status,
+                p.operations.len(),
+                p.declared_agent
+            );
+            Ok(0)
+        }
+
+        "propose-show" => {
+            let store = CanonicalStore::open(args.vault_root()?)?;
+            let p = proposal::current_proposal(&store, args.require("id")?)?;
+            println!(
+                "status={:?} receipt_id={} declared_agent={:?} declared_model={:?} declared_tool={:?}",
+                p.status, p.receipt_id, p.declared_agent, p.declared_model, p.declared_tool
+            );
+            println!(
+                "submitted_at={} inbound_sha256={}",
+                p.submitted_at, p.inbound_sha256
+            );
+            for (i, op) in p.operations.iter().enumerate() {
+                println!("  [{i}] {op:?}");
+            }
+            if let Some(reason) = &p.review_reason {
+                println!("review_reason={reason:?} reviewed_by={:?}", p.reviewed_by);
+            }
+            Ok(0)
+        }
+
+        "project-proposals" => {
+            let store = CanonicalStore::open(args.vault_root()?)?;
+            let proposals = proposal::list_project_proposals(&store, args.require("project")?)?;
+            println!("proposals: {}", proposals.len());
+            for (id, p) in &proposals {
+                println!(
+                    "  {id} status={:?} operations={}",
+                    p.status,
+                    p.operations.len()
+                );
+            }
+            Ok(0)
+        }
+
+        "propose-accept" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let selected: Vec<usize> = split_ids(args.require("select")?)
+                .into_iter()
+                .map(|s| {
+                    s.parse::<usize>()
+                        .map_err(|_| Error::Project(format!("invalid --select index: {s}")))
+                })
+                .collect::<Result<_>>()?;
+            let (outcome, p) = proposal::accept_proposal(
+                &mut store,
+                CLI_ACTOR,
+                args.require("id")?,
+                args.require("expect")?,
+                &selected,
+            )?;
+            println!(
+                "{} {} status={:?} accepted={:?}",
+                outcome.object_id, outcome.revision_id, p.status, p.accepted_operation_indices
+            );
+            Ok(0)
+        }
+
+        "propose-reject" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let (outcome, p) = proposal::reject_proposal(
+                &mut store,
+                CLI_ACTOR,
+                args.require("id")?,
+                args.require("expect")?,
+                args.require("reason")?,
+            )?;
+            println!(
+                "{} {} status={:?}",
+                outcome.object_id, outcome.revision_id, p.status
+            );
+            Ok(0)
+        }
+
+        "propose-expire" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let (outcome, p) = proposal::expire_proposal(
+                &mut store,
+                CLI_ACTOR,
+                args.require("id")?,
+                args.require("expect")?,
+                args.require("reason")?,
+            )?;
+            println!(
+                "{} {} status={:?}",
+                outcome.object_id, outcome.revision_id, p.status
             );
             Ok(0)
         }
@@ -3120,6 +3240,244 @@ mod tests {
         ]))
         .unwrap_err();
         assert!(format!("{err}").contains("revoked"));
+
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn agent_proposal_lifecycle_works_through_the_cli() {
+        let root = tmp();
+        let root_str = root.to_string_lossy().to_string();
+        assert_eq!(
+            run(&s(&["canonical-init", "--vault", &root_str])).unwrap(),
+            0
+        );
+        assert_eq!(
+            run(&s(&["project-create", "--vault", &root_str, "--name", "P"])).unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let project_id = store
+            .list_current_objects()
+            .unwrap()
+            .into_iter()
+            .find_map(|(id, _, payload)| {
+                project::RecordPayload::from_json(&payload)
+                    .ok()?
+                    .as_project()
+                    .ok()
+                    .map(|_| id)
+            })
+            .unwrap();
+        drop(store);
+        assert_eq!(
+            run(&s(&[
+                "note-create",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--body",
+                "original body"
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let (note_id, note_rev) = project::list_project_records(&store, &project_id)
+            .unwrap()
+            .into_iter()
+            .find_map(|(id, r)| r.as_note().ok().map(|_| id))
+            .map(|id| {
+                let rev = store.read_current(&id).unwrap().unwrap().0;
+                (id, rev)
+            })
+            .unwrap();
+        drop(store);
+
+        assert_eq!(
+            run(&s(&[
+                "grant-issue",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let grant_id = store
+            .list_current_objects()
+            .unwrap()
+            .into_iter()
+            .find_map(|(id, _, payload)| {
+                project::RecordPayload::from_json(&payload)
+                    .ok()?
+                    .as_export_grant()
+                    .ok()
+                    .map(|_| id)
+            })
+            .unwrap();
+        drop(store);
+
+        let package_path = root.join("package.jsonl");
+        let package_path_str = package_path.to_string_lossy().to_string();
+        assert_eq!(
+            run(&s(&[
+                "package-export",
+                "--vault",
+                &root_str,
+                "--grant",
+                &grant_id,
+                "--request-id",
+                "req-1",
+                "--out",
+                &package_path_str
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let receipt_id = store
+            .list_current_objects()
+            .unwrap()
+            .into_iter()
+            .find_map(|(id, _, payload)| {
+                project::RecordPayload::from_json(&payload)
+                    .ok()?
+                    .as_disclosure_receipt()
+                    .ok()
+                    .map(|_| id)
+            })
+            .unwrap();
+        drop(store);
+
+        let proposal_json = format!(
+            r#"{{"receipt_id":"{receipt_id}","declared_agent":"cli-test-agent","operations":[{{"kind":"note_edit","note_id":"{note_id}","expected_revision_id":"{note_rev}","body":"edited by agent via cli"}}]}}"#
+        );
+        let proposal_path = root.join("proposal.json");
+        std::fs::write(&proposal_path, &proposal_json).unwrap();
+        let proposal_path_str = proposal_path.to_string_lossy().to_string();
+
+        assert_eq!(
+            run(&s(&[
+                "propose-import",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--file",
+                &proposal_path_str
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let (proposal_id, proposal_rev) = proposal::list_project_proposals(&store, &project_id)
+            .unwrap()
+            .into_iter()
+            .next()
+            .map(|(id, _)| {
+                let rev = store.read_current(&id).unwrap().unwrap().0;
+                (id, rev)
+            })
+            .unwrap();
+        drop(store);
+
+        assert_eq!(
+            run(&s(&[
+                "propose-show",
+                "--vault",
+                &root_str,
+                "--id",
+                &proposal_id
+            ]))
+            .unwrap(),
+            0
+        );
+        assert_eq!(
+            run(&s(&[
+                "project-proposals",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id
+            ]))
+            .unwrap(),
+            0
+        );
+
+        assert_eq!(
+            run(&s(&[
+                "propose-accept",
+                "--vault",
+                &root_str,
+                "--id",
+                &proposal_id,
+                "--expect",
+                &proposal_rev,
+                "--select",
+                "0"
+            ]))
+            .unwrap(),
+            0
+        );
+
+        let store = CanonicalStore::open(&root).unwrap();
+        let (_, note_payload) = store.read_current(&note_id).unwrap().unwrap();
+        let note = project::RecordPayload::from_json(&note_payload)
+            .unwrap()
+            .as_note()
+            .unwrap()
+            .clone();
+        assert_eq!(note.body, "edited by agent via cli");
+        let accepted = proposal::current_proposal(&store, &proposal_id).unwrap();
+        assert_eq!(accepted.status, proposal::ProposalStatus::Accepted);
+        drop(store);
+
+        // A second, separately-admitted proposal can be rejected without
+        // touching the already-accepted one.
+        std::fs::write(&proposal_path, &proposal_json).unwrap();
+        assert_eq!(
+            run(&s(&[
+                "propose-import",
+                "--vault",
+                &root_str,
+                "--project",
+                &project_id,
+                "--file",
+                &proposal_path_str
+            ]))
+            .unwrap(),
+            0
+        );
+        let store = CanonicalStore::open(&root).unwrap();
+        let (second_id, second_rev) = proposal::list_project_proposals(&store, &project_id)
+            .unwrap()
+            .into_iter()
+            .find(|(id, _)| id != &proposal_id)
+            .map(|(id, _)| {
+                let rev = store.read_current(&id).unwrap().unwrap().0;
+                (id, rev)
+            })
+            .unwrap();
+        drop(store);
+        assert_eq!(
+            run(&s(&[
+                "propose-reject",
+                "--vault",
+                &root_str,
+                "--id",
+                &second_id,
+                "--expect",
+                &second_rev,
+                "--reason",
+                "duplicate"
+            ]))
+            .unwrap(),
+            0
+        );
 
         let _ = std::fs::remove_dir_all(&root);
     }
