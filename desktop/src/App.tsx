@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { NoteEditor, type NoteInfo } from "./NoteEditor";
 import "./App.css";
 
 interface VaultInfo {
@@ -25,6 +26,25 @@ export default function App() {
   const [newVaultName, setNewVaultName] = useState("");
   const [newProjectName, setNewProjectName] = useState("");
   const [newProjectDescription, setNewProjectDescription] = useState("");
+  const [openProject, setOpenProject] = useState<ProjectSummary | null>(null);
+  const [notes, setNotes] = useState<NoteInfo[]>([]);
+  const [selectedNoteId, setSelectedNoteId] = useState<string | "new" | null>(null);
+
+  async function refreshNotes(vaultPath: string, projectId: string) {
+    try {
+      const list = await invoke<NoteInfo[]>("list_notes", { vaultPath, projectId });
+      setNotes(list);
+    } catch (e) {
+      setError(String(e));
+    }
+  }
+
+  async function handleOpenProject(p: ProjectSummary) {
+    if (!vault) return;
+    setOpenProject(p);
+    setSelectedNoteId(null);
+    await refreshNotes(vault.path, p.id);
+  }
 
   async function refreshProjects(v: VaultInfo) {
     try {
@@ -128,6 +148,49 @@ export default function App() {
     );
   }
 
+  if (openProject) {
+    const selectedNote =
+      selectedNoteId && selectedNoteId !== "new" ? notes.find((n) => n.id === selectedNoteId) ?? null : null;
+    return (
+      <main className="shell">
+        <h1>Flake</h1>
+        <button onClick={() => setOpenProject(null)}>&larr; Back to projects</button>
+        <p className="notice">
+          Project: {openProject.name}
+          {openProject.description ? ` -- ${openProject.description}` : ""}
+        </p>
+        <section>
+          <h2>Notes</h2>
+          <ul>
+            {notes.map((n) => (
+              <li key={n.id}>
+                <button onClick={() => setSelectedNoteId(n.id)}>{n.title || "(untitled)"}</button>
+              </li>
+            ))}
+          </ul>
+          <button onClick={() => setSelectedNoteId("new")}>New note</button>
+        </section>
+        {(selectedNoteId === "new" || selectedNote) && (
+          <section>
+            <NoteEditor
+              vaultPath={vault.path}
+              projectId={openProject.id}
+              note={selectedNote}
+              onSaved={(saved) => {
+                setNotes((prev) => {
+                  const exists = prev.some((n) => n.id === saved.id);
+                  return exists ? prev.map((n) => (n.id === saved.id ? saved : n)) : [...prev, saved];
+                });
+                setSelectedNoteId(saved.id);
+              }}
+            />
+          </section>
+        )}
+        {error && <p className="error">{error}</p>}
+      </main>
+    );
+  }
+
   return (
     <main className="shell">
       <h1>Flake</h1>
@@ -143,6 +206,8 @@ export default function App() {
                 <strong>{p.name}</strong>
                 {p.description ? ` -- ${p.description}` : ""}
                 {!p.active && " (archived)"}
+                {" "}
+                <button onClick={() => void handleOpenProject(p)}>Open</button>
               </li>
             ))}
           </ul>

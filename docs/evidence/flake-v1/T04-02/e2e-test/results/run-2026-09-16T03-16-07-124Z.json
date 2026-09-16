@@ -1,0 +1,86 @@
+{
+  "runId": "2026-09-16T03-16-07-124Z",
+  "overallOk": false,
+  "tmpRoot": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-02-e2e-1N6Zk2",
+  "steps": [
+    {
+      "name": "exe-exists",
+      "ok": true,
+      "detail": {
+        "path": "C:\\Users\\Shehr\\work\\Flake\\desktop\\src-tauri\\target\\debug\\flake-desktop.exe"
+      },
+      "ts": "2026-09-16T03:16:07.130Z"
+    },
+    {
+      "name": "vite-dev-server-ready",
+      "ok": true,
+      "detail": {},
+      "ts": "2026-09-16T03:16:09.723Z"
+    },
+    {
+      "name": "launch",
+      "ok": true,
+      "detail": {
+        "pid": 10436
+      },
+      "ts": "2026-09-16T03:16:09.736Z"
+    },
+    {
+      "name": "bridge-ready",
+      "ok": true,
+      "detail": {
+        "url": "http://localhost:1420/"
+      },
+      "ts": "2026-09-16T03:16:11.931Z"
+    },
+    {
+      "name": "vault-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "path": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-02-e2e-1N6Zk2\\parent\\t04-02-vault",
+          "vault_id": "01a0a837-0033-7250-8369-c15149b39b69"
+        }
+      },
+      "ts": "2026-09-16T03:16:11.995Z"
+    },
+    {
+      "name": "project-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a837-0064-778b-af8d-bfc236820981",
+          "name": "T04-02 E2E Project",
+          "description": null,
+          "active": true
+        }
+      },
+      "ts": "2026-09-16T03:16:12.022Z"
+    },
+    {
+      "name": "note-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a837-007f-75e8-9e88-a983f4c468db",
+          "project_id": "01a0a837-0064-778b-af8d-bfc236820981",
+          "title": "E2E note",
+          "body": "# Heading\n\n**bold** and *italic* and `code`\n\n- item one\n- item two\n\n[a link](https://example.invalid/x) ![an image](https://example.invalid/y.png)\n\n添加注释 ✨ émigré café",
+          "revision_id": "01a0a837-007f-75e8-9e88-a984337bff8c"
+        }
+      },
+      "ts": "2026-09-16T03:16:12.037Z"
+    },
+    {
+      "name": "e2e-flow",
+      "ok": false,
+      "detail": {
+        "error": "Error: Command failed: python C:\\Users\\Shehr\\work\\Flake\\docs\\evidence\\flake-v1\\T04-02\\e2e-test\\independent_read_note.py C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-02-e2e-1N6Zk2\\parent\\t04-02-vault\\canonical.sqlite 01a0a837-007f-75e8-9e88-a983f4c468db\nTraceback (most recent call last):\r\n  File \"C:\\Users\\Shehr\\work\\Flake\\docs\\evidence\\flake-v1\\T04-02\\e2e-test\\independent_read_note.py\", line 46, in <module>\r\n    main()\r\n  File \"C:\\Users\\Shehr\\work\\Flake\\docs\\evidence\\flake-v1\\T04-02\\e2e-test\\independent_read_note.py\", line 28, in main\r\n    result = read_vault(db_path)\r\n             ^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\Users\\Shehr\\work\\Flake\\tools\\independent-verify\\sqlite_reader.py\", line 198, in read_vault\r\n    conn = _connect_readonly(db_path)\r\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\Users\\Shehr\\work\\Flake\\tools\\independent-verify\\sqlite_reader.py\", line 30, in _connect_readonly\r\n    conn = sqlite3.connect(uri, uri=True)\r\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nsqlite3.OperationalError: unable to open database file\r\n\n    at genericNodeError (node:internal/errors:983:15)\n    at wrappedFn (node:internal/errors:537:14)\n    at checkExecSyncError (node:child_process:916:11)\n    at execFileSync (node:child_process:952:15)\n    at independentReadNote (file:///C:/Users/Shehr/work/Flake/docs/evidence/flake-v1/T04-02/e2e-test/run-e2e-test.mjs:124:15)\n    at main (file:///C:/Users/Shehr/work/Flake/docs/evidence/flake-v1/T04-02/e2e-test/run-e2e-test.mjs:215:20)"
+      },
+      "ts": "2026-09-16T03:16:12.327Z"
+    }
+  ]
+}
