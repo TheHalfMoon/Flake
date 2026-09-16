@@ -14,3 +14,6 @@ The frozen v1 direction is a local-first continuity product with Rust owning the
 Mandatory graph/model infrastructure, rich collaborative editing, generalized cloud sync, execution brokerage, marketplace/plugin expansion, and hosted AI dependencies are outside the v1 dependency graph unless a later authorized ADR reopens them.
 
 Any implementation-time discovery that would change a Class C architecture decision must stop the affected unit and follow the ADR/review rule defined by the canonical plan.
+## Founder Class E amendment — 2026-09-16
+
+`docs/canonical/FOUNDER_NO_HUMAN_QUALIFICATION_GATES_2026-09-16.md` is an adopted founder-authorized architecture reconsideration for Flake v1. It prospectively removes external human participant/reviewer qualification gates, replaces T03-08 and T05-06 with automated technical qualification contracts, and amends R11. It does not alter the Rust/Core trust boundary, owner acceptance semantics, disclosure controls, canonical data invariants, or historical evidence.

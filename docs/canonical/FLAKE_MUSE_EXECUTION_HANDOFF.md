@@ -1,16 +1,19 @@
 # Flake Muse execution handoff
 
-Status: `ASTRO_PLAN_COMPLETE=YES`; implementation has not started.
+Status: `ASTRO_PLAN_COMPLETE=YES`; implementation is active. `specs/CURRENT.md` owns the live frontier.
 
 ## Canonical entry point
 
 1. Reverify live GitHub/repository truth.
 2. Read `specs/CURRENT.md`.
-3. Read `docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` completely.
-4. Confirm the dependency frontier before changing implementation.
-5. If unchanged and implementation is explicitly authorized, begin `T00-01`.
+3. Read `docs/canonical/FOUNDER_NO_HUMAN_QUALIFICATION_GATES_2026-09-16.md`.
+4. Read `docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` completely.
+5. Confirm the dependency frontier before changing implementation.
+6. Execute the dependency-ready unit named by `CURRENT`; do not restart closed predecessors.
 
 The canonical build plan is the sole implementation roadmap. Historical R1/Fehrest plans are evidence and lineage, not alternate execution roadmaps.
+
+The 2026-09-16 founder decision is an additive Class E amendment to that roadmap. It removes external human participant/reviewer qualification gates, replaces T03-08 and T05-06 with automated technical qualification contracts, and amends R11. It does not alter product owner acceptance semantics or security boundaries.
 
 ## Execution rules
 

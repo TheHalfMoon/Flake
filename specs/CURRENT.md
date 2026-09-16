@@ -14,7 +14,12 @@ CANONICAL_BUILD_PLAN_SHA256=b555f83ff12882ae6f55f90bbeaa411de52b84661a7f3953350c
 CANONICAL_PLAN_REMOTE_STATUS=MIGRATED_TO_GITHUB
 CANONICAL_PLAN_LOCAL_DEPENDENCY=NONE
 ACTIVE_IMPLEMENTATION_UNIT=T03-08
-NEXT_DEPENDENCY_READY_UNIT=NONE_BLOCKED_ON_HUMAN_PARTICIPANTS
+NEXT_DEPENDENCY_READY_UNIT=T03-08
+FOUNDER_DECISION_NO_HUMAN_GATES=docs/canonical/FOUNDER_NO_HUMAN_QUALIFICATION_GATES_2026-09-16.md
+T03-08_EXECUTION_CONTRACT=AUTOMATED_CONTINUITY_QUALIFICATION
+T05-06_EXECUTION_CONTRACT=AUTOMATED_LONG_HORIZON_CONTINUITY_SOAK
+R11_CONTRACT=AUTOMATED_CONTINUITY_AND_SOAK
+EXECUTABLE_REPOSITORY_WORK=AVAILABLE
 P01_STATUS=CLOSED
 T00-01_STATUS=COMPLETE
 T00-01_EVIDENCE=docs/evidence/flake-v1/T00-01/REPORT.md
@@ -96,9 +101,9 @@ T03-07_EVIDENCE=docs/evidence/flake-v1/T03-07/REPORT.md
 T03-07_PREREG_PACKAGE=bench/flake-v1/T03-07/
 T03-07_SEAL=bench/flake-v1/T03-07/SEALS.json
 T03-07_MERGE_COMMIT=4b7f56b74a9e7b8ce074a8b682b06c3d78772716
-T03-08_STATUS=BLOCKED
-T03-08_BLOCKER_ID=T03-08-HUMAN-PARTICIPANTS
-T03-08_BLOCKER=docs/evidence/flake-v1/T03-07/REPORT.md#next-frontier
+T03-08_STATUS=READY
+T03-08_PRIOR_BLOCKER_ID=T03-08-HUMAN-PARTICIPANTS
+T03-08_PRIOR_BLOCKER_STATUS=SUPERSEDED_BY_FOUNDER_DECISION
 SPEC_003_AUTO_ACTIVATION=PROHIBITED
 PROJECT_COMPLETE=NO
 ```
@@ -114,20 +119,17 @@ The historical local-only planning SHAs `4246f6d...` and `852e44b...` are proven
 
 ## Next action
 
-**`T03-08` is blocked on a genuine external dependency.** `T03-07`'s complete preregistration package (`bench/flake-v1/T03-07/`) already *is* the "preregistered local study runner/data/analysis" `T03-08`'s own files/components clause calls for — there is no separate repository-ownable code left to write for `T03-08`. What remains is exclusively execution: recruiting six real, eligible, consenting participants and running the sealed protocol with them, which a repository-execution agent cannot ethically fabricate, impersonate, or simulate as if it were real evidence.
+**`T03-08` is executable now under explicit founder direction.** `docs/canonical/FOUNDER_NO_HUMAN_QUALIFICATION_GATES_2026-09-16.md` prospectively supersedes the external human-participant/reviewer qualification gates while preserving product owner authority and all security/durability/rights/native gates. Execute the replacement automated continuity qualification over the sealed T03-07 engineering fixtures without representing automated output as human evidence.
 
 ```text
-BLOCKER_ID=T03-08-HUMAN-PARTICIPANTS
-EXACT_GATE=Six target-group participants completing the preregistered eight matched interruption/resumption pairs each (96 total attempts) under the sealed T03-07 protocol.
-WHY_EXTERNAL=A repository execution agent cannot ethically create, recruit, or impersonate consenting human participants.
-CURRENT_EVIDENCE=bench/flake-v1/T03-07/SEALS.json (sealed protocol/case/allocation/analysis/harness hashes, product_commit=29263249e17fbaf93bd6a2d764fed418da255feb) plus a successful synthetic dry run recorded in docs/evidence/flake-v1/T03-07/REPORT.md and raw/07-dry-run.txt.
-MISSING_RESOURCE_OR_EVIDENCE=Six eligible, consenting participants matching PROTOCOL.md section 2/3, plus a facilitator to run the sealed sessions.
-EXACT_OPERATOR_ACTION=Recruit per PROTOCOL.md sections 3-4, obtain consent per CONSENT.md, then run each session exactly per PROTOCOL.md sections 8-9 (training, fixed condition order/case assignment from allocation_confirmatory.json, fixed budgets) without modifying cases, allocation, analysis, thresholds, or the product under test. Record every attempt via harness.py, including failures/timeouts/exclusions/deviations.
-SUCCESS_CRITERION=96 attempted observations accounted for under the sealed protocol (or a properly excluded/documented subset per PROTOCOL.md section 13.1), with every exclusion/timeout/failure retained and mechanically routed by analysis.py, cross-checked by verify_independent.py.
-WHAT_UNBLOCKS_AFTERWARD=T03-08's confirmatory analysis and P03 value-gate decision (Pass unlocks T04-01; Fail/Inconclusive blocks desktop entry per section 26).
+PRIOR_BLOCKER_ID=T03-08-HUMAN-PARTICIPANTS
+PRIOR_BLOCKER_STATUS=SUPERSEDED_BY_FOUNDER_DECISION
+CURRENT_GATE=AUTOMATED_CONTINUITY_QUALIFICATION
+HUMAN_EVIDENCE_REQUIRED=NO
+HUMAN_EVIDENCE_CLAIMED=NO
 ```
 
-No other dependency-ready repository work exists: the canonical dependency DAG (build plan section 31) is strictly sequential through `P03`, `T04-01` depends on `T03-08`, and Spec 003 auto-activation remains prohibited. `EXECUTABLE_REPOSITORY_WORK=ZERO`, `PROJECT_COMPLETE=NO`, and this blocker is genuinely external and precisely documented per the founder directive's stop condition.
+The canonical dependency DAG remains sequential: complete the replacement T03-08 contract before `T04-01`. Spec 003 auto-activation remains prohibited. `EXECUTABLE_REPOSITORY_WORK=AVAILABLE` and `PROJECT_COMPLETE=NO`.
 
 `T03-07` closed: the complete preregistration package for the Section 26 P03 value gate, under `bench/flake-v1/T03-07/` — `PROTOCOL.md` (research question, eligibility, recruitment, consent/withdrawal/privacy, training, exact-parity counterbalancing formulas, equal source/setup/access budgets, success/failure/timeout/exclusion definitions, class-loss route, one-permitted-repair-repeat, and a fixed seven-step mechanical Pass/Fail/Inconclusive decision route) and `CONSENT.md`, both structurally checked by `test_protocol.py`. `generate_cases.py`/`generate_allocation.py` deterministically produce the sealed, disjoint, held-out `cases_confirmatory.json` (96 cases, exactly matching the 6-participant×8-pair×2-condition design) and `allocation_confirmatory.json` (exact 24/24 counterbalancing, verified, not merely intended); re-running either script reproduces the sealed files byte-for-byte. `harness.py`'s append-only manifest was proven resumable under a simulated process interruption; `analysis.py` (producer) and a separately-written `verify_independent.py` (oracle, never importing the producer) independently agree on every one of the seven possible routing outcomes. `dry_run.py` exercised the entire machinery end to end using only non-confirmatory `cases_dev.json` data, including an injected timeout, exclusion, protocol deviation, and a simulated harness-restart. `SEALS.json` records SHA-256 digests of all 11 load-bearing files plus the exact qualified product commit (`29263249e17fbaf93bd6a2d764fed418da255feb`) this study is frozen against — sealed before any confirmatory human observation exists. No participant has been recruited and no human evidence of any kind exists in this package; `analysis.py` structurally refuses to treat dev/synthetic data as confirmatory (a runtime guard, not a convention). 53/53 Python tests pass across 7 suites; the full Rust suite (358/358) was re-run to confirm no regression, since this task touched no `src/` code. Full details: `docs/evidence/flake-v1/T03-07/REPORT.md`.
 
