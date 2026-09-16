@@ -38,6 +38,7 @@ What was genuinely missing, and is what this task actually built:
 docs/formats/format-compatibility-policy.md           | new
 docs/evidence/flake-v1/T05-01/...                      | new (this report + raw + checks + results)
 src/bin/flake-migrate.rs                               | new
+src/migration.rs                                       | memory fix (see "A real defect..." below); no behavior/contract change
 src/project.rs                                         | +2 golden-fixture tests
 tests/flake_migrate_binary.rs                          | new
 tests/fixtures/format-compat/...                       | new (2 fixtures + README)
@@ -45,7 +46,7 @@ tools/independent-verify/sqlite_reader.py              | extended: origin="migra
 specs/CURRENT.md                                       | frontier update + T04-06 merge-commit correction
 ```
 
-No change to `src/migration.rs`, `src/canonical.rs`, or any typed-record struct — every already-shipped mechanism above is cited, not modified. No `Cargo.toml`/`Cargo.lock` dependency change: `src/bin/flake-migrate.rs` links only the existing `fehrest`/`serde_json` dependencies already in the workspace.
+No change to `src/canonical.rs` or any typed-record struct — those mechanisms are cited, not modified. `src/migration.rs`'s only change is the memory-footprint fix below — no change to its admission rules, byte-exactness guarantee, completeness semantics, or manifest shape. No `Cargo.toml`/`Cargo.lock` dependency change: `src/bin/flake-migrate.rs` links only the existing `fehrest`/`serde_json` dependencies already in the workspace.
 
 ## 1. Standalone offline migration tool (`src/bin/flake-migrate.rs`)
 
@@ -74,13 +75,21 @@ Chose human-readable JSON payload fixtures over a checked-in binary `canonical.s
 
 New harness: generates a synthetic format-1 legacy vault (`N` records, target average body size), times `flake-migrate preview`/`import` as real release-build subprocesses, independently verifies the result via the extended `sqlite_reader.py` above (no Flake Rust code executed by the verification step), records exact counts/timings/free-disk-space checkpoints as JSON, and **always deletes the generated dataset before exiting** (success or failure) — this development host's own local disk is severely constrained (`docs/evidence/flake-v1/T04-06/../../desktop/src-tauri/Cargo.toml`'s own prior comment on this same constraint; independently reconfirmed here: `df -h /c` showed 4.5 GiB free at the start of this task, out of a 200 GiB volume 98% full).
 
+## 6. A real defect this task's own L-scale measurement found and fixed (`src/migration.rs`)
+
+The first CI attempt at L-scale (100,000 records, ~10 GiB) was killed (`exit 143`) on a `ubuntu-latest` runner with 15 GiB RAM — roughly double plan §27's own documented reference-minimum (4 cores / 8 GiB RAM / local SSD). Root cause, confirmed by reading the code, not guessed at: `preview_migration` read every admitted record's full file content into a `raw_bytes: String` retained on every entry of its returned `Vec<LegacyRecord>` for the whole call — for 100,000 records averaging 100 KB, roughly 10 GiB of live String data held simultaneously. `import_to_new_root` made this worse by calling `preview_migration` internally and then `.clone()`-ing the entire admitted list into a second `to_import` vector before its commit loop — a second full in-memory copy. §27's own closing instruction is explicit: *"If the specified minimum hardware cannot meet a maximum after one measured bounded optimization pass, stop the affected unit for ADR/scope reconsideration."* This task's own named performance gate is exactly "M/L migration and memory/cancel ceilings," so fixing this is squarely in scope, not scope creep — and a genuinely bounded, one-pass fix was available, so no ADR/scope escalation was needed.
+
+**The fix:** `LegacyRecord` no longer carries `raw_bytes` at all — `preview_migration` now reads each candidate file, computes its `content_sha256`, and lets the content drop at the end of that loop iteration (peak memory O(one record), not O(every admitted record)); `import_to_new_root`'s commit loop re-reads each admitted record's exact bytes fresh from disk immediately before committing it, then lets that copy drop too. The content itself is still read directly from disk and committed completely unmodified — never round-tripped through `identity::parse`/`serialize` — this only changes *when* each record's bytes are held in memory, not what bytes end up committed or how "exact-byte preservation" is proven (T01-06's own byte-identity tests, `complete_migration_of_a_clean_vault_preserves_exact_bytes_and_identity` and `gold_fixtures_with_crlf_unicode_and_unknown_fields_migrate_byte_identically`, both still pass unchanged in what they prove, adjusted only to check the preview-stage hash instead of a retained preview-stage copy of the bytes themselves — see their own updated inline comments).
+
+All 328 lib tests (including the pre-existing D5 migration schedule) and all 4 standalone-binary tests pass unchanged after this fix. Re-run via a follow-up commit on this task's own PR; final CI results recorded below.
+
 **S-scale (local, Windows, this development host):** 100 records, ~10 MiB total payload (plan §27's own S definition), release build. `preview` 1.62 s, `import` 0.47 s — both comfortably inside the closest §27 analog ("Full export/import M": target 60 s, maximum 180 s), independent verification (`head_hash_chain_verified: true`, exact count agreement across preview/import/independent-reader) passing. Raw: `results/s-scale-timing-windows-local.json`.
 
 **M-scale (10,000 records, ~1 GiB payload) and L-scale (100,000 records, ~10 GiB payload, attempted disk permitting):** deliberately **not** run on this local host given the 4.5 GiB free-space constraint above — this repeats a real, previously-observed risk on this exact host (a prior task's evidence records free space dropping from ~1.5 GiB to ~22 MiB in about 15 minutes from unrelated background activity). Run instead on a `ubuntu-latest` GitHub Actions runner via the `m-scale-performance` job in `.github/workflows/t05-01-migration-qualification.yml`, which reports its own exact CPU/RAM/disk before running (plan §27's own "record actual CPU/RAM/SSD/OS/filesystem" instruction) and requires at least 24 GiB free before attempting L, else records why L was skipped rather than risking an uncontrolled runner failure mid-measurement.
 
 *(Updated once the CI run referenced below completes — see "Cross-platform and CI qualification".)*
 
-## 6. Standalone binary integration tests (`tests/flake_migrate_binary.rs`)
+## 7. Standalone binary integration tests (`tests/flake_migrate_binary.rs`)
 
 Proves the **compiled, separately-invoked** `flake-migrate` binary itself, as a real subprocess against the checked-in `T01-06` gold fixtures (`tests/fixtures/migration/`) — the one property no `src/migration.rs` unit test can prove, since those call the library functions directly, not the separately-built tool a format-1 owner without the main app would actually run:
 

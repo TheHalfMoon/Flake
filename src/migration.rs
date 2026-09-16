@@ -61,13 +61,28 @@ const MIGRATION_MANIFEST_FILE: &str = "migration-manifest.json";
 /// One legacy object judged admittable by [`preview_migration`]: unambiguous
 /// identity, parseable frontmatter, supported extension, not under a
 /// reserved directory.
+///
+/// **`T05-01`: deliberately does not carry the file's own bytes.** It
+/// originally did (`raw_bytes: String`, retained on every admitted
+/// record for the whole call) -- correct for a handful of records, but a
+/// hard release-blocking defect at the plan §27 L scale: a 100,000-record
+/// legacy vault holding every record's full content simultaneously in one
+/// `Vec` genuinely exhausted memory on a CI runner with roughly double the
+/// documented reference-minimum RAM (`docs/evidence/flake-v1/T05-01/REPORT.md`
+/// "M/L-scale migration performance timing" records the exact failure).
+/// `preview_migration` now computes `content_sha256` per record and lets
+/// that record's bytes drop before reading the next one (peak memory
+/// O(one record), not O(every admitted record)); `import_to_new_root`
+/// re-reads each admitted record's exact bytes fresh from disk immediately
+/// before committing it, for the same reason. The **content itself** is
+/// still read directly from disk and committed unmodified -- never
+/// round-tripped through `identity::parse`/`serialize` -- this change only
+/// moves *when* each record's bytes are held in memory, not what bytes
+/// end up committed.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct LegacyRecord {
     pub legacy_object_id: String,
     pub rel_path: String,
-    /// Exact original file bytes (UTF-8), untouched by any parse/reserialize
-    /// round-trip.
-    pub raw_bytes: String,
     pub content_sha256: String,
 }
 
@@ -162,6 +177,9 @@ pub fn preview_migration(source_root: impl AsRef<Path>) -> Result<MigrationPrevi
             });
             continue;
         }
+        // Read, hash, then let `raw_bytes` drop at the end of this
+        // iteration -- never accumulated in `admitted` (see LegacyRecord's
+        // own doc comment for why this matters at L scale).
         let raw_bytes = fs::read_to_string(source_root.join(&rec.rel_path)).map_err(|e| {
             Error::Migration(format!(
                 "cannot read legacy file {} for migration: {e}",
@@ -172,7 +190,6 @@ pub fn preview_migration(source_root: impl AsRef<Path>) -> Result<MigrationPrevi
         admitted.push(LegacyRecord {
             legacy_object_id: rec.id.to_string(),
             rel_path: rec.rel_path.clone(),
-            raw_bytes,
             content_sha256,
         });
     }
@@ -299,13 +316,30 @@ pub(crate) fn import_to_new_root_with_fault(
     {
         let mut writer = store.writer()?;
         for rec in &to_import {
+            // Re-read this record's exact bytes fresh from disk, right
+            // before committing it, rather than reusing a copy retained
+            // since `preview_migration` -- `LegacyRecord` no longer keeps
+            // one (see its own doc comment): holding every admitted
+            // record's full content in memory for the whole import loop
+            // is what exhausted memory at L scale. Peak memory here is
+            // O(one record), matching `preview_migration`'s own fix.
+            let payload = match fs::read_to_string(source_root.join(&rec.rel_path)) {
+                Ok(bytes) => bytes,
+                Err(e) => {
+                    interrupt_reason = Some(format!(
+                        "cannot re-read legacy file {} for import: {e}",
+                        rec.rel_path
+                    ));
+                    break;
+                }
+            };
             let commit_result = writer.commit(CommandInput {
                 command_id: uuid::Uuid::now_v7().to_string(),
                 actor: "migration".into(),
                 origin: RecordOrigin::Migration,
                 target: CommandTarget::ImportObject {
                     object_id: rec.legacy_object_id.clone(),
-                    payload: rec.raw_bytes.clone(),
+                    payload,
                 },
             });
             match commit_result {
@@ -399,8 +433,11 @@ mod tests {
         assert!(preview.is_complete(), "preview: {preview:?}");
         assert_eq!(preview.admitted.len(), 1);
         assert_eq!(
-            preview.admitted[0].raw_bytes, content,
-            "raw bytes must be exact, CRLF/Unicode included"
+            preview.admitted[0].content_sha256,
+            crate::events::hash_bytes(content.as_bytes()),
+            "preview's own hash must match the exact source bytes, CRLF/Unicode included \
+             (LegacyRecord no longer retains raw_bytes itself -- see its own doc comment; \
+             byte-identity all the way into the canonical store is proven below instead)"
         );
 
         let new_root = tmp();
