@@ -1,0 +1,14 @@
+
+> flake-desktop@0.0.1-phase-t build
+> tsc && vite build
+
+[36mvite v8.3.0 [32mbuilding client environment for production...[36m[39m
+transforming...
+✓ 30 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.40 kB │ gzip:  0.27 kB
+dist/assets/index-DM6edooI.css    1.81 kB │ gzip:  0.78 kB
+dist/assets/index-rk35YeC-.js   255.53 kB │ gzip: 78.77 kB
+
+[32m✓ built in 2.04s[39m

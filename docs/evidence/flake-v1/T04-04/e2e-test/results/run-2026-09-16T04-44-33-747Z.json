@@ -1,0 +1,280 @@
+{
+  "runId": "2026-09-16T04-44-33-747Z",
+  "overallOk": false,
+  "tmpRoot": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-04-e2e-qxM2Fa",
+  "vaultPath": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-04-e2e-qxM2Fa\\parent\\shared-vault",
+  "steps": [
+    {
+      "name": "exe-exists",
+      "ok": true,
+      "detail": {
+        "path": "C:\\Users\\Shehr\\work\\Flake\\desktop\\src-tauri\\target\\debug\\flake-desktop.exe"
+      },
+      "ts": "2026-09-16T04:44:33.756Z"
+    },
+    {
+      "name": "cli-exe-exists",
+      "ok": true,
+      "detail": {
+        "path": "C:\\Users\\Shehr\\work\\Flake\\target\\debug\\fehrest.exe"
+      },
+      "ts": "2026-09-16T04:44:33.757Z"
+    },
+    {
+      "name": "vite-dev-server-ready",
+      "ok": true,
+      "detail": {},
+      "ts": "2026-09-16T04:44:35.548Z"
+    },
+    {
+      "name": "launch",
+      "ok": true,
+      "detail": {
+        "pid": 5764
+      },
+      "ts": "2026-09-16T04:44:36.247Z"
+    },
+    {
+      "name": "bridge-ready",
+      "ok": true,
+      "detail": {
+        "url": "http://localhost:1420/"
+      },
+      "ts": "2026-09-16T04:44:37.512Z"
+    },
+    {
+      "name": "vault-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "path": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-04-e2e-qxM2Fa\\parent\\shared-vault",
+          "vault_id": "01a0a887-f513-7138-9f1b-5f3b3324d3f7"
+        }
+      },
+      "ts": "2026-09-16T04:44:37.550Z"
+    },
+    {
+      "name": "project-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a887-f535-7645-a6c6-881c627107f9",
+          "name": "T04-04 Project",
+          "description": null,
+          "active": true
+        }
+      },
+      "ts": "2026-09-16T04:44:37.562Z"
+    },
+    {
+      "name": "note1-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a887-f542-71a1-9569-5286def234eb",
+          "project_id": "01a0a887-f535-7645-a6c6-881c627107f9",
+          "title": "First note",
+          "body": "Content for disclosure.",
+          "revision_id": "01a0a887-f542-71a1-9569-5287209ab8b9"
+        }
+      },
+      "ts": "2026-09-16T04:44:37.575Z"
+    },
+    {
+      "name": "checkpoint-current-initially-null",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": null
+      },
+      "ts": "2026-09-16T04:44:37.584Z"
+    },
+    {
+      "name": "checkpoint-mark-first",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a887-f556-714a-bf13-04986ae34419",
+          "payload_schema_version": 1,
+          "project_id": "01a0a887-f535-7645-a6c6-881c627107f9",
+          "owner": "owner",
+          "reviewed_through_seq": 2,
+          "reset_reason": null,
+          "revision_id": "01a0a887-f556-714a-bf13-0499395bce0f"
+        }
+      },
+      "ts": "2026-09-16T04:44:37.594Z"
+    },
+    {
+      "name": "note2-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a887-f561-7359-8322-90e9498c5517",
+          "project_id": "01a0a887-f535-7645-a6c6-881c627107f9",
+          "title": "Second note",
+          "body": "Created after first checkpoint.",
+          "revision_id": "01a0a887-f561-7359-8322-90ea07a83e8a"
+        }
+      },
+      "ts": "2026-09-16T04:44:37.606Z"
+    },
+    {
+      "name": "checkpoint-mark-advances",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a887-f556-714a-bf13-04986ae34419",
+          "payload_schema_version": 1,
+          "project_id": "01a0a887-f535-7645-a6c6-881c627107f9",
+          "owner": "owner",
+          "reviewed_through_seq": 4,
+          "reset_reason": null,
+          "revision_id": "01a0a887-f56d-7473-b8bd-46ff37587a67"
+        }
+      },
+      "ts": "2026-09-16T04:44:37.617Z"
+    },
+    {
+      "name": "checkpoint-mark-conflict-refused",
+      "ok": true,
+      "detail": {
+        "ok": false,
+        "error": "canonical store error: expected revision conflict: object 01a0a887-f556-714a-bf13-04986ae34419 is at revision 01a0a887-f56d-7473-b8bd-46ff37587a67, not the expected 01a0a887-f556-714a-bf13-0499395bce0f"
+      },
+      "ts": "2026-09-16T04:44:37.626Z"
+    },
+    {
+      "name": "checkpoint-reset",
+      "ok": "test reset back to the beginning",
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a887-f556-714a-bf13-04986ae34419",
+          "payload_schema_version": 1,
+          "project_id": "01a0a887-f535-7645-a6c6-881c627107f9",
+          "owner": "owner",
+          "reviewed_through_seq": 0,
+          "reset_reason": "test reset back to the beginning",
+          "revision_id": "01a0a887-f582-7257-a891-0833f2955f32"
+        }
+      },
+      "ts": "2026-09-16T04:44:37.688Z"
+    },
+    {
+      "name": "source-import-via-cli",
+      "ok": true,
+      "detail": {
+        "sourceId": "01a0a887-f6ca-7442-921f-8b6fe35aa02e"
+      },
+      "ts": "2026-09-16T04:44:37.973Z"
+    },
+    {
+      "name": "source-initially-unchecked",
+      "ok": true,
+      "detail": {
+        "id": "01a0a887-f6ca-7442-921f-8b6fe35aa02e",
+        "label": "Test Source",
+        "active": true,
+        "latest_check_status": null,
+        "latest_check_at": null
+      },
+      "ts": "2026-09-16T04:44:37.994Z"
+    },
+    {
+      "name": "source-check-match",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "payload_schema_version": 1,
+          "project_id": "01a0a887-f535-7645-a6c6-881c627107f9",
+          "source_id": "01a0a887-f6ca-7442-921f-8b6fe35aa02e",
+          "checked_revision_id": "01a0a887-f6ca-7442-921f-8b7b61867467",
+          "status": "match",
+          "observed_sha256": "b19f8edae2ee6c225b7278b289c2823ab9accfa225c5d67c4bef270b88ea55f0",
+          "observed_byte_length": 9,
+          "observed_at": "2026-09-16T04:44:38Z",
+          "checking_actor": "owner",
+          "algorithm": "sha256"
+        }
+      },
+      "ts": "2026-09-16T04:44:38.007Z"
+    },
+    {
+      "name": "source-check-changed",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "payload_schema_version": 1,
+          "project_id": "01a0a887-f535-7645-a6c6-881c627107f9",
+          "source_id": "01a0a887-f6ca-7442-921f-8b6fe35aa02e",
+          "checked_revision_id": "01a0a887-f6ca-7442-921f-8b7b61867467",
+          "status": "changed",
+          "observed_sha256": "8025d98d52d79486362e5300b8433572cdd2bfa306e13e43df20c4d0f931e4bb",
+          "observed_byte_length": 20,
+          "observed_at": "2026-09-16T04:44:38Z",
+          "checking_actor": "owner",
+          "algorithm": "sha256"
+        }
+      },
+      "ts": "2026-09-16T04:44:38.021Z"
+    },
+    {
+      "name": "source-check-missing",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "payload_schema_version": 1,
+          "project_id": "01a0a887-f535-7645-a6c6-881c627107f9",
+          "source_id": "01a0a887-f6ca-7442-921f-8b6fe35aa02e",
+          "checked_revision_id": "01a0a887-f6ca-7442-921f-8b7b61867467",
+          "status": "missing",
+          "observed_sha256": null,
+          "observed_byte_length": null,
+          "observed_at": "2026-09-16T04:44:38Z",
+          "checking_actor": "owner",
+          "algorithm": "sha256"
+        }
+      },
+      "ts": "2026-09-16T04:44:38.032Z"
+    },
+    {
+      "name": "source-list-reflects-latest-check",
+      "ok": false,
+      "detail": {
+        "id": "01a0a887-f6ca-7442-921f-8b6fe35aa02e",
+        "label": "Test Source",
+        "active": true,
+        "latest_check_status": "match",
+        "latest_check_at": "2026-09-16T04:44:38Z"
+      },
+      "ts": "2026-09-16T04:44:38.039Z"
+    },
+    {
+      "name": "grant-issue-desktop",
+      "ok": false,
+      "detail": {
+        "ok": false,
+        "error": "invalid args `options` for command `grant_issue`: missing field `privacyExclusions`"
+      },
+      "ts": "2026-09-16T04:44:38.045Z"
+    },
+    {
+      "name": "desktop-workflow",
+      "ok": false,
+      "detail": {
+        "error": "TypeError: Cannot read properties of undefined (reading 'id')\n    at main (file:///C:/Users/Shehr/work/Flake/docs/evidence/flake-v1/T04-04/e2e-test/run-e2e-test.mjs:303:37)"
+      },
+      "ts": "2026-09-16T04:44:38.049Z"
+    }
+  ]
+}

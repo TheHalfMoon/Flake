@@ -54,6 +54,19 @@ fn main() {
             commands::list_relations_for_object,
             commands::resume_view,
             commands::search_project,
+            commands::checkpoint_current,
+            commands::checkpoint_mark,
+            commands::checkpoint_reset,
+            commands::list_sources,
+            commands::source_check_now,
+            commands::grant_issue,
+            commands::grant_revoke,
+            commands::package_preview,
+            commands::package_compile,
+            commands::list_proposals,
+            commands::proposal_admit,
+            commands::proposal_accept,
+            commands::proposal_reject,
         ])
         .run(tauri::generate_context!())
         .expect("error while running the Flake desktop shell");

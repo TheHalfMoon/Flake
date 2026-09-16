@@ -1,0 +1,614 @@
+{
+  "runId": "2026-09-16T05-02-16-712Z",
+  "overallOk": true,
+  "tmpRoot": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-04-e2e-4Sv5vE",
+  "vaultPath": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-04-e2e-4Sv5vE\\parent\\shared-vault",
+  "steps": [
+    {
+      "name": "exe-exists",
+      "ok": true,
+      "detail": {
+        "path": "C:\\Users\\Shehr\\work\\Flake\\desktop\\src-tauri\\target\\debug\\flake-desktop.exe"
+      },
+      "ts": "2026-09-16T05:02:16.720Z"
+    },
+    {
+      "name": "cli-exe-exists",
+      "ok": true,
+      "detail": {
+        "path": "C:\\Users\\Shehr\\work\\Flake\\target\\debug\\fehrest.exe"
+      },
+      "ts": "2026-09-16T05:02:16.722Z"
+    },
+    {
+      "name": "vite-dev-server-ready",
+      "ok": true,
+      "detail": {},
+      "ts": "2026-09-16T05:02:18.695Z"
+    },
+    {
+      "name": "launch",
+      "ok": true,
+      "detail": {
+        "pid": 23672
+      },
+      "ts": "2026-09-16T05:02:19.410Z"
+    },
+    {
+      "name": "bridge-ready",
+      "ok": true,
+      "detail": {
+        "url": "http://localhost:1420/"
+      },
+      "ts": "2026-09-16T05:02:20.473Z"
+    },
+    {
+      "name": "vault-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "path": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-04-e2e-4Sv5vE\\parent\\shared-vault",
+          "vault_id": "01a0a898-2d51-70a4-b51e-a951d403da18"
+        }
+      },
+      "ts": "2026-09-16T05:02:20.526Z"
+    },
+    {
+      "name": "project-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a898-2d77-74f0-bcf7-693934709dfc",
+          "name": "T04-04 Project",
+          "description": null,
+          "active": true
+        }
+      },
+      "ts": "2026-09-16T05:02:20.540Z"
+    },
+    {
+      "name": "note1-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a898-2d84-7447-bd81-cffb2096d073",
+          "project_id": "01a0a898-2d77-74f0-bcf7-693934709dfc",
+          "title": "First note",
+          "body": "Content for disclosure.",
+          "revision_id": "01a0a898-2d84-7447-bd81-cffcffabc03d"
+        }
+      },
+      "ts": "2026-09-16T05:02:20.551Z"
+    },
+    {
+      "name": "checkpoint-current-initially-null",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": null
+      },
+      "ts": "2026-09-16T05:02:20.559Z"
+    },
+    {
+      "name": "checkpoint-mark-first",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a898-2d98-7527-a205-7b64ed231a32",
+          "payload_schema_version": 1,
+          "project_id": "01a0a898-2d77-74f0-bcf7-693934709dfc",
+          "owner": "owner",
+          "reviewed_through_seq": 2,
+          "reset_reason": null,
+          "revision_id": "01a0a898-2d98-7527-a205-7b652795adde"
+        }
+      },
+      "ts": "2026-09-16T05:02:20.575Z"
+    },
+    {
+      "name": "note2-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a898-2da6-774c-aa2a-9d23ac5c680a",
+          "project_id": "01a0a898-2d77-74f0-bcf7-693934709dfc",
+          "title": "Second note",
+          "body": "Created after first checkpoint.",
+          "revision_id": "01a0a898-2da6-774c-aa2a-9d247005f12b"
+        }
+      },
+      "ts": "2026-09-16T05:02:20.586Z"
+    },
+    {
+      "name": "checkpoint-mark-advances",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a898-2d98-7527-a205-7b64ed231a32",
+          "payload_schema_version": 1,
+          "project_id": "01a0a898-2d77-74f0-bcf7-693934709dfc",
+          "owner": "owner",
+          "reviewed_through_seq": 4,
+          "reset_reason": null,
+          "revision_id": "01a0a898-2db2-7784-8844-d3ed80709b33"
+        }
+      },
+      "ts": "2026-09-16T05:02:20.598Z"
+    },
+    {
+      "name": "checkpoint-mark-conflict-refused",
+      "ok": true,
+      "detail": {
+        "ok": false,
+        "error": "canonical store error: expected revision conflict: object 01a0a898-2d98-7527-a205-7b64ed231a32 is at revision 01a0a898-2db2-7784-8844-d3ed80709b33, not the expected 01a0a898-2d98-7527-a205-7b652795adde"
+      },
+      "ts": "2026-09-16T05:02:20.607Z"
+    },
+    {
+      "name": "checkpoint-reset",
+      "ok": "test reset back to the beginning",
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a898-2d98-7527-a205-7b64ed231a32",
+          "payload_schema_version": 1,
+          "project_id": "01a0a898-2d77-74f0-bcf7-693934709dfc",
+          "owner": "owner",
+          "reviewed_through_seq": 0,
+          "reset_reason": "test reset back to the beginning",
+          "revision_id": "01a0a898-2dc6-75c0-9d62-ea231f2281bc"
+        }
+      },
+      "ts": "2026-09-16T05:02:20.618Z"
+    },
+    {
+      "name": "source-import-via-cli",
+      "ok": true,
+      "detail": {
+        "sourceId": "01a0a898-2f0e-7420-949b-14e356ee7b01"
+      },
+      "ts": "2026-09-16T05:02:20.947Z"
+    },
+    {
+      "name": "source-initially-unchecked",
+      "ok": true,
+      "detail": {
+        "id": "01a0a898-2f0e-7420-949b-14e356ee7b01",
+        "label": "Test Source",
+        "active": true,
+        "latest_check_status": null,
+        "latest_check_at": null
+      },
+      "ts": "2026-09-16T05:02:20.955Z"
+    },
+    {
+      "name": "source-check-match",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "payload_schema_version": 1,
+          "project_id": "01a0a898-2d77-74f0-bcf7-693934709dfc",
+          "source_id": "01a0a898-2f0e-7420-949b-14e356ee7b01",
+          "checked_revision_id": "01a0a898-2f0e-7420-949b-14f0598ec2bb",
+          "status": "match",
+          "observed_sha256": "b19f8edae2ee6c225b7278b289c2823ab9accfa225c5d67c4bef270b88ea55f0",
+          "observed_byte_length": 9,
+          "observed_at": "2026-09-16T05:02:20Z",
+          "checking_actor": "owner",
+          "algorithm": "sha256"
+        }
+      },
+      "ts": "2026-09-16T05:02:20.969Z"
+    },
+    {
+      "name": "source-check-changed",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "payload_schema_version": 1,
+          "project_id": "01a0a898-2d77-74f0-bcf7-693934709dfc",
+          "source_id": "01a0a898-2f0e-7420-949b-14e356ee7b01",
+          "checked_revision_id": "01a0a898-2f0e-7420-949b-14f0598ec2bb",
+          "status": "changed",
+          "observed_sha256": "8025d98d52d79486362e5300b8433572cdd2bfa306e13e43df20c4d0f931e4bb",
+          "observed_byte_length": 20,
+          "observed_at": "2026-09-16T05:02:20Z",
+          "checking_actor": "owner",
+          "algorithm": "sha256"
+        }
+      },
+      "ts": "2026-09-16T05:02:20.982Z"
+    },
+    {
+      "name": "source-check-missing",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "payload_schema_version": 1,
+          "project_id": "01a0a898-2d77-74f0-bcf7-693934709dfc",
+          "source_id": "01a0a898-2f0e-7420-949b-14e356ee7b01",
+          "checked_revision_id": "01a0a898-2f0e-7420-949b-14f0598ec2bb",
+          "status": "missing",
+          "observed_sha256": null,
+          "observed_byte_length": null,
+          "observed_at": "2026-09-16T05:02:20Z",
+          "checking_actor": "owner",
+          "algorithm": "sha256"
+        }
+      },
+      "ts": "2026-09-16T05:02:20.994Z"
+    },
+    {
+      "name": "source-list-reflects-latest-check",
+      "ok": true,
+      "detail": {
+        "id": "01a0a898-2f0e-7420-949b-14e356ee7b01",
+        "label": "Test Source",
+        "active": true,
+        "latest_check_status": "missing",
+        "latest_check_at": "2026-09-16T05:02:20Z"
+      },
+      "ts": "2026-09-16T05:02:21.001Z"
+    },
+    {
+      "name": "grant-issue-desktop",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a898-2f51-7271-b591-8829a41844de",
+          "payload_schema_version": 1,
+          "project_id": "01a0a898-2d77-74f0-bcf7-693934709dfc",
+          "allowed_kinds": [
+            "note"
+          ],
+          "allowed_object_ids": null,
+          "privacy_exclusions": [],
+          "byte_budget": 65536,
+          "expires_at": "2026-09-16T06:02:21Z",
+          "state": "active",
+          "policy_version": 1,
+          "issued_at": "2026-09-16T05:02:21Z",
+          "revision_id": "01a0a898-2f51-7271-b591-882adbed47f3"
+        }
+      },
+      "ts": "2026-09-16T05:02:21.014Z"
+    },
+    {
+      "name": "package-preview-desktop",
+      "ok": true,
+      "detail": {
+        "emitted_sha256": "3b7b81be295420a8a34cd0c504f4e98bc3fbfa5f11f88ce2adf7a791726e9116"
+      },
+      "ts": "2026-09-16T05:02:21.024Z"
+    },
+    {
+      "name": "package-preview-matches-cli",
+      "ok": true,
+      "detail": {
+        "desktop": "3b7b81be295420a8a34cd0c504f4e98bc3fbfa5f11f88ce2adf7a791726e9116",
+        "cli": "3b7b81be295420a8a34cd0c504f4e98bc3fbfa5f11f88ce2adf7a791726e9116"
+      },
+      "ts": "2026-09-16T05:02:21.038Z"
+    },
+    {
+      "name": "grant-issue-short-ttl",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a898-2f73-76ca-9fd5-009271c443e7",
+          "payload_schema_version": 1,
+          "project_id": "01a0a898-2d77-74f0-bcf7-693934709dfc",
+          "allowed_kinds": [
+            "note"
+          ],
+          "allowed_object_ids": null,
+          "privacy_exclusions": [],
+          "byte_budget": 65536,
+          "expires_at": "2026-09-16T05:02:22Z",
+          "state": "active",
+          "policy_version": 1,
+          "issued_at": "2026-09-16T05:02:21Z",
+          "revision_id": "01a0a898-2f73-76ca-9fd5-0093457f599d"
+        }
+      },
+      "ts": "2026-09-16T05:02:21.047Z"
+    },
+    {
+      "name": "expired-grant-refused",
+      "ok": true,
+      "detail": {
+        "ok": false,
+        "error": "project error: grant expired at 2026-09-16T05:02:22Z; issue a new grant to disclose again"
+      },
+      "ts": "2026-09-16T05:02:23.255Z"
+    },
+    {
+      "name": "package-compile-desktop",
+      "ok": true,
+      "detail": {
+        "receipt_id": "01a0a898-381e-70cb-b57b-ae2960bdb74c"
+      },
+      "ts": "2026-09-16T05:02:23.268Z"
+    },
+    {
+      "name": "proposal-a-admit-via-cli",
+      "ok": true,
+      "detail": {
+        "proposalAId": "01a0a898-3833-7e90-b215-3e654fee6724"
+      },
+      "ts": "2026-09-16T05:02:23.290Z"
+    },
+    {
+      "name": "proposal-a-accept-via-cli",
+      "ok": true,
+      "detail": {
+        "acceptAOut": "01a0a898-3833-7e90-b215-3e654fee6724 01a0a898-3848-7031-8d8b-e0c61de8543d status=Accepted accepted=[0]"
+      },
+      "ts": "2026-09-16T05:02:23.308Z"
+    },
+    {
+      "name": "proposal-a-result-visible-to-desktop",
+      "ok": true,
+      "detail": {
+        "id": "01a0a898-3845-7853-8b85-001439c385da",
+        "project_id": "01a0a898-2d77-74f0-bcf7-693934709dfc",
+        "decision_key": "from-desktop-receipt",
+        "statement": "Decided via desktop receipt, CLI accept",
+        "rationale": null,
+        "basis": "agent_proposal",
+        "verification": "unreviewed",
+        "lifecycle": "draft",
+        "valid_from": null,
+        "valid_to": null,
+        "revision_id": "01a0a898-3845-7853-8b85-002e699162b7"
+      },
+      "ts": "2026-09-16T05:02:23.317Z"
+    },
+    {
+      "name": "package-compile-via-cli",
+      "ok": true,
+      "detail": {
+        "grantBId": "01a0a898-3863-7010-938c-df4c0b7e0166",
+        "receiptB": "01a0a898-3876-7b23-a595-5cc78bd8cd28"
+      },
+      "ts": "2026-09-16T05:02:23.361Z"
+    },
+    {
+      "name": "proposal-b-admit-via-desktop",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a898-3888-761b-8083-bd5602a0155a",
+          "payload_schema_version": 1,
+          "project_id": "01a0a898-2d77-74f0-bcf7-693934709dfc",
+          "receipt_id": "01a0a898-3876-7b23-a595-5cc78bd8cd28",
+          "declared_agent": "test-agent-b",
+          "declared_model": null,
+          "declared_tool": null,
+          "inbound_sha256": "93ace45365444a922b2f6d132ffd4c781050bda4aac3d4f24720e4f0a50e64e3",
+          "inbound_byte_count": 214,
+          "raw_bytes_utf8": "{\"receipt_id\":\"01a0a898-3876-7b23-a595-5cc78bd8cd28\",\"declared_agent\":\"test-agent-b\",\"operations\":[{\"kind\":\"draft_decision\",\"decision_key\":\"from-cli-receipt\",\"statement\":\"Decided via CLI receipt, desktop accept\"}]}",
+          "operations": [
+            {
+              "kind": "draft_decision",
+              "decision_key": "from-cli-receipt",
+              "statement": "Decided via CLI receipt, desktop accept",
+              "rationale": null
+            }
+          ],
+          "status": "pending",
+          "accepted_operation_indices": [],
+          "review_reason": null,
+          "reviewed_by": null,
+          "reviewed_at": null,
+          "submitted_at": "2026-09-16T05:02:23Z",
+          "revision_id": "01a0a898-3888-761b-8083-bd575256231c"
+        }
+      },
+      "ts": "2026-09-16T05:02:23.375Z"
+    },
+    {
+      "name": "proposal-b-accept-via-desktop",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a898-3888-761b-8083-bd5602a0155a",
+          "payload_schema_version": 1,
+          "project_id": "01a0a898-2d77-74f0-bcf7-693934709dfc",
+          "receipt_id": "01a0a898-3876-7b23-a595-5cc78bd8cd28",
+          "declared_agent": "test-agent-b",
+          "declared_model": null,
+          "declared_tool": null,
+          "inbound_sha256": "93ace45365444a922b2f6d132ffd4c781050bda4aac3d4f24720e4f0a50e64e3",
+          "inbound_byte_count": 214,
+          "raw_bytes_utf8": "{\"receipt_id\":\"01a0a898-3876-7b23-a595-5cc78bd8cd28\",\"declared_agent\":\"test-agent-b\",\"operations\":[{\"kind\":\"draft_decision\",\"decision_key\":\"from-cli-receipt\",\"statement\":\"Decided via CLI receipt, desktop accept\"}]}",
+          "operations": [
+            {
+              "kind": "draft_decision",
+              "decision_key": "from-cli-receipt",
+              "statement": "Decided via CLI receipt, desktop accept",
+              "rationale": null
+            }
+          ],
+          "status": "accepted",
+          "accepted_operation_indices": [
+            0
+          ],
+          "review_reason": null,
+          "reviewed_by": "owner",
+          "reviewed_at": "2026-09-16T05:02:23Z",
+          "submitted_at": "2026-09-16T05:02:23Z",
+          "revision_id": "01a0a898-389d-7093-bce9-0010486e2d2b"
+        }
+      },
+      "ts": "2026-09-16T05:02:23.394Z"
+    },
+    {
+      "name": "proposal-b-result-correct",
+      "ok": true,
+      "detail": {
+        "id": "01a0a898-3898-72c9-acec-6ebd949a75ae",
+        "project_id": "01a0a898-2d77-74f0-bcf7-693934709dfc",
+        "decision_key": "from-cli-receipt",
+        "statement": "Decided via CLI receipt, desktop accept",
+        "rationale": null,
+        "basis": "agent_proposal",
+        "verification": "unreviewed",
+        "lifecycle": "draft",
+        "valid_from": null,
+        "valid_to": null,
+        "revision_id": "01a0a898-3898-72c9-acec-6ebebf47b038"
+      },
+      "ts": "2026-09-16T05:02:23.402Z"
+    },
+    {
+      "name": "proposal-acceptance-alone-does-not-grant-decision-authority",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "out": "project=01a0a898-2d77-74f0-bcf7-693934709dfc key=\"from-cli-receipt\" as_of_valid=2026-09-16T05:02:23Z as_of_recorded=21 outcome=NoAcceptedDecision\nconsidered: 1\n  01a0a898-3898-72c9-acec-6ebd949a75ae admitted=false lifecycle=Draft valid_from=None valid_to=None exclusion_reason=Some(\"lifecycle is Draft, not Accepted\")"
+      },
+      "ts": "2026-09-16T05:02:23.415Z"
+    },
+    {
+      "name": "proposal-drafted-decision-explicitly-accepted-by-owner",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a898-3898-72c9-acec-6ebd949a75ae",
+          "project_id": "01a0a898-2d77-74f0-bcf7-693934709dfc",
+          "decision_key": "from-cli-receipt",
+          "statement": "Decided via CLI receipt, desktop accept",
+          "rationale": null,
+          "basis": "agent_proposal",
+          "verification": "unreviewed",
+          "lifecycle": "accepted",
+          "valid_from": null,
+          "valid_to": null,
+          "revision_id": "01a0a898-38be-765d-84e5-a7029aa9c204"
+        }
+      },
+      "ts": "2026-09-16T05:02:23.427Z"
+    },
+    {
+      "name": "explicit-owner-acceptance-now-visible-to-cli",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "out": "project=01a0a898-2d77-74f0-bcf7-693934709dfc key=\"from-cli-receipt\" as_of_valid=2026-09-16T05:02:23Z as_of_recorded=22 outcome=CurrentSet(\"01a0a898-3898-72c9-acec-6ebd949a75ae\")\nconsidered: 1\n  01a0a898-3898-72c9-acec-6ebd949a75ae admitted=true lifecycle=Accepted valid_from=None valid_to=None exclusion_reason=None"
+      },
+      "ts": "2026-09-16T05:02:23.440Z"
+    },
+    {
+      "name": "malformed-proposal-invalid-json-refused",
+      "ok": true,
+      "detail": {
+        "ok": false,
+        "error": "project error: malformed proposal: expected ident at line 1 column 2"
+      },
+      "ts": "2026-09-16T05:02:23.447Z"
+    },
+    {
+      "name": "malformed-proposal-unknown-receipt-refused",
+      "ok": true,
+      "detail": {
+        "ok": false,
+        "error": "project error: proposal declares zero operations"
+      },
+      "ts": "2026-09-16T05:02:23.454Z"
+    },
+    {
+      "name": "proposal-c-admit",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a898-38e4-74ae-88d1-c2e1d452fd0d",
+          "payload_schema_version": 1,
+          "project_id": "01a0a898-2d77-74f0-bcf7-693934709dfc",
+          "receipt_id": "01a0a898-381e-70cb-b57b-ae2960bdb74c",
+          "declared_agent": "test-agent-c",
+          "declared_model": null,
+          "declared_tool": null,
+          "inbound_sha256": "14a05f03d7703bdd24fe9615e6284b115ca4514a7b856e7db9ced70733939196",
+          "inbound_byte_count": 204,
+          "raw_bytes_utf8": "{\"receipt_id\":\"01a0a898-381e-70cb-b57b-ae2960bdb74c\",\"declared_agent\":\"test-agent-c\",\"operations\":[{\"kind\":\"draft_decision\",\"decision_key\":\"conflict-probe-decision\",\"statement\":\"should still work once\"}]}",
+          "operations": [
+            {
+              "kind": "draft_decision",
+              "decision_key": "conflict-probe-decision",
+              "statement": "should still work once",
+              "rationale": null
+            }
+          ],
+          "status": "pending",
+          "accepted_operation_indices": [],
+          "review_reason": null,
+          "reviewed_by": null,
+          "reviewed_at": null,
+          "submitted_at": "2026-09-16T05:02:23Z",
+          "revision_id": "01a0a898-38e4-74ae-88d1-c2e2bc7afa98"
+        }
+      },
+      "ts": "2026-09-16T05:02:23.465Z"
+    },
+    {
+      "name": "proposal-c-reject",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a898-38e4-74ae-88d1-c2e1d452fd0d",
+          "payload_schema_version": 1,
+          "project_id": "01a0a898-2d77-74f0-bcf7-693934709dfc",
+          "receipt_id": "01a0a898-381e-70cb-b57b-ae2960bdb74c",
+          "declared_agent": "test-agent-c",
+          "declared_model": null,
+          "declared_tool": null,
+          "inbound_sha256": "14a05f03d7703bdd24fe9615e6284b115ca4514a7b856e7db9ced70733939196",
+          "inbound_byte_count": 204,
+          "raw_bytes_utf8": "{\"receipt_id\":\"01a0a898-381e-70cb-b57b-ae2960bdb74c\",\"declared_agent\":\"test-agent-c\",\"operations\":[{\"kind\":\"draft_decision\",\"decision_key\":\"conflict-probe-decision\",\"statement\":\"should still work once\"}]}",
+          "operations": [
+            {
+              "kind": "draft_decision",
+              "decision_key": "conflict-probe-decision",
+              "statement": "should still work once",
+              "rationale": null
+            }
+          ],
+          "status": "rejected",
+          "accepted_operation_indices": [],
+          "review_reason": "rejecting to advance revision for the conflict probe",
+          "reviewed_by": "owner",
+          "reviewed_at": "2026-09-16T05:02:23Z",
+          "submitted_at": "2026-09-16T05:02:23Z",
+          "revision_id": "01a0a898-38f1-71e4-b3e8-8dd471d40411"
+        }
+      },
+      "ts": "2026-09-16T05:02:23.479Z"
+    },
+    {
+      "name": "proposal-accept-conflict-refused",
+      "ok": true,
+      "detail": {
+        "ok": false,
+        "error": "project error: proposal 01a0a898-38e4-74ae-88d1-c2e1d452fd0d is Rejected, not Pending; only a pending proposal may be accepted"
+      },
+      "ts": "2026-09-16T05:02:23.486Z"
+    }
+  ]
+}
