@@ -1,0 +1,24 @@
+[2026-09-16T02:30:56.514Z] === T04-01 network-denied test run 2026-09-16T02-30-56-513Z ===
+[2026-09-16T02:30:56.516Z] repo=C:\Users\Shehr\work\Flake
+[2026-09-16T02:30:56.517Z] exe=C:\Users\Shehr\work\Flake\desktop\src-tauri\target\debug\flake-desktop.exe
+[2026-09-16T02:30:56.519Z] STEP OK   exe-exists :: {"path":"C:\\Users\\Shehr\\work\\Flake\\desktop\\src-tauri\\target\\debug\\flake-desktop.exe"}
+[2026-09-16T02:30:56.671Z] STEP OK   connectivity-canary :: {"reachable":true,"status":200}
+[2026-09-16T02:30:56.686Z] STEP OK   network-monitor-started :: {"pid":22856,"logPath":"C:\\Users\\Shehr\\work\\Flake\\docs\\evidence\\flake-v1\\T04-01\\network-denied-test\\results\\run-2026-09-16T02-30-56-513Z.network-monitor.log"}
+[2026-09-16T02:30:58.446Z] STEP OK   vite-dev-server-ready :: {"url":"http://127.0.0.1:1420/"}
+[2026-09-16T02:30:59.029Z] STEP OK   launch-1-spawned :: {"pid":26440}
+[2026-09-16T02:30:59.683Z] STEP OK   launch-1-page-loaded :: {"url":"http://localhost:1420/"}
+[2026-09-16T02:30:59.895Z] STEP OK   launch-1-bridge-present :: "function"
+[2026-09-16T02:30:59.948Z] STEP OK   vault-create :: {"ok":true,"result":{"path":"C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-offline-test-k9MBAY\\parent\\offline-test-vault","vault_id":"01a0a80d-9e48-75b3-9be2-75bf937cd894"}}
+[2026-09-16T02:30:59.956Z] STEP OK   list-projects-empty :: {"ok":true,"result":[]}
+[2026-09-16T02:30:59.967Z] STEP OK   create-project :: {"ok":true,"result":{"id":"01a0a80d-9e7a-76ee-9c39-5c88f1848590","name":"Offline Continuity Check","description":"T04-01 network-denied test project","active":true}}
+[2026-09-16T02:30:59.974Z] STEP OK   list-projects-one :: {"ok":true,"result":[{"id":"01a0a80d-9e7a-76ee-9c39-5c88f1848590","name":"Offline Continuity Check","description":"T04-01 network-denied test project","active":true}]}
+[2026-09-16T02:31:00.944Z] STEP OK   launch-1-clean-shutdown :: {"existedBefore":true,"existsAfter":false}
+[2026-09-16T02:31:00.947Z] STEP OK   launch-2-spawned :: {"pid":21200}
+[2026-09-16T02:31:01.600Z] STEP OK   launch-2-page-loaded :: {"url":"http://localhost:1420/"}
+[2026-09-16T02:31:01.603Z] STEP OK   launch-2-bridge-present :: "function"
+[2026-09-16T02:31:01.617Z] STEP OK   vault-open-after-restart :: {"openRes":{"ok":true,"result":{"path":"C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-offline-test-k9MBAY\\parent\\offline-test-vault","vault_id":"01a0a80d-9e48-75b3-9be2-75bf937cd894"}},"expectedVaultId":"01a0a80d-9e48-75b3-9be2-75bf937cd894"}
+[2026-09-16T02:31:01.624Z] STEP OK   project-persisted-across-restart :: {"ok":true,"result":[{"id":"01a0a80d-9e7a-76ee-9c39-5c88f1848590","name":"Offline Continuity Check","description":"T04-01 network-denied test project","active":true}]}
+[2026-09-16T02:31:02.565Z] STEP OK   launch-2-clean-shutdown :: {"existedBefore":true,"existsAfter":false}
+[2026-09-16T02:31:02.736Z] STEP OK   vite-dev-server-stopped :: {"pid":"13824"}
+[2026-09-16T02:31:02.737Z] STEP OK   expected-vault-path-matches :: {"actual":"C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-offline-test-k9MBAY\\parent\\offline-test-vault","expected":"C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-offline-test-k9MBAY\\parent\\offline-test-vault"}
+[2026-09-16T02:31:02.746Z] === run complete. overallOk=true. json=C:\Users\Shehr\work\Flake\docs\evidence\flake-v1\T04-01\network-denied-test\results\run-2026-09-16T02-30-56-513Z.json log=C:\Users\Shehr\work\Flake\docs\evidence\flake-v1\T04-01\network-denied-test\results\run-2026-09-16T02-30-56-513Z.log netlog=C:\Users\Shehr\work\Flake\docs\evidence\flake-v1\T04-01\network-denied-test\results\run-2026-09-16T02-30-56-513Z.network-monitor.log ===

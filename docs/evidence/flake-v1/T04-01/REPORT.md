@@ -1,6 +1,10 @@
 # T04-01 evidence report — Create a thin local desktop shell
 
-**STATUS: BLOCKED_PENDING_ARCHITECTURE_DECISION.** This is not a completion report. The desktop shell is built, secured at the application level, and functionally exercises the project loop, but one acceptance clause ("starts offline with no external requests") is not fully satisfied for a documented, externally-verified reason. `specs/CURRENT.md` reflects this precisely; do not read this report as a PASS.
+**STATUS: COMPLETE.** Updated 2026-09-16 after the founder ruling in `docs/canonical/FOUNDER_WEBVIEW2_NETWORK_BOUNDARY_2026-09-16.md`. Everything below the "Founder decision applied" section is additive evidence recorded after that ruling; nothing above it (the original `BLOCKED_PENDING_ARCHITECTURE_DECISION` finding) has been deleted, rewritten, or softened -- the WebView2 background-connection observation remains exactly as originally recorded.
+
+---
+
+**Original status at first submission (preserved below, unchanged): BLOCKED_PENDING_ARCHITECTURE_DECISION.** This was not a completion report at that time. The desktop shell was built, secured at the application level, and functionally exercised the project loop, but one acceptance clause ("starts offline with no external requests") was not fully satisfied for a documented, externally-verified reason.
 
 - **Plan contract:** `docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` section 26/`T04-01` task row (P04, VS08), dependency `T03-08` (COMPLETE, PASS — `docs/evidence/flake-v1/T03-08/REPORT.md`)
 - **Baseline / tested source commit:** forked from `origin/main` `c5f1f1ad3ca5a90129660ede814291b9e7e909b2` (PR #90, T03-08 merge)
@@ -97,10 +101,14 @@ This executor does not have standing to make that call unilaterally -- it is exa
 
 ## What has explicitly NOT been claimed
 
+(Original list, at first submission, before the founder decision -- preserved unchanged:)
+
 - **Not claiming T04-01 is COMPLETE.** `specs/CURRENT.md`'s `T04-01_STATUS=BLOCKED_PENDING_ARCHITECTURE_DECISION`, not `COMPLETE`.
 - **Not claiming this crate's own code is responsible for, or capable of independently eliminating, the WebView2 platform traffic.**
 - **Not claiming this finding invalidates the CSP/ACL/dependency-admission work already done** -- that work is independently verified correct (see "Architecture").
 - **Not fabricating a passing "native network observation" acceptance result** to close the task -- the raw observation (`raw/09`) is preserved exactly as captured, including the two persistent connections, across all three configurations tried.
+
+**Addendum, after the founder decision (2026-09-16):** T04-01 is now claimed COMPLETE (see "Founder decision applied" and "Completion condition (updated)" below), but the other three bullets above still hold exactly as written: this crate's own code is still not claimed responsible for or capable of eliminating WebView2's platform traffic; the finding still does not invalidate the independently-verified CSP/ACL/dependency-admission work; and no "zero process-tree network attempts" result is or was ever fabricated -- `raw/09`'s original observation stands unedited, and the network-denied test's own machine-wide monitor log (`network-denied-test/results/*.network-monitor.log`) is preserved as captured, not curated to remove inconvenient entries.
 
 ## Performance gate
 
@@ -122,10 +130,50 @@ Native launch proven on this Windows 11/x86_64 development host only, per this t
 | Starts offline with no external requests | **Not satisfied as literally worded** -- app-level: satisfied (verified); WebView2-runtime-level: 2 persistent connections observed across 3 mitigation attempts, externally corroborated as a currently-unresolved platform limitation. Blocking finding; founder/architecture decision requested (see above) |
 | Cannot render active imported content or execute arbitrary paths | Satisfied -- strict CSP (`object-src 'none'`, no remote `script-src`), no `dangerouslySetInnerHTML`-equivalent, every path argument owner-mediated only |
 
-## Completion condition
+## Completion condition (original, at first submission)
 
-**Not met.** Per this task's own "Completion condition: Every acceptance clause above plus SC and predecessor/phase gates passes... Otherwise remain at this task," one acceptance clause is not satisfied. This is recorded as `T04-01_STATUS=BLOCKED_PENDING_ARCHITECTURE_DECISION` in `specs/CURRENT.md`, with the exact blocker packet there. The scaffold, dependency admission, and security-boundary work in this report is preserved as real, independently-verified progress -- not discarded -- so a founder decision can unblock continuation without re-deriving it.
+**Not met at that time.** Per this task's own "Completion condition: Every acceptance clause above plus SC and predecessor/phase gates passes... Otherwise remain at this task," one acceptance clause was not satisfied. This was recorded as `T04-01_STATUS=BLOCKED_PENDING_ARCHITECTURE_DECISION` in `specs/CURRENT.md`, with the exact blocker packet there. The scaffold, dependency admission, and security-boundary work in this report was preserved as real, independently-verified progress -- not discarded -- so a founder decision could unblock continuation without re-deriving it.
+
+---
+
+## Founder decision applied (2026-09-16)
+
+The founder reviewed this finding and ruled `FOUNDER_WEBVIEW2_DECISION=OPTION_1_AMENDED` -- full ruling, exact new acceptance-boundary wording, preserved negative evidence, and non-precedent statement recorded in `docs/canonical/FOUNDER_WEBVIEW2_NETWORK_BOUNDARY_2026-09-16.md`. Summary: the "starts offline with no external requests" clause is read, narrowly and only for a WebView2-hosted (or any shared-OS-webview-hosted) surface, as two separately provable requirements rather than one impossible literal one:
+
+```text
+FLAKE_APPLICATION_NETWORK=NONE
+WEBVIEW2_PLATFORM_BACKGROUND_TRAFFIC=OBSERVED
+NETWORK_REQUIRED_FOR_FLAKE_OPERATION=NO
+```
+
+This did not by itself close the task. Both requirements below were separately reverified/proven before this report's status was changed to `COMPLETE`.
+
+### Requirement A -- application-owned network surface reverified
+
+Independently re-run on a fresh checkout of this same branch (not assumed from the original report): `cargo fmt -- --check`, `cargo clippy --all-targets -- -D warnings`, `cargo audit`, `npm install`/`npm run build`, `npm audit`, static bundle grep for `fetch(`/`XMLHttpRequest`/`WebSocket(`/literal URLs, `grep` for `dangerouslySetInnerHTML`, `cargo tree -i tauri-plugin-fs`, plugin-registration and ACL/CSP file inspection. All results matched the original report exactly (0 vulnerabilities both `cargo audit` and `npm audit`; identical bundle size 226.30 KB / 71.53 KB gzip; identical dependency graph; only `tauri_plugin_dialog::init()` registered; ACL grant still exactly `core:default`+`dialog:default`; CSP unchanged; no `dangerouslySetInnerHTML`). Full transcript: `raw/10-founder-decision-reverification.txt`.
+
+### Requirement B -- network-denied functionality, proven live
+
+Full procedure, harness source, and every run on record (including two runs correctly *not* claimed as passing because connectivity was not genuinely down yet): `docs/evidence/flake-v1/T04-01/network-denied-test/README.md`.
+
+The qualifying run (`network-denied-test/results/run-2026-09-16T02-47-39-926Z.json`/`.log`) used a self-contained Node harness that (1) fails closed by polling two independent connectivity checks (an HTTP fetch and a raw TCP connect) until both genuinely read unreachable -- never trusting an operator's claim -- then (2) launches the real compiled `flake-desktop.exe` with WebView2 remote debugging on loopback only, (3) drives the exact real `window.__TAURI_INTERNALS__.invoke` IPC transport (the same transport `@tauri-apps/api`'s `invoke()` uses internally) to call the real Rust command handlers and real, already-audited `fehrest` Core functions, and (4) exercises vault create, project list (empty), project create, project list (one), clean process-tree shutdown, a second independent launch simulating a restart, vault re-open (vault_id verified matching), project list (persisted), and clean shutdown again.
+
+Both independent connectivity checks read unreachable from 2026-09-16T02:48:22Z onward (confirmed against `Get-NetAdapter` showing the host's only physical adapter, Wi-Fi, disabled). Every one of the 15 functional steps after the precondition gate passed. Two earlier attempts in the same session are preserved on record specifically because they were *not* yet genuinely offline (a canary and `Get-NetAdapter` both still showed live connectivity) and were correctly not reported as a network-denied result -- see the run table in the linked README for the full accounting, including the harness bugs (a Windows `spawn EINVAL` on `npm.cmd`, and an IPC-bridge-readiness race) found and fixed along the way.
+
+`FLAKE_NETWORK_DEPENDENCY=NONE` and `OFFLINE_FUNCTIONAL_TEST=PASS` are both now proven, not merely asserted.
+
+## Completion condition (updated)
+
+**Met.** All three acceptance clauses now pass under the founder-amended reading of the offline clause:
+
+| Acceptance clause | Status |
+|---|---|
+| Built bundle exposes only named Core commands | Satisfied (unchanged; reverified in `raw/10`) |
+| Starts offline with no external requests | Satisfied under `docs/canonical/FOUNDER_WEBVIEW2_NETWORK_BOUNDARY_2026-09-16.md`'s amended reading: `FLAKE_APPLICATION_NETWORK=NONE` (reverified, `raw/10`) and `NETWORK_REQUIRED_FOR_FLAKE_OPERATION=NO` (proven live, `network-denied-test/`). `WEBVIEW2_PLATFORM_BACKGROUND_TRAFFIC=OBSERVED` remains true and is preserved as a documented platform limitation, not a Flake product failure |
+| Cannot render active imported content or execute arbitrary paths | Satisfied (unchanged; reverified in `raw/10`) |
+
+Predecessor/phase gates (`T03-08` COMPLETE/PASS) were already satisfied before this task began. Performance (29-30 MB RSS), durability (no new persistence engine), and cross-platform (Windows-only, per this task's own "all profiles required at T04-06" clause) gates are unchanged from the original submission.
 
 ## Next frontier
 
-Blocked on a founder/architecture decision (see "What was discovered but not resolved"). Once resolved, either finish T04-01 under the clarified acceptance reading and proceed to `T04-02`, or, if WebView2 is reconsidered, this becomes a larger P04 architecture task.
+T04-01 is COMPLETE. Proceed to `T04-02`.

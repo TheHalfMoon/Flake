@@ -8,12 +8,13 @@ Before changing anything, read the current GitHub repository in this order:
 
 1. `specs/CURRENT.md`
 2. `docs/canonical/FOUNDER_NO_HUMAN_QUALIFICATION_GATES_2026-09-16.md`
-3. `docs/canonical/FLAKE_MUSE_EXECUTION_HANDOFF.md`
-4. `docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md`
-5. `docs/canonical/FLAKE_V1_ARCHITECTURE_DECISION.md`
-6. The active task/spec artifacts named by the canonical plan and `CURRENT`
-7. `docs/canonical/FLAKE_PLAN_MIGRATION_PROVENANCE.md`
-8. Historical Fehrest/R1/Phase T evidence only when the active task or plan requires it
+3. `docs/canonical/FOUNDER_WEBVIEW2_NETWORK_BOUNDARY_2026-09-16.md`
+4. `docs/canonical/FLAKE_MUSE_EXECUTION_HANDOFF.md`
+5. `docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md`
+6. `docs/canonical/FLAKE_V1_ARCHITECTURE_DECISION.md`
+7. The active task/spec artifacts named by the canonical plan and `CURRENT`
+8. `docs/canonical/FLAKE_PLAN_MIGRATION_PROVENANCE.md`
+9. Historical Fehrest/R1/Phase T evidence only when the active task or plan requires it
 
 Live GitHub truth wins over stale handoffs, local-only commits, cached state, old roadmaps, and historical examples.
 

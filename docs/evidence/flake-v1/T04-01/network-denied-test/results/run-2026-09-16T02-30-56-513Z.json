@@ -1,0 +1,207 @@
+{
+  "runId": "2026-09-16T02-30-56-513Z",
+  "overallOk": true,
+  "vaultInfo1": {
+    "path": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-offline-test-k9MBAY\\parent\\offline-test-vault",
+    "vault_id": "01a0a80d-9e48-75b3-9be2-75bf937cd894"
+  },
+  "tmpRoot": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-offline-test-k9MBAY",
+  "netLogPath": "C:\\Users\\Shehr\\work\\Flake\\docs\\evidence\\flake-v1\\T04-01\\network-denied-test\\results\\run-2026-09-16T02-30-56-513Z.network-monitor.log",
+  "steps": [
+    {
+      "name": "exe-exists",
+      "ok": true,
+      "detail": {
+        "path": "C:\\Users\\Shehr\\work\\Flake\\desktop\\src-tauri\\target\\debug\\flake-desktop.exe"
+      },
+      "ts": "2026-09-16T02:30:56.519Z"
+    },
+    {
+      "name": "connectivity-canary",
+      "ok": true,
+      "detail": {
+        "reachable": true,
+        "status": 200
+      },
+      "ts": "2026-09-16T02:30:56.671Z"
+    },
+    {
+      "name": "network-monitor-started",
+      "ok": true,
+      "detail": {
+        "pid": 22856,
+        "logPath": "C:\\Users\\Shehr\\work\\Flake\\docs\\evidence\\flake-v1\\T04-01\\network-denied-test\\results\\run-2026-09-16T02-30-56-513Z.network-monitor.log"
+      },
+      "ts": "2026-09-16T02:30:56.686Z"
+    },
+    {
+      "name": "vite-dev-server-ready",
+      "ok": true,
+      "detail": {
+        "url": "http://127.0.0.1:1420/"
+      },
+      "ts": "2026-09-16T02:30:58.446Z"
+    },
+    {
+      "name": "launch-1-spawned",
+      "ok": true,
+      "detail": {
+        "pid": 26440
+      },
+      "ts": "2026-09-16T02:30:59.029Z"
+    },
+    {
+      "name": "launch-1-page-loaded",
+      "ok": true,
+      "detail": {
+        "url": "http://localhost:1420/"
+      },
+      "ts": "2026-09-16T02:30:59.683Z"
+    },
+    {
+      "name": "launch-1-bridge-present",
+      "ok": true,
+      "detail": "function",
+      "ts": "2026-09-16T02:30:59.895Z"
+    },
+    {
+      "name": "vault-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "path": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-offline-test-k9MBAY\\parent\\offline-test-vault",
+          "vault_id": "01a0a80d-9e48-75b3-9be2-75bf937cd894"
+        }
+      },
+      "ts": "2026-09-16T02:30:59.948Z"
+    },
+    {
+      "name": "list-projects-empty",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": []
+      },
+      "ts": "2026-09-16T02:30:59.956Z"
+    },
+    {
+      "name": "create-project",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a80d-9e7a-76ee-9c39-5c88f1848590",
+          "name": "Offline Continuity Check",
+          "description": "T04-01 network-denied test project",
+          "active": true
+        }
+      },
+      "ts": "2026-09-16T02:30:59.967Z"
+    },
+    {
+      "name": "list-projects-one",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": [
+          {
+            "id": "01a0a80d-9e7a-76ee-9c39-5c88f1848590",
+            "name": "Offline Continuity Check",
+            "description": "T04-01 network-denied test project",
+            "active": true
+          }
+        ]
+      },
+      "ts": "2026-09-16T02:30:59.974Z"
+    },
+    {
+      "name": "launch-1-clean-shutdown",
+      "ok": true,
+      "detail": {
+        "existedBefore": true,
+        "existsAfter": false
+      },
+      "ts": "2026-09-16T02:31:00.944Z"
+    },
+    {
+      "name": "launch-2-spawned",
+      "ok": true,
+      "detail": {
+        "pid": 21200
+      },
+      "ts": "2026-09-16T02:31:00.947Z"
+    },
+    {
+      "name": "launch-2-page-loaded",
+      "ok": true,
+      "detail": {
+        "url": "http://localhost:1420/"
+      },
+      "ts": "2026-09-16T02:31:01.600Z"
+    },
+    {
+      "name": "launch-2-bridge-present",
+      "ok": true,
+      "detail": "function",
+      "ts": "2026-09-16T02:31:01.603Z"
+    },
+    {
+      "name": "vault-open-after-restart",
+      "ok": true,
+      "detail": {
+        "openRes": {
+          "ok": true,
+          "result": {
+            "path": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-offline-test-k9MBAY\\parent\\offline-test-vault",
+            "vault_id": "01a0a80d-9e48-75b3-9be2-75bf937cd894"
+          }
+        },
+        "expectedVaultId": "01a0a80d-9e48-75b3-9be2-75bf937cd894"
+      },
+      "ts": "2026-09-16T02:31:01.617Z"
+    },
+    {
+      "name": "project-persisted-across-restart",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": [
+          {
+            "id": "01a0a80d-9e7a-76ee-9c39-5c88f1848590",
+            "name": "Offline Continuity Check",
+            "description": "T04-01 network-denied test project",
+            "active": true
+          }
+        ]
+      },
+      "ts": "2026-09-16T02:31:01.624Z"
+    },
+    {
+      "name": "launch-2-clean-shutdown",
+      "ok": true,
+      "detail": {
+        "existedBefore": true,
+        "existsAfter": false
+      },
+      "ts": "2026-09-16T02:31:02.565Z"
+    },
+    {
+      "name": "vite-dev-server-stopped",
+      "ok": true,
+      "detail": {
+        "pid": "13824"
+      },
+      "ts": "2026-09-16T02:31:02.736Z"
+    },
+    {
+      "name": "expected-vault-path-matches",
+      "ok": true,
+      "detail": {
+        "actual": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-offline-test-k9MBAY\\parent\\offline-test-vault",
+        "expected": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-offline-test-k9MBAY\\parent\\offline-test-vault"
+      },
+      "ts": "2026-09-16T02:31:02.737Z"
+    }
+  ]
+}

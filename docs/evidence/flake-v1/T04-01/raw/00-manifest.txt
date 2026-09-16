@@ -7,3 +7,4 @@
 07-capabilities-default.json	479	sha256=f59db68c605ac1246ba95996dad310949b74eff935bd605040cc19e6854c3b6d
 08-tauri-conf.json	1408	sha256=153daf5a8cc83f25d4e0fe1fc0ee3a60c5f8ac72073899ee6fc22198380e8690
 09-native-launch-network-observation.txt	2617	sha256=5a13a83e547f6c7574591ec4166887153aedcb3d1a48d2059fe270ca7f029f5f
+10-founder-decision-reverification.txt	3727	sha256=52d0af04842905b0f7d6a85d16bd9c4f1887befd9eade26e4cba5f8052aa31ec

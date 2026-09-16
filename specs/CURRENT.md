@@ -13,17 +13,21 @@ CANONICAL_BUILD_PLAN=docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md
 CANONICAL_BUILD_PLAN_SHA256=b555f83ff12882ae6f55f90bbeaa411de52b84661a7f3953350cbfc6bd789fb2
 CANONICAL_PLAN_REMOTE_STATUS=MIGRATED_TO_GITHUB
 CANONICAL_PLAN_LOCAL_DEPENDENCY=NONE
-ACTIVE_IMPLEMENTATION_UNIT=T04-01
-NEXT_DEPENDENCY_READY_UNIT=T04-01
+ACTIVE_IMPLEMENTATION_UNIT=T04-02
+NEXT_DEPENDENCY_READY_UNIT=T04-02
 FOUNDER_DECISION_NO_HUMAN_GATES=docs/canonical/FOUNDER_NO_HUMAN_QUALIFICATION_GATES_2026-09-16.md
+FOUNDER_DECISION_WEBVIEW2_NETWORK_BOUNDARY=docs/canonical/FOUNDER_WEBVIEW2_NETWORK_BOUNDARY_2026-09-16.md
 T03-08_EXECUTION_CONTRACT=AUTOMATED_CONTINUITY_QUALIFICATION
 T05-06_EXECUTION_CONTRACT=AUTOMATED_LONG_HORIZON_CONTINUITY_SOAK
 R11_CONTRACT=AUTOMATED_CONTINUITY_AND_SOAK
-EXECUTABLE_REPOSITORY_WORK=BLOCKED_PENDING_FOUNDER_DECISION
+EXECUTABLE_REPOSITORY_WORK=AVAILABLE
 P03_STATUS=CLOSED
-T04-01_STATUS=BLOCKED_PENDING_ARCHITECTURE_DECISION
+T04-01_STATUS=COMPLETE
 T04-01_EVIDENCE=docs/evidence/flake-v1/T04-01/REPORT.md
-T04-01_BLOCKER_ID=T04-01-WEBVIEW2-BACKGROUND-NETWORK-TRAFFIC
+T04-01_NETWORK_DENIED_TEST=docs/evidence/flake-v1/T04-01/network-denied-test/README.md
+T04-01_PRIOR_BLOCKER_ID=T04-01-WEBVIEW2-BACKGROUND-NETWORK-TRAFFIC
+T04-01_PRIOR_BLOCKER_STATUS=SUPERSEDED_BY_FOUNDER_DECISION
+T04-01_MERGE_COMMIT=PENDING_PR_MERGE
 P01_STATUS=CLOSED
 T00-01_STATUS=COMPLETE
 T00-01_EVIDENCE=docs/evidence/flake-v1/T00-01/REPORT.md
@@ -110,7 +114,7 @@ T03-08_EVIDENCE=docs/evidence/flake-v1/T03-08/REPORT.md
 T03-08_ROUTE=PASS
 T03-08_PRIOR_BLOCKER_ID=T03-08-HUMAN-PARTICIPANTS
 T03-08_PRIOR_BLOCKER_STATUS=SUPERSEDED_BY_FOUNDER_DECISION
-T03-08_MERGE_COMMIT=PENDING_PR_MERGE
+T03-08_MERGE_COMMIT=c5f1f1ad3ca5a90129660ede814291b9e7e909b2
 SPEC_003_AUTO_ACTIVATION=PROHIBITED
 PROJECT_COMPLETE=NO
 ```
@@ -126,10 +130,14 @@ The historical local-only planning SHAs `4246f6d...` and `852e44b...` are proven
 
 ## Next action
 
-**`T04-01` is BLOCKED on a founder/architecture decision, not merely dependency-ready.** The desktop shell scaffold (`desktop/`, Tauri 2 + React) was built, dependency-admitted, and security-hardened this task (typed-command bridge, strict CSP, no filesystem/shell/http/process/opener/SQL plugin registered or ACL-granted, offline launch verified at 29-30 MB RSS) -- but native network observation on this Windows 11 host found the shared WebView2 runtime itself opens 2 persistent outbound HTTPS connections to a Microsoft-owned endpoint on every cold launch, independent of and unfixable by this application's own code or Chromium command-line mitigation flags (independently corroborated: `github.com/MicrosoftEdge/WebView2Feedback#5224`, an open, unresolved upstream feature request for exactly this capability). Full findings: `docs/evidence/flake-v1/T04-01/REPORT.md`.
+**`T04-02` is dependency-ready.** `T04-01` closed COMPLETE (see below); read `docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` section 26/T04-02's own task row before starting.
+
+Preserved historical blocker record (superseded, not deleted -- the underlying WebView2 observation itself remains true and unchanged):
 
 ```text
 BLOCKER_ID=T04-01-WEBVIEW2-BACKGROUND-NETWORK-TRAFFIC
+STATUS=SUPERSEDED_BY_FOUNDER_DECISION
+SUPERSEDED_BY=docs/canonical/FOUNDER_WEBVIEW2_NETWORK_BOUNDARY_2026-09-16.md
 EXACT_GATE=T04-01 acceptance clause "starts offline with no external requests"
 WHY_EXTERNAL=the traffic originates in the shared OS WebView2 runtime's own
   telemetry/service layer, confirmed by process-tree parentage to this app's
@@ -139,30 +147,23 @@ WHY_EXTERNAL=the traffic originates in the shared OS WebView2 runtime's own
   for exactly this capability remains unresolved as of this evidence
 CURRENT_EVIDENCE=docs/evidence/flake-v1/T04-01/REPORT.md
   ("What was discovered but not resolved"), raw/09-native-launch-network-observation.txt
-MISSING_RESOURCE=an explicit founder/architecture ruling (AGENTS.md Class C/D)
-  on how "no external requests" is interpreted for a WebView2-hosted shell --
-  this executor does not have standing to reinterpret an acceptance
-  criterion unilaterally
-EXACT_OPERATOR_ACTION=read docs/evidence/flake-v1/T04-01/REPORT.md's
-  "What was discovered but not resolved" section and rule on one of its
-  three named options (accept app-level-only reading / require WebView2
-  machine policy as a packaging prerequisite / reconsider WebView2
-  admissibility)
-EXACT_COMMAND_OR_PROCEDURE=none executable by this agent; this is a decision,
-  not a technical task
-SUCCESS_CRITERION=a recorded founder decision document (mirroring
-  docs/canonical/FOUNDER_NO_HUMAN_QUALIFICATION_GATES_2026-09-16.md's own
-  form) naming the accepted interpretation
-WHAT_UNBLOCKS_AFTERWARD=T04-01 can then be finished under the clarified
-  reading (or reworked, if WebView2 is reconsidered) and proceed to T04-02
+RESOLUTION=founder ruled OPTION_1_AMENDED: the acceptance clause is read,
+  narrowly and only for a WebView2-hosted surface, as
+  FLAKE_APPLICATION_NETWORK=NONE (reverified) plus
+  NETWORK_REQUIRED_FOR_FLAKE_OPERATION=NO (proven live via a network-denied
+  functional test, docs/evidence/flake-v1/T04-01/network-denied-test/);
+  WEBVIEW2_PLATFORM_BACKGROUND_TRAFFIC=OBSERVED remains true and is recorded
+  as a documented platform limitation, not a Flake product failure
 ```
 
-`T03-08`'s `PASS` route satisfied the founder decision's "A T03-08 PASS unlocks T04-01," and T04-01 work began; it is now blocked as described above, not merely dependency-ready.
+`T04-01` closed: the founder-amended completion of the thin desktop shell scaffold. `docs/canonical/FOUNDER_WEBVIEW2_NETWORK_BOUNDARY_2026-09-16.md` records the full ruling on the WebView2 background-network finding this task surfaced (see `T04-01_PRIOR_BLOCKER_ID` above). Before applying it, every claim in the original evidence report's dependency-admission, plugin-registration, ACL, and CSP sections was independently reverified on a fresh checkout (`raw/10-founder-decision-reverification.txt`) -- unchanged from the original submission. Then a self-contained, fail-closed Node test harness (`docs/evidence/flake-v1/T04-01/network-denied-test/`) proved the load-bearing new requirement live, not merely asserted: with the host's only physical network adapter confirmed down by two independent methods, the real compiled `flake-desktop.exe`, driven through its exact real typed-IPC bridge (`window.__TAURI_INTERNALS__.invoke`, the same transport `@tauri-apps/api`'s `invoke()` uses), created a vault, listed and created a project, survived a simulated restart with the vault and project both persisted, and shut down cleanly twice -- all while genuinely offline. Two earlier attempts in the same session are preserved on record specifically because connectivity was not yet actually down and were correctly not reported as a network-denied result, which is why the harness's own fail-closed connectivity-precondition gate exists. `T04-01_STATUS=COMPLETE`. Full details: `docs/evidence/flake-v1/T04-01/REPORT.md`, `docs/evidence/flake-v1/T04-01/network-denied-test/README.md`.
+
+`T03-08`'s `PASS` route satisfied the founder decision's "A T03-08 PASS unlocks T04-01," and T04-01 work began, surfaced the WebView2 finding above, and is now closed under the founder's amended reading.
 
 ```text
 T03-08_ROUTE=PASS
 P03_STATUS=CLOSED
-CURRENT_GATE=T04-01-WEBVIEW2-BACKGROUND-NETWORK-TRAFFIC
+T04-01_STATUS=COMPLETE
 HUMAN_EVIDENCE_REQUIRED=NO
 HUMAN_EVIDENCE_CLAIMED=NO
 ```

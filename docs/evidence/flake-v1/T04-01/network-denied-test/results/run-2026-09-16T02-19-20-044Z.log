@@ -1,0 +1,16 @@
+[2026-09-16T02:19:20.046Z] === T04-01 network-denied test run 2026-09-16T02-19-20-044Z ===
+[2026-09-16T02:19:20.049Z] repo=C:\Users\Shehr\work\Flake
+[2026-09-16T02:19:20.049Z] exe=C:\Users\Shehr\work\Flake\desktop\src-tauri\target\debug\flake-desktop.exe
+[2026-09-16T02:19:20.050Z] STEP OK   exe-exists :: {"path":"C:\\Users\\Shehr\\work\\Flake\\desktop\\src-tauri\\target\\debug\\flake-desktop.exe"}
+[2026-09-16T02:19:20.215Z] STEP OK   connectivity-canary :: {"reachable":true,"status":200}
+[2026-09-16T02:19:20.233Z] STEP OK   network-monitor-started :: {"pid":26528,"logPath":"C:\\Users\\Shehr\\work\\Flake\\docs\\evidence\\flake-v1\\T04-01\\network-denied-test\\results\\run-2026-09-16T02-19-20-044Z.network-monitor.log"}
+[2026-09-16T02:19:21.990Z] STEP OK   vite-dev-server-ready :: {"url":"http://127.0.0.1:1420/"}
+[2026-09-16T02:19:22.001Z] STEP OK   launch-1-spawned :: {"pid":10912}
+[2026-09-16T02:19:22.674Z] STEP OK   launch-1-page-loaded :: {"url":"http://localhost:1420/"}
+[2026-09-16T02:19:22.679Z] STEP FAIL launch-1-bridge-present :: "undefined"
+[2026-09-16T02:19:22.684Z] STEP FAIL vault-create :: {"ok":false,"error":"TypeError: Cannot read properties of undefined (reading 'invoke')"}
+[2026-09-16T02:19:23.676Z] STEP OK   launch-1-clean-shutdown :: {"existedBefore":true,"existsAfter":false}
+[2026-09-16T02:19:23.677Z] STEP FAIL launch-2-flow :: {"error":"Error: no vault from launch 1; skipping restart verification"}
+[2026-09-16T02:19:23.890Z] STEP OK   vite-dev-server-stopped :: {"pid":"7728"}
+[2026-09-16T02:19:23.891Z] STEP FAIL expected-vault-path-matches :: {"expected":"C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-offline-test-JbBuVS\\parent\\offline-test-vault"}
+[2026-09-16T02:19:23.900Z] === run complete. overallOk=false. json=C:\Users\Shehr\work\Flake\docs\evidence\flake-v1\T04-01\network-denied-test\results\run-2026-09-16T02-19-20-044Z.json log=C:\Users\Shehr\work\Flake\docs\evidence\flake-v1\T04-01\network-denied-test\results\run-2026-09-16T02-19-20-044Z.log netlog=C:\Users\Shehr\work\Flake\docs\evidence\flake-v1\T04-01\network-denied-test\results\run-2026-09-16T02-19-20-044Z.network-monitor.log ===
