@@ -12,4 +12,4 @@ docs/evidence/flake-v1/T05-02/checks/d6_vm_unclean_shutdown.sh  bytes=10431  sha
 docs/evidence/flake-v1/T05-02/checks/fault-workload.service  bytes=280  sha256=3cc75dd4a5e0e33676da631d2115dbecafb931fa77bcde4101220a0870d8cb7d
 docs/evidence/flake-v1/T05-02/checks/section27_performance.py  bytes=13517  sha256=1e1b551a08460611468e536434fef145f420853193d0e7d3c084ae36a89ea386
 docs/evidence/flake-v1/T05-02/checks/verify_fault_cycle.py  bytes=1876  sha256=85a636ef35ce972545f4de7807c2be702423e12a85faf58b549d7377bcb20278
-# section27-m-scale-windows-local.json added by a follow-up commit on this task's PR once the background M-scale run (real disk headroom, restored mid-task) completes.
+docs/evidence/flake-v1/T05-02/results/section27-m-scale-windows-local.json  bytes=3429  sha256=e47423941792267c0f553090a16bf966ec11f1c69490e42a14be30c54bd5f1f7
