@@ -1,0 +1,17 @@
+{
+  "file_digests_sha256": {
+    "../T03-07/cases_confirmatory.json": "09c3cef71097d086a2f8798e31b25aaba3ca6f4066f8dfecf2aeaaf2703e4c08",
+    "PROTOCOL_ADDENDUM.md": "b813b02d727b8c2563a9a26948f940175c1fe19865539a4d8dbb8d19027be299",
+    "analysis.py": "efb4764196d1c501ab9e95c41775b9a43dfcb36ec86a94a73522cecf8b30ff8f",
+    "baseline_arm.py": "fd02fb95830e7cd129bb8f50b5c50fccff14ca89f4a014deb9bf5125eaef6116",
+    "flake_arm.py": "62c63038ab3d0d82b54224c8146e4be72667e5d13ad635515e2711ed3339d78a",
+    "harness.py": "583a974af22bf2f5c5453f5364ad4b5b587b6d2a1d4d4dbb1a4a2ff37b7502d2",
+    "verify_independent.py": "8810fe4cd0d6d62e689704e4afbc80e16af111cca4b716fbdec9b8f091537d80"
+  },
+  "founder_decision": "docs/canonical/FOUNDER_NO_HUMAN_QUALIFICATION_GATES_2026-09-16.md",
+  "product_commit": "21ee84b141a762f0d25c9a39a5715aff9ddb151b",
+  "product_src_tree": "d237c5fd34119c45c3eb117144fe767e42fd3887",
+  "schema_version": "t03-08-seal-v1",
+  "sealed_at_note": "harness/analysis code frozen before any confirmatory attempt was run",
+  "t03_07_case_bank_seal_confirmed": true
+}

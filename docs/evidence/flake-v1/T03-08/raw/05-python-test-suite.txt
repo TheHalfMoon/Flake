@@ -1,0 +1,40 @@
+test_conflict_case_surfaces_needs_review (test_flake_arm.TestFlakeArm.test_conflict_case_surfaces_needs_review) ... ok
+test_nonconflict_case_resolves_to_last_doc (test_flake_arm.TestFlakeArm.test_nonconflict_case_resolves_to_last_doc) ... ok
+test_run_case_end_to_end (test_flake_arm.TestFlakeArm.test_run_case_end_to_end) ... ok
+test_run_case_records_cli_error_without_raising (test_flake_arm.TestFlakeArm.test_run_case_records_cli_error_without_raising) ... ok
+test_conflict_pair_both_current_and_flagged (test_baseline_arm.TestBaselineArm.test_conflict_pair_both_current_and_flagged) ... ok
+test_nonconflict_last_doc_is_current (test_baseline_arm.TestBaselineArm.test_nonconflict_last_doc_is_current) ... ok
+test_resume_is_a_fresh_read_not_shared_state (test_baseline_arm.TestBaselineArm.test_resume_is_a_fresh_read_not_shared_state)
+Resume must re-derive its answer purely from the file on disk -- ... ok
+test_run_case_produces_complete_record (test_baseline_arm.TestBaselineArm.test_run_case_produces_complete_record) ... ok
+test_run_case_records_error_without_raising (test_baseline_arm.TestBaselineArm.test_run_case_records_error_without_raising) ... ok
+test_append_record_then_scan_finds_it (test_harness.TestResumability.test_append_record_then_scan_finds_it) ... ok
+test_duplicate_cell_refused (test_harness.TestResumability.test_duplicate_cell_refused) ... ok
+test_existing_cells_empty_when_no_manifest (test_harness.TestResumability.test_existing_cells_empty_when_no_manifest) ... ok
+test_run_collection_refuses_confirmatory_case_under_wrong_source (test_harness.TestResumability.test_run_collection_refuses_confirmatory_case_under_wrong_source) ... ok
+test_simulated_interruption_resumes_without_duplication (test_harness.TestResumability.test_simulated_interruption_resumes_without_duplication)
+Writes half a collection, then a brand-new scan of the manifest ... ok
+test_class_loss_fails (test_analysis.TestAnalyzeRouting.test_class_loss_fails) ... ok
+test_deficit_exceeds_5pp (test_analysis.TestAnalyzeRouting.test_deficit_exceeds_5pp) ... ok
+test_forbid_case_source_guard_raises (test_analysis.TestAnalyzeRouting.test_forbid_case_source_guard_raises) ... ok
+test_high_consequence_miss_fails_regardless_of_rate (test_analysis.TestAnalyzeRouting.test_high_consequence_miss_fails_regardless_of_rate) ... ok
+test_missing_execution_is_inconclusive (test_analysis.TestAnalyzeRouting.test_missing_execution_is_inconclusive) ... ok
+test_pass_route (test_analysis.TestAnalyzeRouting.test_pass_route) ... ok
+test_resume_success_below_90pct (test_analysis.TestAnalyzeRouting.test_resume_success_below_90pct) ... ok
+test_correct_conflict (test_analysis.TestGradeRecord.test_correct_conflict) ... ok
+test_correct_nonconflict (test_analysis.TestGradeRecord.test_correct_nonconflict) ... ok
+test_error_is_always_failed (test_analysis.TestGradeRecord.test_error_is_always_failed) ... ok
+test_high_consequence_miss_overrides_otherwise_correct (test_analysis.TestGradeRecord.test_high_consequence_miss_overrides_otherwise_correct) ... ok
+test_missed_conflict_not_flagged (test_analysis.TestGradeRecord.test_missed_conflict_not_flagged) ... ok
+test_wrong_doc_reported (test_analysis.TestGradeRecord.test_wrong_doc_reported) ... ok
+test_agree_on_class_loss (test_verify_independent.TestAgreement.test_agree_on_class_loss) ... ok
+test_agree_on_forbidden_case_source (test_verify_independent.TestAgreement.test_agree_on_forbidden_case_source) ... ok
+test_agree_on_high_consequence_miss (test_verify_independent.TestAgreement.test_agree_on_high_consequence_miss) ... ok
+test_agree_on_missing (test_verify_independent.TestAgreement.test_agree_on_missing) ... ok
+test_agree_on_pass (test_verify_independent.TestAgreement.test_agree_on_pass) ... ok
+
+----------------------------------------------------------------------
+Ran 32 tests in 2.451s
+
+OK
+exit=0

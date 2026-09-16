@@ -13,13 +13,14 @@ CANONICAL_BUILD_PLAN=docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md
 CANONICAL_BUILD_PLAN_SHA256=b555f83ff12882ae6f55f90bbeaa411de52b84661a7f3953350cbfc6bd789fb2
 CANONICAL_PLAN_REMOTE_STATUS=MIGRATED_TO_GITHUB
 CANONICAL_PLAN_LOCAL_DEPENDENCY=NONE
-ACTIVE_IMPLEMENTATION_UNIT=T03-08
-NEXT_DEPENDENCY_READY_UNIT=T03-08
+ACTIVE_IMPLEMENTATION_UNIT=T04-01
+NEXT_DEPENDENCY_READY_UNIT=T04-01
 FOUNDER_DECISION_NO_HUMAN_GATES=docs/canonical/FOUNDER_NO_HUMAN_QUALIFICATION_GATES_2026-09-16.md
 T03-08_EXECUTION_CONTRACT=AUTOMATED_CONTINUITY_QUALIFICATION
 T05-06_EXECUTION_CONTRACT=AUTOMATED_LONG_HORIZON_CONTINUITY_SOAK
 R11_CONTRACT=AUTOMATED_CONTINUITY_AND_SOAK
 EXECUTABLE_REPOSITORY_WORK=AVAILABLE
+P03_STATUS=CLOSED
 P01_STATUS=CLOSED
 T00-01_STATUS=COMPLETE
 T00-01_EVIDENCE=docs/evidence/flake-v1/T00-01/REPORT.md
@@ -101,9 +102,12 @@ T03-07_EVIDENCE=docs/evidence/flake-v1/T03-07/REPORT.md
 T03-07_PREREG_PACKAGE=bench/flake-v1/T03-07/
 T03-07_SEAL=bench/flake-v1/T03-07/SEALS.json
 T03-07_MERGE_COMMIT=4b7f56b74a9e7b8ce074a8b682b06c3d78772716
-T03-08_STATUS=READY
+T03-08_STATUS=COMPLETE
+T03-08_EVIDENCE=docs/evidence/flake-v1/T03-08/REPORT.md
+T03-08_ROUTE=PASS
 T03-08_PRIOR_BLOCKER_ID=T03-08-HUMAN-PARTICIPANTS
 T03-08_PRIOR_BLOCKER_STATUS=SUPERSEDED_BY_FOUNDER_DECISION
+T03-08_MERGE_COMMIT=PENDING_PR_MERGE
 SPEC_003_AUTO_ACTIVATION=PROHIBITED
 PROJECT_COMPLETE=NO
 ```
@@ -119,15 +123,17 @@ The historical local-only planning SHAs `4246f6d...` and `852e44b...` are proven
 
 ## Next action
 
-**`T03-08` is executable now under explicit founder direction.** `docs/canonical/FOUNDER_NO_HUMAN_QUALIFICATION_GATES_2026-09-16.md` prospectively supersedes the external human-participant/reviewer qualification gates while preserving product owner authority and all security/durability/rights/native gates. Execute the replacement automated continuity qualification over the sealed T03-07 engineering fixtures without representing automated output as human evidence.
+**`T04-01` is dependency-ready now that `T03-08` has passed.** `T03-08`'s `PASS` route (see below) satisfies the founder decision's "A T03-08 PASS unlocks T04-01." Begin the first P04 (minimal desktop continuity) task, reverifying live `main` first per the standard task-execution loop; P04's own principle (thin presentation layer over Rust Core, no second correctness model) governs scope.
 
 ```text
-PRIOR_BLOCKER_ID=T03-08-HUMAN-PARTICIPANTS
-PRIOR_BLOCKER_STATUS=SUPERSEDED_BY_FOUNDER_DECISION
-CURRENT_GATE=AUTOMATED_CONTINUITY_QUALIFICATION
+T03-08_ROUTE=PASS
+P03_STATUS=CLOSED
+CURRENT_GATE=NONE -- T04-01 dependency-ready
 HUMAN_EVIDENCE_REQUIRED=NO
 HUMAN_EVIDENCE_CLAIMED=NO
 ```
+
+`T03-08` closed: the founder-authorized automated replacement for T03-07's human confirmatory trial. `bench/flake-v1/T03-08/` — `flake_arm.py` drives the real compiled `fehrest` CLI (never `src/` directly) through every one of T03-07's 96 sealed confirmatory cases; `baseline_arm.py` is a from-scratch, independently-implemented maintained-Markdown + index/status-log baseline importing nothing from Flake. Both arms derive their setup only from each case's `tier`/`sources` (public case-construction metadata) and never read `case["gold"]` — grading happens exclusively afterward, in `analysis.py`/`verify_independent.py`, against the unmodified T03-07 gold keys (`PROTOCOL_ADDENDUM.md` documents this boundary and the honest scope it implies: a round-trip technical-continuity qualification, not a reading-comprehension or human-effort claim). `96 cases x 2 arms = 192 total attempts`, all executed with zero raised exceptions; `seal.py` confirmed the reused `cases_confirmatory.json` digest matches T03-07's own seal before any confirmatory attempt ran. Result: 96/96 Flake `RESUME_CORRECT`, 96/96 baseline `RESUME_CORRECT`, 0 high-consequence misses, all 4 tiers at 24/24 — `analysis.py` (producer) and `verify_independent.py` (independent oracle, never importing the producer) produced byte-identical `PASS` output. This task also fixed a real cross-platform clippy defect discovered during re-verification: `src/capture.rs`/`src/source_check.rs`'s symlink tests declared a variable under `#[cfg(not(windows))]` but only read it under `#[cfg(windows)]`, which would fail `-D warnings` on macOS/Linux CI though it was invisible on this Windows host; fixed by collapsing both files' windows-only logic into one `#[cfg(windows)]` block, no lint suppressed, no test weakened, full 358/358 Rust suite re-confirmed with no regression. No human participant, adoption, retention, or comparative-effort claim is made anywhere in this package, per the founder decision. Full details: `docs/evidence/flake-v1/T03-08/REPORT.md`.
 
 The canonical dependency DAG remains sequential: complete the replacement T03-08 contract before `T04-01`. Spec 003 auto-activation remains prohibited. `EXECUTABLE_REPOSITORY_WORK=AVAILABLE` and `PROJECT_COMPLETE=NO`.
 
