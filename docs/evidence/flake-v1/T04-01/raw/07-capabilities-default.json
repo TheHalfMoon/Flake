@@ -1,0 +1,10 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "T04-01's entire capability grant: the main window may invoke only this crate's own typed commands (project.rs-backed vault/project operations) plus the dialog plugin's default folder/file picker. No filesystem, shell, http, process, opener, or SQL plugin is admitted anywhere in this file.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "dialog:default"
+  ]
+}

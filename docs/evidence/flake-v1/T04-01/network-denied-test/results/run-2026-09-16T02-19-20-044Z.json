@@ -1,0 +1,107 @@
+{
+  "runId": "2026-09-16T02-19-20-044Z",
+  "overallOk": false,
+  "vaultInfo1": null,
+  "tmpRoot": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-offline-test-JbBuVS",
+  "netLogPath": "C:\\Users\\Shehr\\work\\Flake\\docs\\evidence\\flake-v1\\T04-01\\network-denied-test\\results\\run-2026-09-16T02-19-20-044Z.network-monitor.log",
+  "steps": [
+    {
+      "name": "exe-exists",
+      "ok": true,
+      "detail": {
+        "path": "C:\\Users\\Shehr\\work\\Flake\\desktop\\src-tauri\\target\\debug\\flake-desktop.exe"
+      },
+      "ts": "2026-09-16T02:19:20.050Z"
+    },
+    {
+      "name": "connectivity-canary",
+      "ok": true,
+      "detail": {
+        "reachable": true,
+        "status": 200
+      },
+      "ts": "2026-09-16T02:19:20.215Z"
+    },
+    {
+      "name": "network-monitor-started",
+      "ok": true,
+      "detail": {
+        "pid": 26528,
+        "logPath": "C:\\Users\\Shehr\\work\\Flake\\docs\\evidence\\flake-v1\\T04-01\\network-denied-test\\results\\run-2026-09-16T02-19-20-044Z.network-monitor.log"
+      },
+      "ts": "2026-09-16T02:19:20.232Z"
+    },
+    {
+      "name": "vite-dev-server-ready",
+      "ok": true,
+      "detail": {
+        "url": "http://127.0.0.1:1420/"
+      },
+      "ts": "2026-09-16T02:19:21.990Z"
+    },
+    {
+      "name": "launch-1-spawned",
+      "ok": true,
+      "detail": {
+        "pid": 10912
+      },
+      "ts": "2026-09-16T02:19:22.001Z"
+    },
+    {
+      "name": "launch-1-page-loaded",
+      "ok": true,
+      "detail": {
+        "url": "http://localhost:1420/"
+      },
+      "ts": "2026-09-16T02:19:22.674Z"
+    },
+    {
+      "name": "launch-1-bridge-present",
+      "ok": false,
+      "detail": "undefined",
+      "ts": "2026-09-16T02:19:22.679Z"
+    },
+    {
+      "name": "vault-create",
+      "ok": false,
+      "detail": {
+        "ok": false,
+        "error": "TypeError: Cannot read properties of undefined (reading 'invoke')"
+      },
+      "ts": "2026-09-16T02:19:22.684Z"
+    },
+    {
+      "name": "launch-1-clean-shutdown",
+      "ok": true,
+      "detail": {
+        "existedBefore": true,
+        "existsAfter": false
+      },
+      "ts": "2026-09-16T02:19:23.676Z"
+    },
+    {
+      "name": "launch-2-flow",
+      "ok": false,
+      "detail": {
+        "error": "Error: no vault from launch 1; skipping restart verification"
+      },
+      "ts": "2026-09-16T02:19:23.677Z"
+    },
+    {
+      "name": "vite-dev-server-stopped",
+      "ok": true,
+      "detail": {
+        "pid": "7728"
+      },
+      "ts": "2026-09-16T02:19:23.890Z"
+    },
+    {
+      "name": "expected-vault-path-matches",
+      "ok": false,
+      "detail": {
+        "expected": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-offline-test-JbBuVS\\parent\\offline-test-vault"
+      },
+      "ts": "2026-09-16T02:19:23.891Z"
+    }
+  ]
+}

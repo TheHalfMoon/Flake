@@ -1,0 +1,3 @@
+   Compiling flake-desktop v0.0.1-phase-t (C:\Users\Shehr\work\Flake\desktop\src-tauri)
+    Finished `dev` profile [unoptimized] target(s) in 10.85s
+exit=0

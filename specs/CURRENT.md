@@ -13,14 +13,21 @@ CANONICAL_BUILD_PLAN=docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md
 CANONICAL_BUILD_PLAN_SHA256=b555f83ff12882ae6f55f90bbeaa411de52b84661a7f3953350cbfc6bd789fb2
 CANONICAL_PLAN_REMOTE_STATUS=MIGRATED_TO_GITHUB
 CANONICAL_PLAN_LOCAL_DEPENDENCY=NONE
-ACTIVE_IMPLEMENTATION_UNIT=T04-01
-NEXT_DEPENDENCY_READY_UNIT=T04-01
+ACTIVE_IMPLEMENTATION_UNIT=T04-02
+NEXT_DEPENDENCY_READY_UNIT=T04-02
 FOUNDER_DECISION_NO_HUMAN_GATES=docs/canonical/FOUNDER_NO_HUMAN_QUALIFICATION_GATES_2026-09-16.md
+FOUNDER_DECISION_WEBVIEW2_NETWORK_BOUNDARY=docs/canonical/FOUNDER_WEBVIEW2_NETWORK_BOUNDARY_2026-09-16.md
 T03-08_EXECUTION_CONTRACT=AUTOMATED_CONTINUITY_QUALIFICATION
 T05-06_EXECUTION_CONTRACT=AUTOMATED_LONG_HORIZON_CONTINUITY_SOAK
 R11_CONTRACT=AUTOMATED_CONTINUITY_AND_SOAK
 EXECUTABLE_REPOSITORY_WORK=AVAILABLE
 P03_STATUS=CLOSED
+T04-01_STATUS=COMPLETE
+T04-01_EVIDENCE=docs/evidence/flake-v1/T04-01/REPORT.md
+T04-01_NETWORK_DENIED_TEST=docs/evidence/flake-v1/T04-01/network-denied-test/README.md
+T04-01_PRIOR_BLOCKER_ID=T04-01-WEBVIEW2-BACKGROUND-NETWORK-TRAFFIC
+T04-01_PRIOR_BLOCKER_STATUS=SUPERSEDED_BY_FOUNDER_DECISION
+T04-01_MERGE_COMMIT=PENDING_PR_MERGE
 P01_STATUS=CLOSED
 T00-01_STATUS=COMPLETE
 T00-01_EVIDENCE=docs/evidence/flake-v1/T00-01/REPORT.md
@@ -107,7 +114,7 @@ T03-08_EVIDENCE=docs/evidence/flake-v1/T03-08/REPORT.md
 T03-08_ROUTE=PASS
 T03-08_PRIOR_BLOCKER_ID=T03-08-HUMAN-PARTICIPANTS
 T03-08_PRIOR_BLOCKER_STATUS=SUPERSEDED_BY_FOUNDER_DECISION
-T03-08_MERGE_COMMIT=PENDING_PR_MERGE
+T03-08_MERGE_COMMIT=c5f1f1ad3ca5a90129660ede814291b9e7e909b2
 SPEC_003_AUTO_ACTIVATION=PROHIBITED
 PROJECT_COMPLETE=NO
 ```
@@ -123,19 +130,47 @@ The historical local-only planning SHAs `4246f6d...` and `852e44b...` are proven
 
 ## Next action
 
-**`T04-01` is dependency-ready now that `T03-08` has passed.** `T03-08`'s `PASS` route (see below) satisfies the founder decision's "A T03-08 PASS unlocks T04-01." Begin the first P04 (minimal desktop continuity) task, reverifying live `main` first per the standard task-execution loop; P04's own principle (thin presentation layer over Rust Core, no second correctness model) governs scope.
+**`T04-02` is dependency-ready.** `T04-01` closed COMPLETE (see below); read `docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` section 26/T04-02's own task row before starting.
+
+Preserved historical blocker record (superseded, not deleted -- the underlying WebView2 observation itself remains true and unchanged):
+
+```text
+BLOCKER_ID=T04-01-WEBVIEW2-BACKGROUND-NETWORK-TRAFFIC
+STATUS=SUPERSEDED_BY_FOUNDER_DECISION
+SUPERSEDED_BY=docs/canonical/FOUNDER_WEBVIEW2_NETWORK_BOUNDARY_2026-09-16.md
+EXACT_GATE=T04-01 acceptance clause "starts offline with no external requests"
+WHY_EXTERNAL=the traffic originates in the shared OS WebView2 runtime's own
+  telemetry/service layer, confirmed by process-tree parentage to this app's
+  own msedgewebview2.exe host; 2 rounds of documented Chromium/Edge
+  background-networking-disable command-line flags did not eliminate it;
+  an open upstream Microsoft feature request (WebView2Feedback#5224) asking
+  for exactly this capability remains unresolved as of this evidence
+CURRENT_EVIDENCE=docs/evidence/flake-v1/T04-01/REPORT.md
+  ("What was discovered but not resolved"), raw/09-native-launch-network-observation.txt
+RESOLUTION=founder ruled OPTION_1_AMENDED: the acceptance clause is read,
+  narrowly and only for a WebView2-hosted surface, as
+  FLAKE_APPLICATION_NETWORK=NONE (reverified) plus
+  NETWORK_REQUIRED_FOR_FLAKE_OPERATION=NO (proven live via a network-denied
+  functional test, docs/evidence/flake-v1/T04-01/network-denied-test/);
+  WEBVIEW2_PLATFORM_BACKGROUND_TRAFFIC=OBSERVED remains true and is recorded
+  as a documented platform limitation, not a Flake product failure
+```
+
+`T04-01` closed: the founder-amended completion of the thin desktop shell scaffold. `docs/canonical/FOUNDER_WEBVIEW2_NETWORK_BOUNDARY_2026-09-16.md` records the full ruling on the WebView2 background-network finding this task surfaced (see `T04-01_PRIOR_BLOCKER_ID` above). Before applying it, every claim in the original evidence report's dependency-admission, plugin-registration, ACL, and CSP sections was independently reverified on a fresh checkout (`raw/10-founder-decision-reverification.txt`) -- unchanged from the original submission. Then a self-contained, fail-closed Node test harness (`docs/evidence/flake-v1/T04-01/network-denied-test/`) proved the load-bearing new requirement live, not merely asserted: with the host's only physical network adapter confirmed down by two independent methods, the real compiled `flake-desktop.exe`, driven through its exact real typed-IPC bridge (`window.__TAURI_INTERNALS__.invoke`, the same transport `@tauri-apps/api`'s `invoke()` uses), created a vault, listed and created a project, survived a simulated restart with the vault and project both persisted, and shut down cleanly twice -- all while genuinely offline. Two earlier attempts in the same session are preserved on record specifically because connectivity was not yet actually down and were correctly not reported as a network-denied result, which is why the harness's own fail-closed connectivity-precondition gate exists. `T04-01_STATUS=COMPLETE`. Full details: `docs/evidence/flake-v1/T04-01/REPORT.md`, `docs/evidence/flake-v1/T04-01/network-denied-test/README.md`.
+
+`T03-08`'s `PASS` route satisfied the founder decision's "A T03-08 PASS unlocks T04-01," and T04-01 work began, surfaced the WebView2 finding above, and is now closed under the founder's amended reading.
 
 ```text
 T03-08_ROUTE=PASS
 P03_STATUS=CLOSED
-CURRENT_GATE=NONE -- T04-01 dependency-ready
+T04-01_STATUS=COMPLETE
 HUMAN_EVIDENCE_REQUIRED=NO
 HUMAN_EVIDENCE_CLAIMED=NO
 ```
 
 `T03-08` closed: the founder-authorized automated replacement for T03-07's human confirmatory trial. `bench/flake-v1/T03-08/` — `flake_arm.py` drives the real compiled `fehrest` CLI (never `src/` directly) through every one of T03-07's 96 sealed confirmatory cases; `baseline_arm.py` is a from-scratch, independently-implemented maintained-Markdown + index/status-log baseline importing nothing from Flake. Both arms derive their setup only from each case's `tier`/`sources` (public case-construction metadata) and never read `case["gold"]` — grading happens exclusively afterward, in `analysis.py`/`verify_independent.py`, against the unmodified T03-07 gold keys (`PROTOCOL_ADDENDUM.md` documents this boundary and the honest scope it implies: a round-trip technical-continuity qualification, not a reading-comprehension or human-effort claim). `96 cases x 2 arms = 192 total attempts`, all executed with zero raised exceptions; `seal.py` confirmed the reused `cases_confirmatory.json` digest matches T03-07's own seal before any confirmatory attempt ran. Result: 96/96 Flake `RESUME_CORRECT`, 96/96 baseline `RESUME_CORRECT`, 0 high-consequence misses, all 4 tiers at 24/24 — `analysis.py` (producer) and `verify_independent.py` (independent oracle, never importing the producer) produced byte-identical `PASS` output. This task also fixed a real cross-platform clippy defect discovered during re-verification: `src/capture.rs`/`src/source_check.rs`'s symlink tests declared a variable under `#[cfg(not(windows))]` but only read it under `#[cfg(windows)]`, which would fail `-D warnings` on macOS/Linux CI though it was invisible on this Windows host; fixed by collapsing both files' windows-only logic into one `#[cfg(windows)]` block, no lint suppressed, no test weakened, full 358/358 Rust suite re-confirmed with no regression. No human participant, adoption, retention, or comparative-effort claim is made anywhere in this package, per the founder decision. Full details: `docs/evidence/flake-v1/T03-08/REPORT.md`.
 
-The canonical dependency DAG remains sequential: complete the replacement T03-08 contract before `T04-01`. Spec 003 auto-activation remains prohibited. `EXECUTABLE_REPOSITORY_WORK=AVAILABLE` and `PROJECT_COMPLETE=NO`.
+The canonical dependency DAG remains sequential: `T03-08` (COMPLETE, PASS) unlocked `T04-01`, which is now `BLOCKED_PENDING_ARCHITECTURE_DECISION` (see the blocker packet above). Spec 003 auto-activation remains prohibited. `EXECUTABLE_REPOSITORY_WORK=BLOCKED_PENDING_FOUNDER_DECISION` and `PROJECT_COMPLETE=NO`.
 
 `T03-07` closed: the complete preregistration package for the Section 26 P03 value gate, under `bench/flake-v1/T03-07/` — `PROTOCOL.md` (research question, eligibility, recruitment, consent/withdrawal/privacy, training, exact-parity counterbalancing formulas, equal source/setup/access budgets, success/failure/timeout/exclusion definitions, class-loss route, one-permitted-repair-repeat, and a fixed seven-step mechanical Pass/Fail/Inconclusive decision route) and `CONSENT.md`, both structurally checked by `test_protocol.py`. `generate_cases.py`/`generate_allocation.py` deterministically produce the sealed, disjoint, held-out `cases_confirmatory.json` (96 cases, exactly matching the 6-participant×8-pair×2-condition design) and `allocation_confirmatory.json` (exact 24/24 counterbalancing, verified, not merely intended); re-running either script reproduces the sealed files byte-for-byte. `harness.py`'s append-only manifest was proven resumable under a simulated process interruption; `analysis.py` (producer) and a separately-written `verify_independent.py` (oracle, never importing the producer) independently agree on every one of the seven possible routing outcomes. `dry_run.py` exercised the entire machinery end to end using only non-confirmatory `cases_dev.json` data, including an injected timeout, exclusion, protocol deviation, and a simulated harness-restart. `SEALS.json` records SHA-256 digests of all 11 load-bearing files plus the exact qualified product commit (`29263249e17fbaf93bd6a2d764fed418da255feb`) this study is frozen against — sealed before any confirmatory human observation exists. No participant has been recruited and no human evidence of any kind exists in this package; `analysis.py` structurally refuses to treat dev/synthetic data as confirmatory (a runtime guard, not a convention). 53/53 Python tests pass across 7 suites; the full Rust suite (358/358) was re-run to confirm no regression, since this task touched no `src/` code. Full details: `docs/evidence/flake-v1/T03-07/REPORT.md`.
 

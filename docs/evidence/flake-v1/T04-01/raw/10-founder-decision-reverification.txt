@@ -1,0 +1,85 @@
+T04-01 -- reverification performed before applying the Founder WebView2 decision
+(docs/canonical/FOUNDER_WEBVIEW2_NETWORK_BOUNDARY_2026-09-16.md), same branch
+feat/t04-01-desktop-shell-scaffold, head at the time PR #91 was opened
+(2d4844c3f130f1a2dacef9e4bd0a786806889b18). Re-run from a fresh clone checkout,
+not assumed from the original report.
+
+=== cargo fmt -- --check (desktop/src-tauri) ===
+$ cargo fmt -- --check
+(exit 0, no diff)
+
+=== cargo clippy --all-targets -- -D warnings (desktop/src-tauri) ===
+$ cargo clippy --all-targets -- -D warnings
+    Finished `dev` profile [unoptimized] target(s) in 2m 06s
+(exit 0, 0 warnings)
+
+=== cargo audit (desktop/src-tauri) ===
+$ cargo audit
+    Scanning Cargo.lock for vulnerabilities (444 crate dependencies)
+(exit 0; 0 vulnerabilities; 7 informational unmaintained/unsound warnings on
+transitive deps: proc-macro-error, 4x unic-* Unicode-identifier crates, glib
+(Linux GTK bindings, inert on this Windows target) -- unchanged from the
+original report, none reachable from any code this task wrote)
+
+=== npm install / npm run build / npm audit (desktop/) ===
+$ npm install
+added 29 packages, and audited 30 packages in 3s
+found 0 vulnerabilities
+
+$ npm run build
+> flake-desktop@0.0.1-phase-t build
+> tsc && vite build
+✓ 18 modules transformed.
+dist/index.html                   0.40 kB │ gzip:  0.27 kB
+dist/assets/index-BqZD1S9r.css    0.55 kB │ gzip:  0.35 kB
+dist/assets/index-DCjcqX9s.js   226.30 kB │ gzip: 71.53 kB
+✓ built in 805ms
+
+$ npm audit
+found 0 vulnerabilities
+
+=== Security surface recheck ===
+$ grep -oE "fetch\(|XMLHttpRequest|WebSocket\(|https?://[a-zA-Z0-9./_-]+" dist/assets/*.js | sort -u
+fetch(
+http://www.w3.org/1998/Math/MathML
+http://www.w3.org/1999/xlink
+http://www.w3.org/2000/svg
+http://www.w3.org/XML/1998/namespace
+https://react.dev/errors/
+(the sole `fetch(` occurrence is Vite's own same-origin modulepreload
+polyfill, unchanged from the original report; `https://react.dev/errors/`
+is React's own minified-error-decoder doc-link string, concatenated into an
+error message and never fetched -- confirmed by inspecting the surrounding
+bytes: `var B=...+"https://react.dev/errors/"+M; ...` -- same category as
+the already-noted "inert XML-namespace/doc-link strings")
+
+$ grep -rn "dangerouslySetInnerHTML" desktop/src/
+(no matches)
+
+$ cd desktop/src-tauri && cargo tree -i tauri-plugin-fs
+tauri-plugin-fs v2.5.2
+└── tauri-plugin-dialog v2.7.3
+    └── flake-desktop v0.0.1-phase-t (desktop/src-tauri)
+(single edge, transitive only via the dialog plugin, unregistered -- unchanged
+from the original report)
+
+$ cat desktop/src-tauri/src/main.rs   # plugin registration
+    .plugin(tauri_plugin_dialog::init())
+(only the dialog plugin is registered with Builder::plugin(); no fs/shell/
+http/process/opener/sql plugin init() call anywhere in this crate)
+
+$ cat desktop/src-tauri/capabilities/default.json   # ACL grant
+"permissions": ["core:default", "dialog:default"]
+(zero matches for fs:/shell:/http:/process:/opener:/sql: prefixes)
+
+$ grep -A3 '"security"' desktop/src-tauri/tauri.conf.json
+"csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';
+img-src 'self' data:; connect-src 'self' ipc: http://ipc.localhost;
+object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'"
+(unchanged from the original report; no remote origin permitted anywhere)
+
+Conclusion: every claim in the original T04-01 evidence report's "Architecture"
+and "Security boundary" sections was independently reverified true on a fresh
+checkout, before the Founder decision was applied. Nothing in the dependency
+tree, plugin registration, ACL, or CSP changed between the original report and
+this reverification.

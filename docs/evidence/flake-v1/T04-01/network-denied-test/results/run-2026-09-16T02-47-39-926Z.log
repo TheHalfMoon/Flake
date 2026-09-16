@@ -1,0 +1,38 @@
+[2026-09-16T02:47:39.927Z] === T04-01 network-denied test run 2026-09-16T02-47-39-926Z ===
+[2026-09-16T02:47:39.929Z] repo=C:\Users\Shehr\work\Flake
+[2026-09-16T02:47:39.929Z] exe=C:\Users\Shehr\work\Flake\desktop\src-tauri\target\debug\flake-desktop.exe
+[2026-09-16T02:47:39.930Z] STEP OK   exe-exists :: {"path":"C:\\Users\\Shehr\\work\\Flake\\desktop\\src-tauri\\target\\debug\\flake-desktop.exe"}
+[2026-09-16T02:47:40.066Z] connectivity poll: http=true tcp=true
+[2026-09-16T02:47:43.112Z] connectivity poll: http=true tcp=true
+[2026-09-16T02:47:46.174Z] connectivity poll: http=true tcp=true
+[2026-09-16T02:47:49.230Z] connectivity poll: http=true tcp=true
+[2026-09-16T02:47:52.271Z] connectivity poll: http=true tcp=true
+[2026-09-16T02:47:55.331Z] connectivity poll: http=true tcp=true
+[2026-09-16T02:47:58.393Z] connectivity poll: http=true tcp=true
+[2026-09-16T02:48:01.461Z] connectivity poll: http=true tcp=true
+[2026-09-16T02:48:04.515Z] connectivity poll: http=true tcp=true
+[2026-09-16T02:48:07.572Z] connectivity poll: http=true tcp=true
+[2026-09-16T02:48:10.631Z] connectivity poll: http=true tcp=true
+[2026-09-16T02:48:13.696Z] connectivity poll: http=true tcp=true
+[2026-09-16T02:48:16.760Z] connectivity poll: http=true tcp=true
+[2026-09-16T02:48:22.784Z] connectivity poll: http=false tcp=false
+[2026-09-16T02:48:22.784Z] STEP OK   network-denied-precondition :: {"httpReachable":false,"tcpReachable":false,"anyReachable":false}
+[2026-09-16T02:48:22.804Z] STEP OK   network-monitor-started :: {"pid":25656,"logPath":"C:\\Users\\Shehr\\work\\Flake\\docs\\evidence\\flake-v1\\T04-01\\network-denied-test\\results\\run-2026-09-16T02-47-39-926Z.network-monitor.log"}
+[2026-09-16T02:48:24.279Z] STEP OK   vite-dev-server-ready :: {"url":"http://127.0.0.1:1420/"}
+[2026-09-16T02:48:24.291Z] STEP OK   launch-1-spawned :: {"pid":10128}
+[2026-09-16T02:48:24.920Z] STEP OK   launch-1-page-loaded :: {"url":"http://localhost:1420/"}
+[2026-09-16T02:48:25.749Z] STEP OK   launch-1-bridge-present :: "function"
+[2026-09-16T02:48:25.792Z] STEP OK   vault-create :: {"ok":true,"result":{"path":"C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-offline-test-nGzeUC\\parent\\offline-test-vault","vault_id":"01a0a81d-93a1-7177-92b1-47ea3a01ad3a"}}
+[2026-09-16T02:48:25.799Z] STEP OK   list-projects-empty :: {"ok":true,"result":[]}
+[2026-09-16T02:48:25.816Z] STEP OK   create-project :: {"ok":true,"result":{"id":"01a0a81d-93d3-731a-8426-8013167da7e1","name":"Offline Continuity Check","description":"T04-01 network-denied test project","active":true}}
+[2026-09-16T02:48:25.823Z] STEP OK   list-projects-one :: {"ok":true,"result":[{"id":"01a0a81d-93d3-731a-8426-8013167da7e1","name":"Offline Continuity Check","description":"T04-01 network-denied test project","active":true}]}
+[2026-09-16T02:48:26.738Z] STEP OK   launch-1-clean-shutdown :: {"existedBefore":true,"existsAfter":false}
+[2026-09-16T02:48:26.741Z] STEP OK   launch-2-spawned :: {"pid":3096}
+[2026-09-16T02:48:27.391Z] STEP OK   launch-2-page-loaded :: {"url":"http://localhost:1420/"}
+[2026-09-16T02:48:27.394Z] STEP OK   launch-2-bridge-present :: "function"
+[2026-09-16T02:48:27.407Z] STEP OK   vault-open-after-restart :: {"openRes":{"ok":true,"result":{"path":"C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-offline-test-nGzeUC\\parent\\offline-test-vault","vault_id":"01a0a81d-93a1-7177-92b1-47ea3a01ad3a"}},"expectedVaultId":"01a0a81d-93a1-7177-92b1-47ea3a01ad3a"}
+[2026-09-16T02:48:27.414Z] STEP OK   project-persisted-across-restart :: {"ok":true,"result":[{"id":"01a0a81d-93d3-731a-8426-8013167da7e1","name":"Offline Continuity Check","description":"T04-01 network-denied test project","active":true}]}
+[2026-09-16T02:48:28.277Z] STEP OK   launch-2-clean-shutdown :: {"existedBefore":true,"existsAfter":false}
+[2026-09-16T02:48:28.412Z] STEP OK   vite-dev-server-stopped :: {"pid":"14832"}
+[2026-09-16T02:48:28.414Z] STEP OK   expected-vault-path-matches :: {"actual":"C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-offline-test-nGzeUC\\parent\\offline-test-vault","expected":"C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-offline-test-nGzeUC\\parent\\offline-test-vault"}
+[2026-09-16T02:48:28.421Z] === run complete. overallOk=true. json=C:\Users\Shehr\work\Flake\docs\evidence\flake-v1\T04-01\network-denied-test\results\run-2026-09-16T02-47-39-926Z.json log=C:\Users\Shehr\work\Flake\docs\evidence\flake-v1\T04-01\network-denied-test\results\run-2026-09-16T02-47-39-926Z.log netlog=C:\Users\Shehr\work\Flake\docs\evidence\flake-v1\T04-01\network-denied-test\results\run-2026-09-16T02-47-39-926Z.network-monitor.log ===

@@ -1,0 +1,32 @@
+{
+  "runId": "2026-09-16T02-15-51-816Z",
+  "fatal": "Error: spawn EINVAL\n    at ChildProcess.spawn (node:internal/child_process:420:11)\n    at spawn (node:child_process:787:9)\n    at main (file:///C:/Users/Shehr/work/Flake/docs/evidence/flake-v1/T04-01/network-denied-test/run-offline-test.mjs:186:16)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)",
+  "steps": [
+    {
+      "name": "exe-exists",
+      "ok": true,
+      "detail": {
+        "path": "C:\\Users\\Shehr\\work\\Flake\\desktop\\src-tauri\\target\\debug\\flake-desktop.exe"
+      },
+      "ts": "2026-09-16T02:15:51.819Z"
+    },
+    {
+      "name": "connectivity-canary",
+      "ok": true,
+      "detail": {
+        "reachable": false,
+        "error": "TypeError: fetch failed"
+      },
+      "ts": "2026-09-16T02:15:52.046Z"
+    },
+    {
+      "name": "network-monitor-started",
+      "ok": true,
+      "detail": {
+        "pid": 26176,
+        "logPath": "C:\\Users\\Shehr\\work\\Flake\\docs\\evidence\\flake-v1\\T04-01\\network-denied-test\\results\\run-2026-09-16T02-15-51-816Z.network-monitor.log"
+      },
+      "ts": "2026-09-16T02:15:52.061Z"
+    }
+  ]
+}

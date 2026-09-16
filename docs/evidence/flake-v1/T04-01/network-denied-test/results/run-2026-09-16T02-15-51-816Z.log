@@ -1,0 +1,11 @@
+[2026-09-16T02:15:51.817Z] === T04-01 network-denied test run 2026-09-16T02-15-51-816Z ===
+[2026-09-16T02:15:51.818Z] repo=C:\Users\Shehr\work\Flake
+[2026-09-16T02:15:51.819Z] exe=C:\Users\Shehr\work\Flake\desktop\src-tauri\target\debug\flake-desktop.exe
+[2026-09-16T02:15:51.819Z] STEP OK   exe-exists :: {"path":"C:\\Users\\Shehr\\work\\Flake\\desktop\\src-tauri\\target\\debug\\flake-desktop.exe"}
+[2026-09-16T02:15:52.046Z] STEP OK   connectivity-canary :: {"reachable":false,"error":"TypeError: fetch failed"}
+[2026-09-16T02:15:52.061Z] STEP OK   network-monitor-started :: {"pid":26176,"logPath":"C:\\Users\\Shehr\\work\\Flake\\docs\\evidence\\flake-v1\\T04-01\\network-denied-test\\results\\run-2026-09-16T02-15-51-816Z.network-monitor.log"}
+[2026-09-16T02:15:52.066Z] FATAL: Error: spawn EINVAL
+    at ChildProcess.spawn (node:internal/child_process:420:11)
+    at spawn (node:child_process:787:9)
+    at main (file:///C:/Users/Shehr/work/Flake/docs/evidence/flake-v1/T04-01/network-denied-test/run-offline-test.mjs:186:16)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
