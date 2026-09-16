@@ -87,7 +87,16 @@ All 328 lib tests (including the pre-existing D5 migration schedule) and all 4 s
 
 **M-scale (10,000 records, ~1 GiB payload) and L-scale (100,000 records, ~10 GiB payload, attempted disk permitting):** deliberately **not** run on this local host given the 4.5 GiB free-space constraint above — this repeats a real, previously-observed risk on this exact host (a prior task's evidence records free space dropping from ~1.5 GiB to ~22 MiB in about 15 minutes from unrelated background activity). Run instead on a `ubuntu-latest` GitHub Actions runner via the `m-scale-performance` job in `.github/workflows/t05-01-migration-qualification.yml`, which reports its own exact CPU/RAM/disk before running (plan §27's own "record actual CPU/RAM/SSD/OS/filesystem" instruction) and requires at least 24 GiB free before attempting L, else records why L was skipped rather than risking an uncontrolled runner failure mid-measurement.
 
-*(Updated once the CI run referenced below completes — see "Cross-platform and CI qualification".)*
+**Actual CI run: [35081331572](https://github.com/TheHalfMoon/Flake/actions/runs/35081331572)**, `m-scale-performance` job, head SHA `673497a11b0bd6981aa6e2233b1b70bc8c241138` (this task's final commit, after the memory fix in section 6 above). Runner: `ubuntu-24.04` GitHub-hosted, 4 vCPU (AMD EPYC 9V74), 15 GiB RAM, `/dev/root` 145 GiB total / 86 GiB available at job start — well above the 24 GiB L-scale threshold, so L ran (not skipped).
+
+| Scale | n | payload bytes | generate | preview | import | independent verify | gate (target/max) | result |
+|---|---|---|---|---|---|---|---|---|
+| M | 10,000 | 1,001,213,445 | 62.21 s | 2.43 s | 17.82 s | 4.41 s | 60 s / 180 s | within target |
+| L | 100,000 | 10,012,272,794 | 614.02 s | 44.58 s | 217.54 s | 93.06 s | 600 s / 1800 s | within target |
+
+Both runs: `counts_agree: true`, `import_complete: true`, `import_exit_code: 0`, `independent_head_hash_chain_verified: true`, `dataset_deleted: true` (disk reclaimed before the job's next step). Raw JSON (byte-identical to the job's own stdout, downloaded via `gh run download 35081331572`): `results/m-scale-timing-35081331572.json`, `results/l-scale-timing-35081331572.json` (manifest: `raw/00-manifest.txt`).
+
+Import time is well inside both gates at both scales (17.82 s / 60 s target at M; 217.54 s / 600 s target at L), confirming the section-6 memory fix did not trade a memory ceiling for a time regression.
 
 ## 7. Standalone binary integration tests (`tests/flake_migrate_binary.rs`)
 
@@ -118,7 +127,7 @@ Full raw-artifact manifest with SHA-256: `raw/00-manifest.txt`.
 - `qualify` (matrix: `windows-latest`, `macos-latest`, `ubuntu-latest`): full root Rust gates (fmt/clippy/`cargo test --locked --lib`, so the D5 migration schedule and both golden-fixture tests run natively on all three), `cargo audit`, the standalone-binary integration tests as real native subprocesses, and an independent-reader import smoke check. Satisfies this task's own cross-platform gate: "Migration and refusal behavior native on all profiles."
 - `m-scale-performance` (`ubuntu-latest` only, `needs: qualify`): M-scale timing always; L-scale attempted only if the runner reports ≥24 GiB free, else explicitly recorded as skipped with the exact reason. Not repeated across all three OSes — a deliberate, disk-risk-driven scope decision recorded honestly here, not a silent gap (refusal/preservation/full-migration *correctness*, the part that can genuinely differ per OS, is still proven natively on all three by `qualify`).
 
-*(This section is completed with the actual CI run ID and M/L-scale results once that run finishes — see the follow-up evidence commit on this task's PR before merge.)*
+**Final PR CI run, head `673497a`:** `qualify` passed on all three of `windows-latest`/`macos-latest`/`ubuntu-latest` (runs `35081331483`/`35081331572`), `m-scale-performance` passed (run `35081331572`, results above), `verify-artifacts` passed (run `35081331370`). `CodeRabbit`: skipped ("manual review required for this OSS repository" — the same pre-existing hosted-review limitation recorded at every prior `flake-v1` task). `cubic`: `NEUTRAL`/skipping. No GitHub-enforced required check runs `cargo test`/`fmt`/`clippy` directly on this repo (unchanged limitation, recorded again here) — this PR's own two new workflows are the actual gate, both green on the exact merged head.
 
 ## Explicit scope boundaries (recorded, not silently dropped)
 
@@ -129,4 +138,4 @@ Full raw-artifact manifest with SHA-256: `raw/00-manifest.txt`.
 
 ## Completion condition
 
-Pending: the CI run above completing on all three platforms plus the M/L-scale job, then a follow-up evidence commit on this task's PR recording the exact run ID and results, `specs/CURRENT.md` marked `T05-01_STATUS=COMPLETE`, merge, and post-merge main/CI reverification — following the identical pattern already established at every prior `flake-v1` task.
+Met: `qualify` green natively on all three platforms, `m-scale-performance` green with both M- and L-scale within their target gates, `verify-artifacts` green, all on this task's own final head `673497a`. `specs/CURRENT.md` marked `T05-01_STATUS=COMPLETE` in this same commit. Remaining steps (merge, post-merge main/CI reverification, frontier advance to `T05-02`) follow the identical pattern already established at every prior `flake-v1` task.

@@ -13,8 +13,8 @@ CANONICAL_BUILD_PLAN=docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md
 CANONICAL_BUILD_PLAN_SHA256=b555f83ff12882ae6f55f90bbeaa411de52b84661a7f3953350cbfc6bd789fb2
 CANONICAL_PLAN_REMOTE_STATUS=MIGRATED_TO_GITHUB
 CANONICAL_PLAN_LOCAL_DEPENDENCY=NONE
-ACTIVE_IMPLEMENTATION_UNIT=T05-01
-NEXT_DEPENDENCY_READY_UNIT=T05-01
+ACTIVE_IMPLEMENTATION_UNIT=T05-02
+NEXT_DEPENDENCY_READY_UNIT=T05-02
 FOUNDER_DECISION_NO_HUMAN_GATES=docs/canonical/FOUNDER_NO_HUMAN_QUALIFICATION_GATES_2026-09-16.md
 FOUNDER_DECISION_WEBVIEW2_NETWORK_BOUNDARY=docs/canonical/FOUNDER_WEBVIEW2_NETWORK_BOUNDARY_2026-09-16.md
 FOUNDER_DECISION_T04-06_ACCESSIBILITY_WITNESS=docs/canonical/FOUNDER_T04-06_ACCESSIBILITY_WITNESS_AMENDMENT_2026-09-16.md
@@ -50,6 +50,10 @@ T04-06_STATUS=COMPLETE
 T04-06_EVIDENCE=docs/evidence/flake-v1/T04-06/REPORT.md
 T04-06_CROSS_PLATFORM_CI_RUN=35066083071
 T04-06_MERGE_COMMIT=6538dd974575a0fe0e8613b6fda86220479c2be6
+T05-01_STATUS=COMPLETE
+T05-01_EVIDENCE=docs/evidence/flake-v1/T05-01/REPORT.md
+T05-01_CROSS_PLATFORM_CI_RUN=35081331572
+T05-01_MERGE_COMMIT=PENDING_PR_MERGE
 P01_STATUS=CLOSED
 T00-01_STATUS=COMPLETE
 T00-01_EVIDENCE=docs/evidence/flake-v1/T00-01/REPORT.md
@@ -152,7 +156,9 @@ The historical local-only planning SHAs `4246f6d...` and `852e44b...` are proven
 
 ## Next action
 
-**`T05-01` is dependency-ready.** `T04-06` closed COMPLETE, closing `P04` (see below); read `docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` section 26/T05-01's own task row before starting.
+**`T05-02` is dependency-ready.** `T05-01` closed COMPLETE (see below); read `docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` section 26/T05-02's own task row before starting. Note `T05-02`'s own failure-behavior clause: "no process-kill proxy for power-loss evidence" -- its 30 native-VM-unclean-shutdown/profile and 10 physical-device-controlled-trials/profile (or an exact-stack qualified lab report) requirements need genuine VM-level power-cut or hardware evidence, not an in-process kill -- investigate available authorized native/VM infrastructure (nested virtualization on GitHub-hosted runners, an existing authorized machine, or a qualified lab report path) before assuming any part of this is blocked.
+
+`T05-01` closed: froze the format-1/2 compatibility policy and shipped a standalone offline `flake-migrate` tool, qualified natively on all three platforms plus M/L-scale performance timing on `ubuntu-latest` CI (M: 10,000 records/~1 GiB, import 17.82s within the 60s/180s gate; L: 100,000 records/~10 GiB, import 217.54s within the 600s/1800s gate; both `independent_head_hash_chain_verified: true`). Found and fixed one real defect during L-scale measurement: `preview_migration`/`import_to_new_root` held the full payload bytes of every admitted record in memory simultaneously (`raw_bytes: String` per entry, plus a second full `.clone()`'d copy in the import commit loop) -- roughly 10 GiB of live `String` data for the L-scale case, which killed the first CI attempt (`exit 143`) on a 15 GiB-RAM runner. Fixed to O(one record) peak memory by hashing/dropping each candidate's content during preview and re-reading each admitted record's bytes fresh from disk immediately before commit -- no change to admission rules, byte-exactness guarantee, or committed content (T01-06's own byte-identity tests still pass unchanged in what they prove). Full details: `docs/evidence/flake-v1/T05-01/REPORT.md`.
 
 Preserved historical blocker record (superseded, not deleted -- the underlying WebView2 observation itself remains true and unchanged):
 
