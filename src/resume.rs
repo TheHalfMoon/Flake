@@ -45,10 +45,11 @@ use crate::decision_state::{self, DecisionResolution};
 use crate::project::{self, Action, ActionState, Note};
 use crate::source_check::{self, CheckStatus, SourceCheck};
 use crate::{project as project_mod, Result};
+use serde::Serialize;
 
 /// One source whose most recent check is not a clean `Match` — this
 /// project's "missing/changed evidence" (§12).
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct StaleEvidence {
     pub source_id: String,
     pub latest_check: SourceCheck,
@@ -56,14 +57,14 @@ pub struct StaleEvidence {
 
 /// One revision recorded after the project's checkpoint — the raw
 /// "changes since checkpoint" log, before any per-kind interpretation.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct ChangeSummary {
     pub recorded_seq: i64,
     pub object_id: String,
     pub kind: String,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct ResumeView {
     pub project_id: String,
     /// `None` if this project has never been marked reviewed.

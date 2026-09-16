@@ -61,11 +61,12 @@ use crate::canonical::CanonicalStore;
 use crate::capture::{now_rfc3339_utc, parse_rfc3339_utc};
 use crate::project::{self, Decision, DecisionLifecycle, RecordPayload};
 use crate::{Error, Result};
+use serde::Serialize;
 use std::collections::HashMap;
 
 /// One decision object sharing the requested `(project, decision_key)`,
 /// reconstructed as of the resolution's `as_of_recorded` cutoff.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct ConsideredDecision {
     pub decision_id: String,
     /// The decision's own fields as of `as_of_recorded` — not necessarily
@@ -79,7 +80,8 @@ pub struct ConsideredDecision {
     pub exclusion_reason: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum DecisionOutcome {
     /// Exactly one admitted decision. Carries its `decision_id`.
     CurrentSet(String),
@@ -92,7 +94,7 @@ pub enum DecisionOutcome {
     NoAcceptedDecision,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct DecisionResolution {
     pub project_id: String,
     pub decision_key: String,

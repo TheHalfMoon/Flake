@@ -13,8 +13,8 @@ CANONICAL_BUILD_PLAN=docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md
 CANONICAL_BUILD_PLAN_SHA256=b555f83ff12882ae6f55f90bbeaa411de52b84661a7f3953350cbfc6bd789fb2
 CANONICAL_PLAN_REMOTE_STATUS=MIGRATED_TO_GITHUB
 CANONICAL_PLAN_LOCAL_DEPENDENCY=NONE
-ACTIVE_IMPLEMENTATION_UNIT=T04-03
-NEXT_DEPENDENCY_READY_UNIT=T04-03
+ACTIVE_IMPLEMENTATION_UNIT=T04-04
+NEXT_DEPENDENCY_READY_UNIT=T04-04
 FOUNDER_DECISION_NO_HUMAN_GATES=docs/canonical/FOUNDER_NO_HUMAN_QUALIFICATION_GATES_2026-09-16.md
 FOUNDER_DECISION_WEBVIEW2_NETWORK_BOUNDARY=docs/canonical/FOUNDER_WEBVIEW2_NETWORK_BOUNDARY_2026-09-16.md
 T03-08_EXECUTION_CONTRACT=AUTOMATED_CONTINUITY_QUALIFICATION
@@ -31,7 +31,10 @@ T04-01_MERGE_COMMIT=5a9a738cdfcd72505c45ac6f85b92ae4dcfc1ceb
 T04-02_STATUS=COMPLETE
 T04-02_EVIDENCE=docs/evidence/flake-v1/T04-02/REPORT.md
 T04-02_MANUAL_CHECKLIST=docs/evidence/flake-v1/T04-02/MANUAL_COMPOSITION_CHECKLIST.md
-T04-02_MERGE_COMMIT=PENDING_PR_MERGE
+T04-02_MERGE_COMMIT=ec3b1e7fec33df7068d982238b4f4af6fb8c907d
+T04-03_STATUS=COMPLETE
+T04-03_EVIDENCE=docs/evidence/flake-v1/T04-03/REPORT.md
+T04-03_MERGE_COMMIT=PENDING_PR_MERGE
 P01_STATUS=CLOSED
 T00-01_STATUS=COMPLETE
 T00-01_EVIDENCE=docs/evidence/flake-v1/T00-01/REPORT.md
@@ -134,7 +137,7 @@ The historical local-only planning SHAs `4246f6d...` and `852e44b...` are proven
 
 ## Next action
 
-**`T04-03` is dependency-ready.** `T04-02` closed COMPLETE (see below); read `docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` section 26/T04-03's own task row before starting.
+**`T04-04` is dependency-ready.** `T04-03` closed COMPLETE (see below); read `docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` section 26/T04-04's own task row before starting.
 
 Preserved historical blocker record (superseded, not deleted -- the underlying WebView2 observation itself remains true and unchanged):
 
@@ -159,6 +162,8 @@ RESOLUTION=founder ruled OPTION_1_AMENDED: the acceptance clause is read,
   WEBVIEW2_PLATFORM_BACKGROUND_TRAFFIC=OBSERVED remains true and is recorded
   as a documented platform limitation, not a Flake product failure
 ```
+
+`T04-03` closed: search, inspect and complete project work in the desktop, without CLI knowledge. Two small, additive Core changes (`src/project.rs`'s `tombstone_note`/`untombstone_note` -- explicitly named as `T04`'s own deferred scope by that module's existing doc comments, since `Note::tombstoned` had no setter until now; `#[derive(Serialize)]` added to `decision_state.rs`/`resume.rs`'s already-fully-typed structs, no logic change, so `resume()` can cross the IPC boundary without a parallel DTO hierarchy) plus 19 new typed desktop commands covering the full action lifecycle (create/start/block/cancel/reopen/complete), the full decision lifecycle (create/accept/withdraw/supersede), evidence-linking relations, project archive/unarchive, resume/history, and a bounded substring search. This task's own named acceptance clause -- "produces identical canonical state to CLI" -- is proven directly: the exact same workflow (project -> note -> action lifecycle -> decision lifecycle -> relation) driven once through the real desktop app and once through the real `fehrest` CLI, against two independent vaults, produces content-identical `canonical.sqlite` state (object IDs/revisions/timestamps aside, which are never expected to match across independently created vaults) -- verified by `docs/evidence/flake-v1/T04-03/e2e-test/compare_canonical_state.py`, reusing T02-07's unmodified `sqlite_reader.py`. A genuine `expected revision conflict` (blocking an action, then replaying a stale pre-block revision) is refused and independently confirmed non-destructive. Every existing Rust test still passes unchanged (326/326); no `src/` behavior changed, only two additive capabilities Core's own docs had already named as this task's to add. Full details: `docs/evidence/flake-v1/T04-03/REPORT.md`.
 
 `T04-02` closed: an owner note editor with an honest save-state machine (`Saved`/`Unsaved`/`Saving…`/two distinct not-saved states/outcome-unknown), Ctrl/Cmd+S keyboard save, native undo/redo, and a dependency-free, security-inert Markdown preview (headings/bold/italic/code/lists; links and images render as plain text, never a clickable `<a>`/loaded `<img>` -- zero network/process activity by construction, not by a runtime check). Three new typed commands (`list_notes`, `note_create`, `note_update`, `desktop/src-tauri/src/commands.rs`) call only already-audited, unchanged `fehrest::project::{create_note,update_note}` -- no `src/` change, no new conflict logic (Core's own `expected_revision_id` check is the entire "never a silent overwrite" guarantee). A scripted E2E (`docs/evidence/flake-v1/T04-02/e2e-test/`) drove the real compiled app through its exact real typed-IPC bridge and independently cross-checked every claimed save by reading `canonical.sqlite` directly (reusing T02-07's unmodified `sqlite_reader.py`, never trusting the IPC response alone) -- proving byte-exact save/update, a refused stale-revision conflict that did not silently overwrite the committed state, a ~900 KB near-limit body preserved byte-exact, and a >1 MiB body correctly refused by Core's own existing limit. A real accessibility gap (no `aria-live` on the save-state announcement) was found while drafting the manual composition checklist and fixed, not merely noted. Native IME/screen-reader confirmation is honestly recorded as not yet performed (`MANUAL_COMPOSITION_CHECKLIST.md`) -- consistent with this task's own contract, which names exhaustive native composition/keyboard confirmation across three profiles as `T04-06`'s cross-platform gate, not this task's. Full details: `docs/evidence/flake-v1/T04-02/REPORT.md`.
 
