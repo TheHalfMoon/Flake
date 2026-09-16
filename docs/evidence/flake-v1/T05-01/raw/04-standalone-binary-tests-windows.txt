@@ -1,0 +1,17 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running tests\flake_migrate_binary.rs (target\debug\deps\flake_migrate_binary-a98a1bc1d67768ea.exe)
+
+running 4 tests
+vault created: C:\Users\Shehr\AppData\Local\Temp\flake-migrate-binary-test-source-01a0a949-6c5d-7111-a462-4d01f183a59c
+vault created: C:\Users\Shehr\AppData\Local\Temp\flake-migrate-binary-test-source-01a0a949-6c5d-7111-a462-4d1bfcfad925
+test standalone_binary_version_and_help_do_not_touch_any_filesystem_path ... ok
+vault created: C:\Users\Shehr\AppData\Local\Temp\flake-migrate-binary-test-source-01a0a949-6c5e-74d3-9cc5-afb046e5914a
+test standalone_binary_preview_reports_both_gold_fixtures_admitted ... ok
+vault created: C:\Users\Shehr\AppData\Local\Temp\flake-migrate-binary-test-dest-exists-01a0a949-6c99-7143-9b67-6ecbb26d42a5
+test standalone_binary_import_produces_a_real_openable_format_2_vault ... ok
+test standalone_binary_import_refuses_to_clobber_an_existing_format_2_root ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.14s
+
+/^$/N;/
+$/D
