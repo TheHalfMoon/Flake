@@ -10,6 +10,7 @@ is an expected, recordable outcome, not a script crash.
 """
 
 import json
+import sqlite3
 import sys
 from pathlib import Path
 
@@ -17,6 +18,30 @@ REPO_ROOT = Path(__file__).resolve().parents[5]
 sys.path.insert(0, str(REPO_ROOT / "tools" / "independent-verify"))
 
 from sqlite_reader import read_vault, SqliteFormatError  # noqa: E402
+
+
+def roll_forward_hot_journal_if_present(db_path: Path) -> None:
+    """A kill mid-transaction can leave a `<db>-journal` file next to the
+    copied database (Flake uses `journal_mode=DELETE` -- a rollback
+    journal, not WAL). `sqlite_reader.py`'s own reader deliberately opens
+    strictly read-only (`?mode=ro`) so it can never touch what it reads --
+    correct for reading a live vault, but SQLite cannot roll back a hot
+    journal on a connection opened with that flag (observed directly:
+    `OperationalError: attempt to write a readonly database` on some
+    SQLite builds when a journal is pending). This is never called on a
+    live vault -- only on this script's own disposable copy, pulled off
+    the guest disk purely for inspection -- so a normal read-write open
+    here is safe: it lets SQLite perform its own standard crash recovery
+    once, leaving a clean database for the read-only reader to open
+    afterward, exactly as a real Flake process's own open would."""
+    journal_path = db_path.with_name(db_path.name + "-journal")
+    if not journal_path.exists():
+        return
+    conn = sqlite3.connect(str(db_path))
+    try:
+        conn.execute("PRAGMA quick_check")
+    finally:
+        conn.close()
 
 
 def main() -> int:
@@ -30,6 +55,7 @@ def main() -> int:
         print(json.dumps(result))
         return 0
     try:
+        roll_forward_hot_journal_if_present(db_path)
         vault = read_vault(db_path)
     except SqliteFormatError as e:
         result["error"] = f"SqliteFormatError: {e}"
