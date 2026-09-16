@@ -1,0 +1,119 @@
+{
+  "runId": "2026-09-16T05-21-45-138Z",
+  "overallOk": false,
+  "tmpRoot": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-05-e2e-k63Eg4",
+  "vaultPath": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-05-e2e-k63Eg4\\parent\\original-vault",
+  "steps": [
+    {
+      "name": "exe-exists",
+      "ok": true,
+      "detail": {
+        "path": "C:\\Users\\Shehr\\work\\Flake\\desktop\\src-tauri\\target\\debug\\flake-desktop.exe"
+      },
+      "ts": "2026-09-16T05:21:45.150Z"
+    },
+    {
+      "name": "vite-dev-server-ready",
+      "ok": true,
+      "detail": {},
+      "ts": "2026-09-16T05:21:46.966Z"
+    },
+    {
+      "name": "launch",
+      "ok": true,
+      "detail": {
+        "pid": 3332
+      },
+      "ts": "2026-09-16T05:21:48.053Z"
+    },
+    {
+      "name": "bridge-ready",
+      "ok": true,
+      "detail": {
+        "url": "http://localhost:1420/"
+      },
+      "ts": "2026-09-16T05:21:50.561Z"
+    },
+    {
+      "name": "vault-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "path": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-05-e2e-k63Eg4\\parent\\original-vault",
+          "vault_id": "01a0a8aa-07f6-7524-9e0d-10fda7b33819"
+        }
+      },
+      "ts": "2026-09-16T05:21:50.624Z"
+    },
+    {
+      "name": "project-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a8aa-082a-77a4-a418-d696913e15a2",
+          "name": "T04-05 Project",
+          "description": null,
+          "active": true
+        }
+      },
+      "ts": "2026-09-16T05:21:50.647Z"
+    },
+    {
+      "name": "note-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a8aa-0841-73db-9617-b8562e098319",
+          "project_id": "01a0a8aa-082a-77a4-a418-d696913e15a2",
+          "title": "Backup content",
+          "body": "This content must survive backup, restore, export, import and recovery unchanged.",
+          "revision_id": "01a0a8aa-0841-73db-9617-b857b1dfaf0e"
+        }
+      },
+      "ts": "2026-09-16T05:21:50.663Z"
+    },
+    {
+      "name": "filler-note-0",
+      "ok": true,
+      "detail": {
+        "ok": true
+      },
+      "ts": "2026-09-16T05:21:50.819Z"
+    },
+    {
+      "name": "filler-note-1",
+      "ok": true,
+      "detail": {
+        "ok": true
+      },
+      "ts": "2026-09-16T05:21:51.015Z"
+    },
+    {
+      "name": "filler-note-2",
+      "ok": true,
+      "detail": {
+        "ok": true
+      },
+      "ts": "2026-09-16T05:21:51.155Z"
+    },
+    {
+      "name": "filler-note-3",
+      "ok": true,
+      "detail": {
+        "ok": true
+      },
+      "ts": "2026-09-16T05:21:51.275Z"
+    },
+    {
+      "name": "desktop-workflow",
+      "ok": false,
+      "detail": {
+        "error": "Error: Command failed: python -c \nimport sys, json\nsys.path.insert(0, \"C:\\\\Users\\\\Shehr\\\\work\\\\Flake\\\\tools\\\\independent-verify\")\nfrom sqlite_reader import read_vault\nresult = read_vault(\"C:\\\\Users\\\\Shehr\\\\AppData\\\\Local\\\\Temp\\\\flake-t04-05-e2e-k63Eg4\\\\parent\\\\original-vault\\\\.fehrest\\\\canonical.sqlite\")\nprint(json.dumps({\n    \"transaction_head_seq\": result[\"vault_row\"][\"transaction_head_seq\"],\n    \"vault_id\": result[\"vault_row\"][\"vault_id\"],\n    \"object_count\": len(result[\"current_object\"]),\n    \"head_hash_chain_verified\": result[\"head_hash_chain_verified\"],\n}))\n\nTraceback (most recent call last):\r\n  File \"<string>\", line 5, in <module>\r\n  File \"C:\\Users\\Shehr\\work\\Flake\\tools\\independent-verify\\sqlite_reader.py\", line 198, in read_vault\r\n    conn = _connect_readonly(db_path)\r\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\Users\\Shehr\\work\\Flake\\tools\\independent-verify\\sqlite_reader.py\", line 29, in _connect_readonly\r\n    uri = f\"file:{db_path.as_posix()}?mode=ro\"\r\n                  ^^^^^^^^^^^^^^^^\r\nAttributeError: 'str' object has no attribute 'as_posix'\r\n\n    at genericNodeError (node:internal/errors:983:15)\n    at wrappedFn (node:internal/errors:537:14)\n    at checkExecSyncError (node:child_process:916:11)\n    at execFileSync (node:child_process:952:15)\n    at independentReadWholeVault (file:///C:/Users/Shehr/work/Flake/docs/evidence/flake-v1/T04-05/e2e-test/run-e2e-test.mjs:170:15)\n    at main (file:///C:/Users/Shehr/work/Flake/docs/evidence/flake-v1/T04-05/e2e-test/run-e2e-test.mjs:241:30)"
+      },
+      "ts": "2026-09-16T05:21:51.427Z"
+    }
+  ]
+}

@@ -12,17 +12,22 @@
 //! equivalent, no filesystem/http/shell/process plugins admitted).
 
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 
+use fehrest::backup::{self, BackupReport, RestoreReport};
 use fehrest::canonical::CanonicalStore;
 use fehrest::capture;
 use fehrest::checkpoint::{self, ReviewCheckpoint};
 use fehrest::disclosure::{self, DisclosureReceipt};
+use fehrest::export::{self, ExportPreview, ExportReport};
 use fehrest::grant::{self, ExportGrant};
-use fehrest::import::import_full_restore;
+use fehrest::import::{self, import_full_restore, ImportPreview, ImportReport};
 use fehrest::project::{
     self, ActionState, DecisionBasis, DecisionLifecycle, DecisionVerification, RecordPayload,
 };
 use fehrest::proposal::{self, AgentProposal};
+use fehrest::recovery::{self, RecoveryReport};
 use fehrest::relation::{self, RelationType};
 use fehrest::resume::ResumeView;
 use fehrest::source_check::{self, CheckStatus, SourceCheck};
@@ -1219,4 +1224,155 @@ pub fn proposal_reject(
         proposal,
         revision_id: outcome.revision_id,
     })
+}
+
+// --- T04-05: backup, recovery, import and export, exposed safely ---
+//
+// Every destination/source argument here still originates only from the
+// owner's own native folder picker (`pick_directory`, T04-01) -- this
+// task reuses that one native dialog for every new destination/source
+// selection rather than adding a new native dialog capability, matching
+// this task's own "native destination dialog bindings" requirement with
+// the capability already admitted and audited, not a new one.
+//
+// `backup_to_new_root` is the only one of these five Core operations that
+// accepts a cancellation callback -- `restore_from_backup`,
+// `recover_to_new_root`, `export_to_new_root` and `import_full_restore`/
+// `import_selected_merge` are synchronous, all-or-nothing Core operations
+// with no such hook. This is not a bridge-level limitation papered over:
+// it is exactly what Core exposes, so only `vault_backup` below runs on a
+// blocking task with a real, checked-by-the-copy-loop cancellation flag;
+// the others are plain commands (still off the UI thread, since every
+// Tauri command already runs off it) that either complete or fail, never
+// "cancel mid-write."
+
+#[derive(Default)]
+pub struct CancellationRegistry(Mutex<std::collections::HashMap<String, Arc<AtomicBool>>>);
+
+impl CancellationRegistry {
+    fn register(&self, operation_id: &str) -> Arc<AtomicBool> {
+        let flag = Arc::new(AtomicBool::new(false));
+        self.0
+            .lock()
+            .expect("cancellation registry mutex poisoned")
+            .insert(operation_id.to_string(), flag.clone());
+        flag
+    }
+    fn cancel(&self, operation_id: &str) -> bool {
+        match self
+            .0
+            .lock()
+            .expect("cancellation registry mutex poisoned")
+            .get(operation_id)
+        {
+            Some(flag) => {
+                flag.store(true, Ordering::SeqCst);
+                true
+            }
+            None => false,
+        }
+    }
+    fn unregister(&self, operation_id: &str) {
+        self.0
+            .lock()
+            .expect("cancellation registry mutex poisoned")
+            .remove(operation_id);
+    }
+}
+
+/// Signal cancellation for an in-flight `vault_backup` call by the same
+/// `operation_id` the caller passed to it. Returns `false` if no such
+/// operation is currently registered (already finished, or never
+/// started) -- never an error, since "there was nothing to cancel" is not
+/// a failure.
+#[tauri::command]
+pub fn cancel_operation(
+    registry: tauri::State<'_, CancellationRegistry>,
+    operation_id: String,
+) -> bool {
+    registry.cancel(&operation_id)
+}
+
+#[tauri::command]
+pub async fn vault_backup(
+    registry: tauri::State<'_, CancellationRegistry>,
+    vault_path: String,
+    dest_parent_dir: String,
+    dest_name: String,
+    operation_id: String,
+) -> Result<BackupReport, String> {
+    let dest = join_child(&dest_parent_dir, &dest_name)?;
+    let flag = registry.register(&operation_id);
+    let flag_for_closure = flag.clone();
+    let source = PathBuf::from(vault_path);
+    let result = tauri::async_runtime::spawn_blocking(move || {
+        backup::backup_to_new_root(&source, &dest, move || {
+            flag_for_closure.load(Ordering::SeqCst)
+        })
+    })
+    .await
+    .map_err(|e| e.to_string())
+    .and_then(|r| r.map_err(|e| e.to_string()));
+    registry.unregister(&operation_id);
+    result
+}
+
+#[tauri::command]
+pub fn vault_restore_from_backup(
+    backup_path: String,
+    dest_parent_dir: String,
+    dest_name: String,
+) -> Result<RestoreReport, String> {
+    let dest = join_child(&dest_parent_dir, &dest_name)?;
+    backup::restore_from_backup(Path::new(&backup_path), &dest).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn vault_recover(
+    original_path: String,
+    dest_parent_dir: String,
+    dest_name: String,
+) -> Result<RecoveryReport, String> {
+    let dest = join_child(&dest_parent_dir, &dest_name)?;
+    recovery::recover_to_new_root(Path::new(&original_path), &dest).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn export_preview(
+    vault_path: String,
+    project_id: Option<String>,
+) -> Result<ExportPreview, String> {
+    let store = CanonicalStore::open(&vault_path).map_err(|e| e.to_string())?;
+    export::preview_export(&store, project_id.as_deref()).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn vault_export(
+    vault_path: String,
+    project_id: Option<String>,
+    dest_parent_dir: String,
+    dest_name: String,
+) -> Result<ExportReport, String> {
+    let dest = join_child(&dest_parent_dir, &dest_name)?;
+    let store = CanonicalStore::open(&vault_path).map_err(|e| e.to_string())?;
+    export::export_to_new_root(&store, project_id.as_deref(), &dest).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn import_preview(source_path: String) -> Result<ImportPreview, String> {
+    import::preview_import(Path::new(&source_path)).map_err(|e| e.to_string())
+}
+
+/// Merge a portable package's selected/exported scope into an **existing**
+/// vault -- distinct from `vault_restore` (T04-01, `import_full_restore`
+/// into a brand-new empty vault). Never a "silent merge": the owner must
+/// have already reviewed `import_preview`'s own conflict list before
+/// choosing to call this.
+#[tauri::command]
+pub fn vault_import_selected(
+    vault_path: String,
+    source_path: String,
+) -> Result<ImportReport, String> {
+    let mut store = CanonicalStore::open(&vault_path).map_err(|e| e.to_string())?;
+    import::import_selected_merge(&mut store, Path::new(&source_path)).map_err(|e| e.to_string())
 }

@@ -1,0 +1,6 @@
+raw/01-cargo-tree-forbidden-plugins.txt	37	sha256=0a08890cf4380e92cac61df67c9603c64884ee1687be57f4dc80be3969e03857
+raw/02-cargo-audit.txt	1609	sha256=3a5f40d9ce03d71cd068a237310bf8e1969e1cd6cbf9015d39148430a1985278
+raw/03-npm-audit.txt	24	sha256=6d8c5c8f3d7684adb070417bd608d01ae90aa3dc26a65af03ffda4955f38d9a3
+raw/04-frontend-build.txt	436	sha256=2675bd78fc78695adc53bc158ef5ca80c92f3bcacf088e48d040276be9bb2477
+raw/05-bundle-network-surface-grep.txt	161	sha256=96789e38fa92e277d6f9012e1eceb0c1e8524fa2af38ee778b48cfd419c71dab
+raw/06-root-lib-tests.txt	25761	sha256=77355ae64e0fea96be160599645fcaa8dc57da548c13b4ff6a5f8f24b43dfef1

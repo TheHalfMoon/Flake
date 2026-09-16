@@ -80,14 +80,14 @@ pub struct BackupManifest {
     pub verified: bool,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct BackupReport {
     pub source_root: PathBuf,
     pub backup_root: PathBuf,
     pub manifest: BackupManifest,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct RestoreReport {
     pub backup_root: PathBuf,
     pub restored_root: PathBuf,

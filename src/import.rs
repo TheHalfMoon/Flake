@@ -81,7 +81,7 @@ use crate::canonical::{
 use crate::export::{compute_integrity_root, ExportManifest};
 use crate::project::RecordPayload;
 use crate::{Error, Result};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
 use std::path::{Path, PathBuf};
 
@@ -113,7 +113,7 @@ struct ParsedPackage {
     objects: BTreeMap<String, Vec<ParsedRevisionFile>>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct ImportPreview {
     pub kind: String,
     pub source_vault_id: String,
@@ -129,7 +129,7 @@ pub struct ImportPreview {
     pub conflicts: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct ImportReport {
     pub dest_root: PathBuf,
     pub mode: &'static str,

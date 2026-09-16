@@ -108,7 +108,7 @@ pub struct ExportManifest {
     pub integrity_root: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct ExportReport {
     pub dest_root: PathBuf,
     pub manifest: ExportManifest,
@@ -117,7 +117,7 @@ pub struct ExportReport {
 /// A no-write dry run — "sensitive history and scope shown before writing"
 /// (§12). Computes exactly what [`export_to_new_root`] would produce,
 /// without touching the filesystem.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct ExportPreview {
     pub kind: String,
     pub project_id: Option<String>,

@@ -24,6 +24,7 @@ async fn pick_directory(app: tauri::AppHandle) -> Option<String> {
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .manage(commands::CancellationRegistry::default())
         .invoke_handler(tauri::generate_handler![
             pick_directory,
             commands::vault_create,
@@ -67,6 +68,14 @@ fn main() {
             commands::proposal_admit,
             commands::proposal_accept,
             commands::proposal_reject,
+            commands::cancel_operation,
+            commands::vault_backup,
+            commands::vault_restore_from_backup,
+            commands::vault_recover,
+            commands::export_preview,
+            commands::vault_export,
+            commands::import_preview,
+            commands::vault_import_selected,
         ])
         .run(tauri::generate_context!())
         .expect("error while running the Flake desktop shell");
