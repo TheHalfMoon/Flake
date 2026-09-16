@@ -61,6 +61,7 @@ jobs:
   m-scale-performance:
     needs: qualify
     runs-on: ubuntu-latest
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
 

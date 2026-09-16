@@ -57,6 +57,7 @@ def generate_legacy_vault(root: Path, fehrest_bin: str, n: int, avg_bytes: int, 
     subprocess.run([fehrest_bin, "init", "--vault", str(root)], check=True, capture_output=True, text=True)
     rng = random.Random(seed)
     total_bytes = 0
+    heartbeat_start = time.perf_counter()
     for i in range(n):
         obj_id = str(uuid.uuid4())
         title = f"M-scale synthetic record {i}"
@@ -65,14 +66,41 @@ def generate_legacy_vault(root: Path, fehrest_bin: str, n: int, avg_bytes: int, 
         path = root / f"record-{i:06d}.md"
         path.write_text(content, encoding="utf-8", newline="\n")
         total_bytes += len(content.encode("utf-8"))
+        # A CI runner's own stdout-silence watchdog can cancel a step that
+        # produces no output for several minutes -- generating a large L
+        # dataset file-by-file takes long enough to trigger that on its
+        # own, independent of anything actually being wrong, so a periodic
+        # heartbeat here is required, not cosmetic.
+        if (i + 1) % 5000 == 0 or (time.perf_counter() - heartbeat_start) > 30:
+            print(f"  generated {i + 1}/{n} legacy files ({total_bytes} bytes so far)", flush=True)
+            heartbeat_start = time.perf_counter()
     return total_bytes
 
 
 def time_subprocess(args) -> tuple[float, subprocess.CompletedProcess]:
+    """Times `args` end to end exactly like `subprocess.run`, but polls
+    with a periodic heartbeat print while waiting -- see the comment in
+    `generate_legacy_vault` above; a `flake-migrate import` of a large
+    dataset can itself run long enough in total silence to trigger the
+    same CI watchdog, independent of the subprocess actually working
+    correctly. The heartbeat is emitted by this script, never by
+    `flake-migrate` itself -- its own stdout/stderr streams are captured
+    unchanged and only inspected after it exits, so the measured
+    `elapsed` and the tool's own JSON contract are both untouched."""
     start = time.perf_counter()
-    proc = subprocess.run(args, capture_output=True, text=True)
+    proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    last_heartbeat = start
+    while True:
+        try:
+            stdout, stderr = proc.communicate(timeout=30)
+            break
+        except subprocess.TimeoutExpired:
+            now = time.perf_counter()
+            print(f"  ... still waiting on {' '.join(args)} ({now - start:.0f}s elapsed)", flush=True)
+            last_heartbeat = now
     elapsed = time.perf_counter() - start
-    return elapsed, proc
+    result = subprocess.CompletedProcess(args, proc.returncode, stdout, stderr)
+    return elapsed, result
 
 
 def free_bytes(path: Path) -> int:
@@ -152,10 +180,15 @@ def main() -> int:
             and independent["command_count"] == args.n
             and len(independent["current_object"]) == args.n
         )
-        result["gate_target_seconds"] = 60
-        result["gate_maximum_seconds"] = 180
-        result["import_within_target"] = import_elapsed <= 60
-        result["import_within_maximum"] = import_elapsed <= 180
+        # Plan section 27: "Full export/import M" target 60s/max 180s;
+        # "L rebuild/export/import/full verification" target 600s/max 1800s
+        # (L is explicitly permitted slower reported batch times, but must
+        # stay bounded).
+        gate_target, gate_max = (600, 1800) if args.label == "L" else (60, 180)
+        result["gate_target_seconds"] = gate_target
+        result["gate_maximum_seconds"] = gate_max
+        result["import_within_target"] = import_elapsed <= gate_target
+        result["import_within_maximum"] = import_elapsed <= gate_max
         result["ok"] = bool(
             result["counts_agree"]
             and independent["head_hash_chain_verified"]
