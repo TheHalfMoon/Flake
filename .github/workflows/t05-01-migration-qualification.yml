@@ -1,0 +1,117 @@
+name: t05-01-migration-qualification
+
+# T05-01's own cross-platform gate ("Migration and refusal behavior
+# native on all profiles") plus its performance gate ("M/L migration and
+# memory/cancel ceilings", plan section 27). Uses GitHub-hosted native
+# runners, matching the precedent already established by
+# t04-06-cross-platform.yml.
+#
+# M/L-scale timing runs on ubuntu-latest only, not the full matrix: this
+# development host's own local disk is severely constrained (see
+# docs/evidence/flake-v1/T05-01/REPORT.md "Environment"), so generating a
+# 1+ GiB synthetic legacy vault locally on every OS was judged an
+# unnecessary and disk-risky repetition of the same measurement --
+# refusal/preservation/full-migration correctness (the part that can
+# genuinely differ per OS: filesystem semantics, path handling) is still
+# proven natively on all three profiles by the `qualify` job below.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  qualify:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Root Rust gates (fmt, clippy, full lib test suite including migration D5 schedule)
+        shell: bash
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy --all-targets --locked -- -D warnings
+          cargo test --locked --lib
+
+      - name: Root Rust advisories
+        shell: bash
+        run: |
+          cargo install cargo-audit --locked
+          cargo audit
+
+      - name: Build standalone flake-migrate + fehrest CLI
+        shell: bash
+        run: cargo build --locked --bin flake-migrate --bin fehrest
+
+      - name: Standalone binary + golden-fixture qualification (native subprocess, this OS)
+        shell: bash
+        run: cargo test --locked --test flake_migrate_binary
+
+      - name: Independent-reader smoke check (Python, no Flake code executed)
+        shell: bash
+        run: python3 -c "import sys; sys.path.insert(0, 'tools/independent-verify'); import sqlite_reader; print('sqlite_reader imports cleanly')"
+
+  m-scale-performance:
+    needs: qualify
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build release binaries
+        run: cargo build --release --locked --bin flake-migrate --bin fehrest
+
+      - name: Report runner disk/CPU/RAM (plan section 27 environment record)
+        run: |
+          echo "--- disk ---"; df -h .
+          echo "--- cpu ---"; nproc || true; cat /proc/cpuinfo | grep "model name" | head -1 || true
+          echo "--- ram ---"; free -h || true
+
+      - name: M-scale migration timing + independent verification
+        run: |
+          python3 docs/evidence/flake-v1/T05-01/checks/m_scale_migration_timing.py \
+            --n 10000 --avg-bytes 100000 \
+            --fehrest-bin ./target/release/fehrest \
+            --migrate-bin ./target/release/flake-migrate \
+            --label M \
+            --out docs/evidence/flake-v1/T05-01/results/m-scale-timing-${{ github.run_id }}.json \
+            --work-dir /tmp/flake-t05-01-m-scale
+
+      - name: L-scale migration timing + independent verification (best-effort, disk permitting)
+        if: always()
+        run: |
+          avail_kib=$(df --output=avail . | tail -1)
+          # L needs roughly 10 GiB source + a comparable destination; require
+          # at least 24 GiB free before attempting, else record why it was
+          # skipped rather than risk an uncontrolled failure mid-run.
+          required_kib=$((24 * 1024 * 1024))
+          if [ "$avail_kib" -ge "$required_kib" ]; then
+            python3 docs/evidence/flake-v1/T05-01/checks/m_scale_migration_timing.py \
+              --n 100000 --avg-bytes 100000 \
+              --fehrest-bin ./target/release/fehrest \
+              --migrate-bin ./target/release/flake-migrate \
+              --label L \
+              --out docs/evidence/flake-v1/T05-01/results/l-scale-timing-${{ github.run_id }}.json \
+              --work-dir /tmp/flake-t05-01-l-scale
+          else
+            echo "{\"label\": \"L\", \"skipped\": true, \"reason\": \"insufficient runner disk: ${avail_kib} KiB available, ${required_kib} KiB required\"}" \
+              > docs/evidence/flake-v1/T05-01/results/l-scale-timing-${{ github.run_id }}.json
+            cat docs/evidence/flake-v1/T05-01/results/l-scale-timing-${{ github.run_id }}.json
+          fi
+
+      - name: Upload timing evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: t05-01-m-l-scale-timing
+          path: docs/evidence/flake-v1/T05-01/results/
+          if-no-files-found: error

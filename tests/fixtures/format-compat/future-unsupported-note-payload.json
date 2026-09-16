@@ -1,0 +1,9 @@
+{
+  "kind": "note",
+  "payload_schema_version": 999999,
+  "project_id": "018f4d2a-0000-7000-8000-000000000001",
+  "title": "Synthetic future-unsupported fixture",
+  "body": "This payload declares payload_schema_version 999999, which this build's RecordPayload::from_json must never claim to understand -- 999999 is chosen to remain newer than any real version this codebase reaches, not tied to today's current value (src/project.rs::RECORD_PAYLOAD_SCHEMA_VERSION), so this fixture keeps proving the same thing across future schema-version bumps without needing to be regenerated.",
+  "tombstoned": false,
+  "hypothetical_future_field": "a real future payload_schema_version 2 could add real fields here; this fixture invents none as a production format, it only proves refusal"
+}

@@ -2038,6 +2038,62 @@ mod tests {
     }
 
     // -------------------------------------------------------------
+    // T05-01: format compatibility policy — golden fixtures
+    // -------------------------------------------------------------
+    //
+    // Checked-in fixtures (`tests/fixtures/format-compat/`, not generated
+    // inline) so an independent reader can inspect the exact bytes this
+    // build is tested against, per `docs/formats/format-compatibility-policy.md`.
+
+    #[test]
+    fn golden_fixture_future_unsupported_payload_is_refused() {
+        let json =
+            include_str!("../tests/fixtures/format-compat/future-unsupported-note-payload.json");
+        let err = RecordPayload::from_json(json).unwrap_err();
+        assert!(
+            format!("{err}").contains("newer than this build supports"),
+            "got {err}"
+        );
+    }
+
+    #[test]
+    fn golden_fixture_unknown_optional_fields_survive_a_read_then_write_round_trip() {
+        let json = include_str!(
+            "../tests/fixtures/format-compat/unknown-optional-fields-note-payload.json"
+        );
+        let parsed = RecordPayload::from_json(json).expect("current-version fixture must parse");
+        let note = match &parsed {
+            RecordPayload::Note(n) => n,
+            other => panic!("expected a Note, got {other:?}"),
+        };
+        assert_eq!(
+            note.unknown.get("future_priority_flag"),
+            Some(&serde_json::json!("urgent"))
+        );
+        assert_eq!(
+            note.unknown.get("future_reminder"),
+            Some(&serde_json::json!({
+                "remind_at": "2099-01-01T00:00:00Z",
+                "channel": "desktop-notification",
+            }))
+        );
+
+        // Re-serialize and re-parse (a read-then-write round trip, as any
+        // save of an already-loaded record performs) -- both unrecognized
+        // fields must still be present afterward, unchanged.
+        let rewritten = parsed.to_json().unwrap();
+        let reparsed = RecordPayload::from_json(&rewritten).unwrap();
+        let note2 = match &reparsed {
+            RecordPayload::Note(n) => n,
+            other => panic!("expected a Note, got {other:?}"),
+        };
+        assert_eq!(
+            note.unknown, note2.unknown,
+            "unknown fields must round-trip exactly"
+        );
+    }
+
+    // -------------------------------------------------------------
     // T02-03: Action state machine
     // -------------------------------------------------------------
 

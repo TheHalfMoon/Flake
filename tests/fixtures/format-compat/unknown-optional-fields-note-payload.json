@@ -1,0 +1,13 @@
+{
+  "kind": "note",
+  "payload_schema_version": 1,
+  "project_id": "018f4d2a-0000-7000-8000-000000000001",
+  "title": "Golden fixture: unknown optional fields",
+  "body": "This payload is at the current payload_schema_version (1), so RecordPayload::from_json must accept it -- but it also carries two fields (future_priority_flag, future_reminder) that no field on Note names. A read-then-write round trip through this build must reproduce both unrecognized fields byte-for-byte via Note's own #[serde(flatten)] unknown map, exactly as a real future minor payload addition would need to survive an older build.",
+  "tombstoned": false,
+  "future_priority_flag": "urgent",
+  "future_reminder": {
+    "remind_at": "2099-01-01T00:00:00Z",
+    "channel": "desktop-notification"
+  }
+}

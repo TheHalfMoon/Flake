@@ -8,6 +8,15 @@ schema-recognition rules, the pragma values, the `payload_sha256`
 definition and the `resulting_head_hash` chain formula are all
 transcribed from that document, not from reading `src/canonical.rs`'s
 implementation.
+
+`T05-01` extends `read_revision_envelopes` to also accept `origin =
+"migration"` rows without requiring a JSON `kind` field: per
+`docs/formats/legacy-migration.md`'s own published payload contract
+("payload = the exact original file bytes ... actor = migration, origin
+= RecordOrigin::Migration"), a migrated revision's payload is the source
+format-1 file's raw bytes, not a typed-record JSON object. This is a
+documented second payload shape, not a weakening of the JSON check for
+every other origin.
 """
 import hashlib
 import json
@@ -81,17 +90,25 @@ def read_revision_envelopes(conn: sqlite3.Connection) -> list[dict]:
                 f"payload_sha256 mismatch for revision {row['revision_id']}: "
                 f"stored={row['payload_sha256']} recomputed={recomputed}"
             )
-        try:
-            payload = json.loads(payload_text)
-        except json.JSONDecodeError as e:
-            raise SqliteFormatError(
-                f"revision {row['revision_id']} payload is not valid JSON: {e}"
-            ) from e
-        kind = payload.get("kind")
-        if not kind:
-            raise SqliteFormatError(
-                f"revision {row['revision_id']} payload has no 'kind' field"
-            )
+        if row["origin"] == "migration":
+            # Legacy format-1 raw bytes, not typed-record JSON -- the
+            # payload_sha256 re-hash above already proved these bytes are
+            # exactly what is stored; there is no further JSON/kind shape
+            # to check for this origin (see this module's own docstring).
+            kind = None
+            payload = payload_text
+        else:
+            try:
+                payload = json.loads(payload_text)
+            except json.JSONDecodeError as e:
+                raise SqliteFormatError(
+                    f"revision {row['revision_id']} payload is not valid JSON: {e}"
+                ) from e
+            kind = payload.get("kind")
+            if not kind:
+                raise SqliteFormatError(
+                    f"revision {row['revision_id']} payload has no 'kind' field"
+                )
         envelopes.append({
             "object_id": row["object_id"],
             "revision_id": row["revision_id"],
