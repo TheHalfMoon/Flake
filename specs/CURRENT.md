@@ -19,8 +19,11 @@ FOUNDER_DECISION_NO_HUMAN_GATES=docs/canonical/FOUNDER_NO_HUMAN_QUALIFICATION_GA
 T03-08_EXECUTION_CONTRACT=AUTOMATED_CONTINUITY_QUALIFICATION
 T05-06_EXECUTION_CONTRACT=AUTOMATED_LONG_HORIZON_CONTINUITY_SOAK
 R11_CONTRACT=AUTOMATED_CONTINUITY_AND_SOAK
-EXECUTABLE_REPOSITORY_WORK=AVAILABLE
+EXECUTABLE_REPOSITORY_WORK=BLOCKED_PENDING_FOUNDER_DECISION
 P03_STATUS=CLOSED
+T04-01_STATUS=BLOCKED_PENDING_ARCHITECTURE_DECISION
+T04-01_EVIDENCE=docs/evidence/flake-v1/T04-01/REPORT.md
+T04-01_BLOCKER_ID=T04-01-WEBVIEW2-BACKGROUND-NETWORK-TRAFFIC
 P01_STATUS=CLOSED
 T00-01_STATUS=COMPLETE
 T00-01_EVIDENCE=docs/evidence/flake-v1/T00-01/REPORT.md
@@ -123,19 +126,50 @@ The historical local-only planning SHAs `4246f6d...` and `852e44b...` are proven
 
 ## Next action
 
-**`T04-01` is dependency-ready now that `T03-08` has passed.** `T03-08`'s `PASS` route (see below) satisfies the founder decision's "A T03-08 PASS unlocks T04-01." Begin the first P04 (minimal desktop continuity) task, reverifying live `main` first per the standard task-execution loop; P04's own principle (thin presentation layer over Rust Core, no second correctness model) governs scope.
+**`T04-01` is BLOCKED on a founder/architecture decision, not merely dependency-ready.** The desktop shell scaffold (`desktop/`, Tauri 2 + React) was built, dependency-admitted, and security-hardened this task (typed-command bridge, strict CSP, no filesystem/shell/http/process/opener/SQL plugin registered or ACL-granted, offline launch verified at 29-30 MB RSS) -- but native network observation on this Windows 11 host found the shared WebView2 runtime itself opens 2 persistent outbound HTTPS connections to a Microsoft-owned endpoint on every cold launch, independent of and unfixable by this application's own code or Chromium command-line mitigation flags (independently corroborated: `github.com/MicrosoftEdge/WebView2Feedback#5224`, an open, unresolved upstream feature request for exactly this capability). Full findings: `docs/evidence/flake-v1/T04-01/REPORT.md`.
+
+```text
+BLOCKER_ID=T04-01-WEBVIEW2-BACKGROUND-NETWORK-TRAFFIC
+EXACT_GATE=T04-01 acceptance clause "starts offline with no external requests"
+WHY_EXTERNAL=the traffic originates in the shared OS WebView2 runtime's own
+  telemetry/service layer, confirmed by process-tree parentage to this app's
+  own msedgewebview2.exe host; 2 rounds of documented Chromium/Edge
+  background-networking-disable command-line flags did not eliminate it;
+  an open upstream Microsoft feature request (WebView2Feedback#5224) asking
+  for exactly this capability remains unresolved as of this evidence
+CURRENT_EVIDENCE=docs/evidence/flake-v1/T04-01/REPORT.md
+  ("What was discovered but not resolved"), raw/09-native-launch-network-observation.txt
+MISSING_RESOURCE=an explicit founder/architecture ruling (AGENTS.md Class C/D)
+  on how "no external requests" is interpreted for a WebView2-hosted shell --
+  this executor does not have standing to reinterpret an acceptance
+  criterion unilaterally
+EXACT_OPERATOR_ACTION=read docs/evidence/flake-v1/T04-01/REPORT.md's
+  "What was discovered but not resolved" section and rule on one of its
+  three named options (accept app-level-only reading / require WebView2
+  machine policy as a packaging prerequisite / reconsider WebView2
+  admissibility)
+EXACT_COMMAND_OR_PROCEDURE=none executable by this agent; this is a decision,
+  not a technical task
+SUCCESS_CRITERION=a recorded founder decision document (mirroring
+  docs/canonical/FOUNDER_NO_HUMAN_QUALIFICATION_GATES_2026-09-16.md's own
+  form) naming the accepted interpretation
+WHAT_UNBLOCKS_AFTERWARD=T04-01 can then be finished under the clarified
+  reading (or reworked, if WebView2 is reconsidered) and proceed to T04-02
+```
+
+`T03-08`'s `PASS` route satisfied the founder decision's "A T03-08 PASS unlocks T04-01," and T04-01 work began; it is now blocked as described above, not merely dependency-ready.
 
 ```text
 T03-08_ROUTE=PASS
 P03_STATUS=CLOSED
-CURRENT_GATE=NONE -- T04-01 dependency-ready
+CURRENT_GATE=T04-01-WEBVIEW2-BACKGROUND-NETWORK-TRAFFIC
 HUMAN_EVIDENCE_REQUIRED=NO
 HUMAN_EVIDENCE_CLAIMED=NO
 ```
 
 `T03-08` closed: the founder-authorized automated replacement for T03-07's human confirmatory trial. `bench/flake-v1/T03-08/` — `flake_arm.py` drives the real compiled `fehrest` CLI (never `src/` directly) through every one of T03-07's 96 sealed confirmatory cases; `baseline_arm.py` is a from-scratch, independently-implemented maintained-Markdown + index/status-log baseline importing nothing from Flake. Both arms derive their setup only from each case's `tier`/`sources` (public case-construction metadata) and never read `case["gold"]` — grading happens exclusively afterward, in `analysis.py`/`verify_independent.py`, against the unmodified T03-07 gold keys (`PROTOCOL_ADDENDUM.md` documents this boundary and the honest scope it implies: a round-trip technical-continuity qualification, not a reading-comprehension or human-effort claim). `96 cases x 2 arms = 192 total attempts`, all executed with zero raised exceptions; `seal.py` confirmed the reused `cases_confirmatory.json` digest matches T03-07's own seal before any confirmatory attempt ran. Result: 96/96 Flake `RESUME_CORRECT`, 96/96 baseline `RESUME_CORRECT`, 0 high-consequence misses, all 4 tiers at 24/24 — `analysis.py` (producer) and `verify_independent.py` (independent oracle, never importing the producer) produced byte-identical `PASS` output. This task also fixed a real cross-platform clippy defect discovered during re-verification: `src/capture.rs`/`src/source_check.rs`'s symlink tests declared a variable under `#[cfg(not(windows))]` but only read it under `#[cfg(windows)]`, which would fail `-D warnings` on macOS/Linux CI though it was invisible on this Windows host; fixed by collapsing both files' windows-only logic into one `#[cfg(windows)]` block, no lint suppressed, no test weakened, full 358/358 Rust suite re-confirmed with no regression. No human participant, adoption, retention, or comparative-effort claim is made anywhere in this package, per the founder decision. Full details: `docs/evidence/flake-v1/T03-08/REPORT.md`.
 
-The canonical dependency DAG remains sequential: complete the replacement T03-08 contract before `T04-01`. Spec 003 auto-activation remains prohibited. `EXECUTABLE_REPOSITORY_WORK=AVAILABLE` and `PROJECT_COMPLETE=NO`.
+The canonical dependency DAG remains sequential: `T03-08` (COMPLETE, PASS) unlocked `T04-01`, which is now `BLOCKED_PENDING_ARCHITECTURE_DECISION` (see the blocker packet above). Spec 003 auto-activation remains prohibited. `EXECUTABLE_REPOSITORY_WORK=BLOCKED_PENDING_FOUNDER_DECISION` and `PROJECT_COMPLETE=NO`.
 
 `T03-07` closed: the complete preregistration package for the Section 26 P03 value gate, under `bench/flake-v1/T03-07/` — `PROTOCOL.md` (research question, eligibility, recruitment, consent/withdrawal/privacy, training, exact-parity counterbalancing formulas, equal source/setup/access budgets, success/failure/timeout/exclusion definitions, class-loss route, one-permitted-repair-repeat, and a fixed seven-step mechanical Pass/Fail/Inconclusive decision route) and `CONSENT.md`, both structurally checked by `test_protocol.py`. `generate_cases.py`/`generate_allocation.py` deterministically produce the sealed, disjoint, held-out `cases_confirmatory.json` (96 cases, exactly matching the 6-participant×8-pair×2-condition design) and `allocation_confirmatory.json` (exact 24/24 counterbalancing, verified, not merely intended); re-running either script reproduces the sealed files byte-for-byte. `harness.py`'s append-only manifest was proven resumable under a simulated process interruption; `analysis.py` (producer) and a separately-written `verify_independent.py` (oracle, never importing the producer) independently agree on every one of the seven possible routing outcomes. `dry_run.py` exercised the entire machinery end to end using only non-confirmatory `cases_dev.json` data, including an injected timeout, exclusion, protocol deviation, and a simulated harness-restart. `SEALS.json` records SHA-256 digests of all 11 load-bearing files plus the exact qualified product commit (`29263249e17fbaf93bd6a2d764fed418da255feb`) this study is frozen against — sealed before any confirmatory human observation exists. No participant has been recruited and no human evidence of any kind exists in this package; `analysis.py` structurally refuses to treat dev/synthetic data as confirmatory (a runtime guard, not a convention). 53/53 Python tests pass across 7 suites; the full Rust suite (358/358) was re-run to confirm no regression, since this task touched no `src/` code. Full details: `docs/evidence/flake-v1/T03-07/REPORT.md`.
 

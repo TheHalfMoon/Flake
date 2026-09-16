@@ -1,0 +1,44 @@
+Native cold-launch network observation (Windows 11, this development host)
+============================================================================
+
+Launch 1 (baseline additionalBrowserArgs: msWebOOUI,msPdfOOUI,msSmartScreenProtection
+disabled only, no further mitigation):
+  flake-desktop.exe PID 21552
+  -> child msedgewebview2.exe PID 18764 (confirmed by CommandLine:
+     "--webview-exe-name=flake-desktop.exe --webview-exe-version=0.0.1-phase-t
+      --user-data-dir=...\AppData\Local\app.flake.desktop.phase-t\EBWebView")
+  Get-NetTCPConnection on full process tree (18764 + all descendants + 21552):
+    PID 18764  [::]:22456/22457            Bound     (local listeners)
+    PID 18764  <ipv6>:22456 -> 2603:1046:c0b:81a::2:443   Established
+    PID 18764  <ipv6>:22457 -> 2603:1046:c0b:81a::2:443   Established
+  RSS: 29-30 MB (tasklist)
+
+Mitigation applied: added --disable-background-networking
+--disable-component-update --disable-breakpad to additionalBrowserArgs
+(tauri.conf.json app.windows[0].additionalBrowserArgs). Rebuilt, cleared the
+app's WebView2 profile directory, relaunched (Launch 2). Same two
+Established 443 connections still present (different specific IPv6 host in
+the same Microsoft-owned 2603:1046:c0b:*/48 range).
+
+Mitigation attempt 2: broadened additionalBrowserArgs to also disable
+OptimizationHints, MediaRouter, EdgeFeedback, msEdgeTelemetry,
+PrivateNetworkAccessSendPreflights, domain-reliability, and
+client-side-phishing-detection. Rebuilt, cleared profile, relaunched
+(Launch 3). Same two Established 443 connections still present
+(2603:1046:c0b:1b::2:443).
+
+Conclusion: this outbound HTTPS traffic originates from the shared Windows
+WebView2 runtime itself (confirmed by process-tree parentage to this
+app's own msedgewebview2.exe host, distinguishing it from the ~25 other
+unrelated msedgewebview2.exe processes already running on this host for
+other applications), not from this application's own web content --
+independently corroborated by MicrosoftEdge/WebView2Feedback#5224
+("[Feature]: Disable outgoing traffic from WebView2"), an open, as-yet
+unresolved upstream feature request as of this research (2026-09-16)
+confirming no full application-level command-line-switch solution
+currently exists. This application's own JS bundle makes zero external
+requests (raw/06): the sole `fetch(` call is Vite's local modulepreload
+polyfill (fetches only same-origin already-bundled assets, further bounded
+by this app's own CSP `connect-src 'self'`); every literal http(s):// URL
+found is an inert XML/SVG namespace string or a React library doc-link
+string, never fetched.

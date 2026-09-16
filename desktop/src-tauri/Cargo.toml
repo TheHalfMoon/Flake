@@ -1,0 +1,34 @@
+[package]
+name = "flake-desktop"
+version = "0.0.1-phase-t"
+edition = "2021"
+rust-version = "1.97"
+description = "Flake T04-01 thin desktop shell -- presentation only, reuses Core, no new authority model."
+license = "Apache-2.0"
+publish = false
+
+[lints.rust]
+unsafe_code = "forbid"
+
+# This development host has very little free disk space; full debug symbols
+# for Tauri's own sizeable dependency tree (wry/tao/webview2-com) exhausted
+# it mid-build. Slimmer debug info keeps a local build possible without
+# weakening anything about the shipped product (this only affects this
+# crate's own local dev builds, never a release/bundle profile).
+[profile.dev]
+debug = 0
+incremental = false
+
+[build-dependencies]
+tauri-build = { version = "=2.6.3", default-features = false, features = [] }
+
+[dependencies]
+tauri = { version = "=2.11.5", default-features = false, features = ["wry", "common-controls-v6"] }
+tauri-plugin-dialog = { version = "=2.7.3", default-features = false }
+serde = { version = "1", default-features = false, features = ["derive", "std"] }
+serde_json = { version = "1", default-features = false, features = ["std"] }
+fehrest = { path = "../.." }
+
+[[bin]]
+name = "flake-desktop"
+path = "src/main.rs"

@@ -1,0 +1,37 @@
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, sans-serif;
+}
+
+.shell {
+  max-width: 640px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.notice {
+  opacity: 0.75;
+  font-size: 0.9rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+label {
+  display: block;
+  margin: 0.5rem 0;
+}
+
+input {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.error {
+  color: #c0392b;
+  margin-top: 1rem;
+}
