@@ -1,0 +1,11 @@
+[Unit]
+Description=Flake D6 fault workload
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c '/usr/local/bin/flake-fault-workload /root/vault $(cat /etc/flake-fault-target) > /root/fault-workload.log 2>&1'
+RemainAfterExit=no
+
+[Install]
+WantedBy=multi-user.target

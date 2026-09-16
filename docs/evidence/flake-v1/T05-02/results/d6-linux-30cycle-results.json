@@ -1,0 +1,639 @@
+{
+  "seed": 20260916,
+  "requested_cycles": 30,
+  "kill_cycles_run": 30,
+  "all_kill_cycles_db_present": true,
+  "all_kill_cycles_head_hash_chain_verified": false,
+  "final_cycle": {
+    "ok": true,
+    "db_exists": true,
+    "head_hash_chain_verified": true,
+    "command_count": 93199,
+    "current_object_count": 93199,
+    "vault_row": {
+      "singleton": 1,
+      "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+      "schema_version": 2,
+      "min_reader_capability": 2,
+      "created_by_version": "0.0.1-phase-t",
+      "created_at": "2026-09-14T44912Z",
+      "transaction_head_seq": 93199,
+      "transaction_head_hash": "5f2843008d151c10675a1116aec8d38e0bbc7eca8947f2978ccc8d6423f792d3"
+    },
+    "cycle": "final",
+    "stale_writer_lock_found_and_cleared": false,
+    "last_progress_seq_in_log": 93199
+  },
+  "final_reached_target": true,
+  "cycles": [
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 2500,
+      "current_object_count": 2500,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 2500,
+        "transaction_head_hash": "97022e128bb540143e1be545dee810bed436074ae5d0c87d86b067ec4b18201d"
+      },
+      "cycle": "1",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 1237
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 5828,
+      "current_object_count": 5828,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 5828,
+        "transaction_head_hash": "3ded898fef2ad9ee307ecc5113decb1fb5fe78f06e95f75f29cfd9e743704672"
+      },
+      "cycle": "2",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 4323
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 8914,
+      "current_object_count": 8914,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 8914,
+        "transaction_head_hash": "b93225a0f90cc3e513fdef8ab36e669255a63fb30ea5d88b41bd9c9aaaa67859"
+      },
+      "cycle": "3",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 7351
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 12230,
+      "current_object_count": 12230,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 12230,
+        "transaction_head_hash": "cb2e89bf0cb148a47efc28bb511b11e9d905ad6952da24fd5add45f1a8bb347d"
+      },
+      "cycle": "4",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 10736
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 15746,
+      "current_object_count": 15746,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 15746,
+        "transaction_head_hash": "8002564ff7839337426b7cd3b2589260228a7db5670d4d70ee1656f51c0b9398"
+      },
+      "cycle": "5",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 14221
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 19533,
+      "current_object_count": 19533,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 19533,
+        "transaction_head_hash": "fbc7aff19291425fe3b454837f649ee751f731caa4ce919ce442a89dc2395832"
+      },
+      "cycle": "6",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 17792
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 23256,
+      "current_object_count": 23256,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 23256,
+        "transaction_head_hash": "7a308ea4066ebaa507ba0b38e66033c02396fa7d1c5c06d52e0c436097e67b5e"
+      },
+      "cycle": "7",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 21657
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 26862,
+      "current_object_count": 26862,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 26862,
+        "transaction_head_hash": "63333ab24a10d2d61d4f30f14713602303b51decc1dbeefc428a5c7ccda44085"
+      },
+      "cycle": "8",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 25280
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 30287,
+      "current_object_count": 30287,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 30287,
+        "transaction_head_hash": "166513eb217423e607d20b002a2301c64be72616895dffa0b04c20684e6aea66"
+      },
+      "cycle": "9",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 28828
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 32711,
+      "current_object_count": 32711,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 32711,
+        "transaction_head_hash": "92312a105242058edbf99a46010386f84df81c77782ce2e6a780ca9ccf7f502b"
+      },
+      "cycle": "10",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 31652
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 35913,
+      "current_object_count": 35913,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 35913,
+        "transaction_head_hash": "94131d855f791d200564b4c93ce2fdc0147c1735a7fa45be57f156b95a284ba4"
+      },
+      "cycle": "11",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 34461
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 38449,
+      "current_object_count": 38449,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 38449,
+        "transaction_head_hash": "9b5ad85b0473491f908972660409d27d6f3a465217ec822a2f8e192d668740bf"
+      },
+      "cycle": "12",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 37507
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 40455,
+      "current_object_count": 40455,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 40455,
+        "transaction_head_hash": "039b952e377e704edce0273c1541bde29455cc0a238b7b2e97b61ada850c4710"
+      },
+      "cycle": "13",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 39644
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 42985,
+      "current_object_count": 42985,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 42985,
+        "transaction_head_hash": "e7996052d967b42e5c65acef54421fd028c7253cd69f4c4bf6290dd591919017"
+      },
+      "cycle": "14",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 41856
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 45595,
+      "current_object_count": 45595,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 45595,
+        "transaction_head_hash": "a2144c1002f0de35f70b8544f3cd2847dd8357a24ccdc64f983be5d68f390588"
+      },
+      "cycle": "15",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 44473
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 48609,
+      "current_object_count": 48609,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 48609,
+        "transaction_head_hash": "c4757cb478d4af2c6006c02e45cc8365840e0128900cbeaaa3331a1dd2c4d748"
+      },
+      "cycle": "16",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 47315
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 50907,
+      "current_object_count": 50907,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 50907,
+        "transaction_head_hash": "9a3bcb1ed769827af0ffe830fe02b8b99f25950b36854d6131af7af5e3478172"
+      },
+      "cycle": "17",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 50024
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 53404,
+      "current_object_count": 53404,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 53404,
+        "transaction_head_hash": "c25c26a2db1504b3827a78675c1f0857bb5f10fcad6017b1184f31d0382bdb7d"
+      },
+      "cycle": "18",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 52295
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 56292,
+      "current_object_count": 56292,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 56292,
+        "transaction_head_hash": "25db54817776c71f0e6023c2e18c85c997b0bc6c8d068d73c1caccc1b4362cc0"
+      },
+      "cycle": "19",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 54888
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 60070,
+      "current_object_count": 60070,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 60070,
+        "transaction_head_hash": "508264c10f3aeace2f00d636c3aaedbf8e1f63b08e8e7e8c6ecdfd6b42961802"
+      },
+      "cycle": "20",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 58463
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 63644,
+      "current_object_count": 63644,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 63644,
+        "transaction_head_hash": "64a6caaa590915b817234eebd63cdc703f7605d2b2f6939c568e709be822ecc0"
+      },
+      "cycle": "21",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 62131
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 67213,
+      "current_object_count": 67213,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 67213,
+        "transaction_head_hash": "eb0a94da8e7e16a2eaa14662b3fd4134b67989bc1bc4b8b34e49c4bd6834fc61"
+      },
+      "cycle": "22",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 65585
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 70492,
+      "current_object_count": 70492,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 70492,
+        "transaction_head_hash": "7a790668adb92b955f041308b3cb17dff541508a4000c823411607a65ed81674"
+      },
+      "cycle": "23",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 68894
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 73949,
+      "current_object_count": 73949,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 73949,
+        "transaction_head_hash": "39d8900c92157a687953daeb215342b56bac7363e840f1da30f59867f597382c"
+      },
+      "cycle": "24",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 72339
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 77205,
+      "current_object_count": 77205,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 77205,
+        "transaction_head_hash": "83ca717a3252134430e23bedad8fd2892f7029fd8924fa3c70c290a64ef9cd13"
+      },
+      "cycle": "25",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 75575
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 80646,
+      "current_object_count": 80646,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 80646,
+        "transaction_head_hash": "f028bc92fdf7e8555699c24a4e9fee28a20900d3eb4cb894aeb04c42a19ed93b"
+      },
+      "cycle": "26",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 79130
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 83602,
+      "current_object_count": 83602,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 83602,
+        "transaction_head_hash": "24c028c5533975f6e91fa635b7ad855c0f886d9988a411c8f86f6ffe26a08251"
+      },
+      "cycle": "27",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 82237
+    },
+    {
+      "ok": false,
+      "db_exists": true,
+      "error": "DatabaseError: database disk image is malformed",
+      "cycle": "28",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 85472
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 90103,
+      "current_object_count": 90103,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 90103,
+        "transaction_head_hash": "24ef2cb0d904b478f4b5482a17689fb330bdba5a96157e5b77d60a0c9b7d7cd5"
+      },
+      "cycle": "29",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 88729
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 93149,
+      "current_object_count": 93149,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 93149,
+        "transaction_head_hash": "f057c8bf1d7dde62219478f4cebfc2c835a2aaf05226b179171f1babc1cf538a"
+      },
+      "cycle": "30",
+      "stale_writer_lock_found_and_cleared": true,
+      "last_progress_seq_in_log": 91740
+    },
+    {
+      "ok": true,
+      "db_exists": true,
+      "head_hash_chain_verified": true,
+      "command_count": 93199,
+      "current_object_count": 93199,
+      "vault_row": {
+        "singleton": 1,
+        "vault_id": "01a0aa30-ad39-7b03-b4b9-c5a78d086d33",
+        "schema_version": 2,
+        "min_reader_capability": 2,
+        "created_by_version": "0.0.1-phase-t",
+        "created_at": "2026-09-14T44912Z",
+        "transaction_head_seq": 93199,
+        "transaction_head_hash": "5f2843008d151c10675a1116aec8d38e0bbc7eca8947f2978ccc8d6423f792d3"
+      },
+      "cycle": "final",
+      "stale_writer_lock_found_and_cleared": false,
+      "last_progress_seq_in_log": 93199
+    }
+  ],
+  "ok": false
+}

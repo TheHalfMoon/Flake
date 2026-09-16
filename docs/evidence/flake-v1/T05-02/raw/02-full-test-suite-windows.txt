@@ -1,0 +1,442 @@
+   Compiling fehrest v0.0.1-phase-t (C:\Users\Shehr\work\Flake)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.60s
+     Running unittests src\lib.rs (target\debug\deps\fehrest-3169ee0784ab6f1d.exe)
+
+running 328 tests
+test canonical::tests::create_refuses_to_clobber_existing_control_dir ... ok
+test canonical::tests::duplicate_command_id_with_different_input_is_rejected ... ok
+test canonical::tests::create_object_commits_atomically_and_advances_head ... ok
+test backup::tests::concurrent_legitimate_commits_during_backup_do_not_produce_mixed_state ... ok
+test backup::tests::restore_refuses_when_a_member_digest_does_not_match_manifest ... ok
+test backup::tests::backup_destination_no_clobber ... ok
+test backup::tests::cancellation_before_publication_leaves_no_published_backup ... ok
+test canonical::tests::fresh_creation_publishes_guard_and_database_with_matching_identity ... ok
+test canonical::tests::generic_sqlite_connection_can_inspect_published_schema ... ok
+test canonical::tests::full_history_reconstructs_current_state_independent_of_pointer ... ok
+test canonical::tests::guard_database_identity_mismatch_is_refused ... ok
+test backup::tests::restore_refuses_when_manifest_head_disagrees_with_database ... ok
+test canonical::tests::fault_before_sql_commit_leaves_zero_trace ... ok
+test canonical::tests::fault_after_sql_commit_reconciles_on_retry_instead_of_double_committing ... ok
+test canonical::tests::duplicate_command_id_with_identical_input_replays_the_original_result ... ok
+test canonical::tests::interrupted_creation_at_each_fault_point_leaves_root_without_published_control_dir ... ok
+test canonical::tests::legacy_format1_reader_refuses_format2_store ... ok
+test backup::tests::backup_then_restore_round_trips_exact_state ... ok
+test canonical::tests::malformed_database_file_is_refused_not_panicking ... ok
+test canonical::tests::only_one_writer_capability_can_exist_at_a_time ... ok
+test canonical::tests::min_reader_capability_higher_than_supported_is_refused ... ok
+test canonical::tests::reopen_after_create_is_stable_and_pragmas_hold ... ok
+test canonical::tests::unrecognized_extra_table_in_schema_refuses_open ... ok
+test canonical::tests::reopened_store_independently_shows_the_committed_command_and_revision ... ok
+test capture::tests::hex_round_trips_every_byte_value ... ok
+test canonical::tests::update_object_requires_matching_expected_revision ... ok
+test canonical::tests::second_creation_on_a_published_root_is_refused_and_first_is_untouched ... ok
+test canonical::tests::update_of_unknown_object_id_is_refused ... ok
+test capture::tests::a_fault_during_source_commit_leaves_no_partial_admission ... ok
+test capture::tests::deactivate_and_reactivate_preserve_history_like_project_archive ... ok
+test capture::tests::parse_rfc3339_utc_rejects_malformed_and_impossible_dates ... ok
+test capture::tests::parse_rfc3339_utc_round_trips_known_fixed_points ... ok
+test capture::tests::extract_bytes_refuses_a_manual_reference_with_no_captured_bytes ... ok
+test capture::tests::extract_bytes_recovers_the_exact_original_content ... ok
+test capture::tests::rfc3339_formats_known_epoch_fixed_points ... ok
+test capture::tests::imports_a_binary_fixture_with_exact_byte_fidelity ... ok
+test capture::tests::refuses_a_symlink_without_ever_opening_the_target ... ok
+test capture::tests::refuses_a_directory_and_a_missing_path ... ok
+test canonical::tests::oversized_payload_is_refused_before_any_mutation ... ok
+test capture::tests::refuses_obvious_secret_filenames_but_admits_their_example_carve_out ... ok
+test capture::tests::imports_unicode_and_crlf_text_with_exact_byte_fidelity ... ok
+test capture::tests::manual_reference_source_carries_no_bytes ... ok
+test capture::tests::source_requires_an_existing_project ... ok
+test checkpoint::tests::first_mark_creates_a_checkpoint_without_expect ... ok
+test capture::tests::oversized_artifact_is_refused_before_any_mutation ... ok
+test checkpoint::tests::reset_before_any_mark_is_refused ... ok
+test checkpoint::tests::no_checkpoint_before_any_mark ... ok
+test checkpoint::tests::reset_requires_a_non_empty_reason ... ok
+test checkpoint::tests::reset_explicitly_moves_the_checkpoint_backward_with_a_reason ... ok
+test checkpoint::tests::second_mark_without_expect_is_refused ... ok
+test checkpoint::tests::stale_expect_is_refused ... ok
+test checkpoint::tests::mark_backward_is_refused_without_an_explicit_reset ... ok
+test checkpoint::tests::out_of_range_through_seq_is_refused ... ok
+test cli::tests::cli_rejects_a_note_create_with_an_invalid_project_reference ... ok
+test cli::tests::compile_appends_context_compiled_event_via_writer_and_chain_verifies ... ok
+test cli::tests::action_decision_relation_lifecycle_works_through_the_cli ... ok
+test cli::tests::fts_index_rebuild_search_and_status_work_through_the_cli ... ok
+test cli::tests::capture_and_source_lifecycle_works_through_the_cli ... ok
+test cli::tests::decision_state_reports_no_accepted_then_current_set_then_needs_review_through_the_cli ... ok
+test cli::tests::agent_proposal_lifecycle_works_through_the_cli ... ok
+test context::tests::budget_pressure_omits_rather_than_strips_metadata ... ok
+test context::tests::compiles_deterministically ... ok
+test cli::tests::init_appends_vault_created_event_via_writer_and_chain_verifies ... ok
+test context::tests::hostile_content_cannot_inflate_the_manifest ... ok
+test context::tests::manifest_records_exactly_what_was_emitted ... ok
+test cli::tests::export_preview_and_run_work_through_the_cli ... ok
+test context::tests::pending_memory_never_reaches_an_authoritative_section ... ok
+test context::tests::out_of_scope_memory_is_never_emitted ... ok
+test cli::tests::grant_and_package_lifecycle_works_through_the_cli ... ok
+test context::tests::superseded_items_are_labelled_and_name_their_replacement ... ok
+test context::tests::package_stays_within_budget ... ok
+test context::tests::truncation_shortens_content_but_never_the_envelope ... ok
+test cli::tests::full_project_and_record_lifecycle_works_through_the_cli ... ok
+test cli::tests::resume_and_checkpoint_lifecycle_works_through_the_cli ... ok
+test decision_state::tests::as_of_recorded_out_of_range_is_refused ... ok
+test cli::tests::import_preview_full_restore_and_merge_work_through_the_cli ... ok
+test decision_state::tests::current_set_when_exactly_one_decision_is_accepted ... ok
+test decision_state::tests::as_of_recorded_reconstructs_a_past_state_before_a_later_acceptance ... ok
+test cli::tests::source_check_reselect_and_admit_change_work_through_the_cli ... ok
+test decision_state::tests::different_projects_with_the_same_key_never_collide ... ok
+test decision_state::tests::needs_review_when_two_independently_accepted_decisions_share_a_key_and_overlap ... ok
+test decision_state::tests::explicit_supersession_leaves_exactly_one_candidate_never_a_conflict ... ok
+test decision_state::tests::non_overlapping_valid_intervals_for_the_same_key_are_not_a_conflict ... ok
+test derived::tests::empty_query_returns_nothing ... ok
+test derived::tests::extension_loading_is_unavailable ... ok
+test derived::tests::hardening_pragmas_are_applied ... ok
+test decision_state::tests::resolution_ordering_is_stable_across_repeated_calls ... ok
+test derived::tests::literal_query_cannot_activate_fts_syntax ... ok
+test decision_state::tests::no_accepted_decision_when_nothing_exists_for_the_key ... ok
+test derived::tests::hostile_query_returns_no_results_rather_than_erroring ... ok
+test decision_state::tests::withdrawal_reason_is_surfaced_as_negative_evidence ... ok
+test decision_state::tests::no_accepted_decision_when_only_a_draft_exists ... ok
+test disclosure::tests::a_clean_note_and_decision_are_fully_disclosed ... ok
+test disclosure::tests::kind_restricted_grant_excludes_other_kinds ... ok
+test disclosure::tests::draft_only_decision_key_is_never_a_candidate ... ok
+test disclosure::tests::full_receipt_replay_verifies_exact_bytes ... ok
+test disclosure::tests::mixed_project_fixture_never_discloses_the_other_project ... ok
+test disclosure::tests::a_budget_too_small_for_even_the_header_is_a_clear_top_level_error ... ok
+test derived::tests::rebuild_is_deterministic_across_independent_builds ... ok
+test envelope::tests::content_cannot_create_a_second_machine_owned_item ... ok
+test envelope::tests::content_cannot_forge_trust_or_provenance_fields ... ok
+test envelope::tests::content_containing_a_length_prefix_is_inert ... ok
+test envelope::tests::instruction_shaped_content_remains_evidence ... ok
+test envelope::tests::metadata_size_excludes_content ... ok
+test envelope::tests::round_trips_ordinary_content ... ok
+test envelope::tests::superseded_items_name_their_replacement ... ok
+test disclosure::tests::privacy_exclusion_is_rejected_with_a_clear_reason_never_disclosed ... ok
+test disclosure::tests::repeated_identical_request_id_yields_the_same_receipt ... ok
+test disclosure::tests::relation_with_an_undisclosed_endpoint_is_rejected_not_leaked ... ok
+test disclosure::tests::revoked_grant_refuses_compilation ... ok
+test events::tests::consistent_full_rewrite_is_not_detected_and_we_say_so ... ok
+test events::tests::hash_freeze_is_versioned ... ok
+test events::tests::open_never_creates_a_missing_control_directory ... ok
+test events::tests::oversized_event_detail_is_rejected ... ok
+test disclosure::tests::truncation_never_exceeds_the_byte_budget ... ok
+test disclosure::tests::tiny_budget_omits_items_with_a_budget_reason_never_a_partial_leak ... ok
+test events::tests::single_record_edit_is_detected ... ok
+test events::tests::chain_is_intact_after_appends ... ok
+test events::tests::typed_payload_participates_in_hash ... ok
+test events::tests::truncation_and_removal_are_detected ... ok
+test events::tests::current_v2_fixture_is_typed_and_verifies ... ok
+test canonical::tests::repeated_creations_have_unique_vault_ids_and_all_reopen_correctly ... ok
+test export::tests::export_never_overwrites_an_existing_destination ... ok
+test export::tests::integrity_root_is_independently_recomputable ... ok
+test export::tests::full_export_includes_every_project_and_full_history ... ok
+test export::tests::preview_reports_scope_without_writing_anything ... ok
+test export::tests::note_bodies_also_get_a_plain_markdown_sidecar_file ... ok
+test export::tests::payload_raw_is_byte_identical_to_canonical_state ... ok
+test export::tests::project_export_includes_a_review_checkpoint ... ok
+test events::tests::historical_v1_golden_fixture_upcasts_without_rewrite ... ok
+test events::tests::append_after_historical_v1_preserves_chain_mixed_versions ... ok
+test grant::tests::byte_budget_out_of_range_is_refused ... ok
+test grant::tests::covers_respects_kind_allowlist_id_allowlist_and_exclusions ... ok
+test export::tests::project_export_includes_source_checks ... ok
+test export::tests::unknown_project_reference_is_refused_before_any_write ... ok
+test identity::tests::body_line_endings_survive ... ok
+test export::tests::project_export_never_includes_a_grant_receipt_or_proposal ... ok
+test identity::tests::generates_distinct_time_ordered_ids ... ok
+test identity::tests::rejects_missing_or_malformed_frontmatter ... ok
+test identity::tests::round_trips_and_preserves_unknown_fields_verbatim ... ok
+test grant::tests::issue_grant_defaults_to_full_disclosable_scope ... ok
+test export::tests::project_export_excludes_other_projects_entirely ... ok
+test grant::tests::expired_grant_is_unusable ... ok
+test derived::tests::query_and_result_bounds_are_enforced ... ok
+test grant::tests::revoke_makes_the_grant_unusable_and_cannot_be_repeated ... ok
+test import::tests::full_restore_is_all_or_nothing_on_a_corrupt_member ... ok
+test grant::tests::unrecognized_kind_is_refused ... ok
+test grant::tests::ttl_beyond_seven_days_is_refused ... ok
+test import::tests::full_restore_refuses_an_already_existing_destination ... ok
+test import::tests::full_restore_preserves_grants_unlike_selected_merge ... ok
+test import::tests::full_restore_preserves_object_ids_and_all_payload_bytes ... ok
+test import::tests::merge_relation_endpoints_are_rewritten_and_repinned ... ok
+test import::tests::tampered_manifest_integrity_root_is_refused ... ok
+test import::tests::selected_merge_refuses_a_package_containing_a_grant ... ok
+test index::tests::a_poisoned_project_hint_in_the_index_cannot_leak_into_another_projects_scoped_search ... ok
+test import::tests::selected_merge_refuses_a_package_containing_an_agent_proposal ... ok
+test import::tests::preview_reports_scope_without_writing_anything ... ok
+test import::tests::merge_review_checkpoint_is_carried_through_with_its_project_id_rewritten ... ok
+test import::tests::merge_source_check_source_id_is_rewritten_and_checked_revision_repinned ... ok
+test index::tests::corrupt_index_database_falls_back_rather_than_erroring_the_whole_search ... ok
+test index::tests::interrupted_rebuild_leaves_the_previous_generation_fully_usable ... ok
+test index::tests::literal_query_cannot_activate_fts_syntax ... ok
+test index::tests::query_and_result_bounds_are_enforced ... ok
+test locator::tests::accepts_ordinary_relative_paths ... ok
+test locator::tests::open_confined_rejects_traversal_even_when_target_exists ... ok
+test index::tests::missing_index_falls_back_to_a_bounded_canonical_scan_not_a_false_empty_result ... ok
+test locator::tests::rejects_absolute_and_traversal_and_prefix ... ok
+test markdown::tests::embedded_html_and_script_like_content_stays_literal_and_unexecuted ... ok
+test markdown::tests::full_body_remains_available_unmodified_regardless_of_preview ... ok
+test markdown::tests::short_body_is_returned_unchanged_with_no_marker ... ok
+test markdown::tests::truncates_on_a_char_boundary_never_splitting_multibyte_sequences ... ok
+test memory::tests::different_projects_are_incomparable_not_ordered ... ok
+test memory::tests::oversized_statement_is_rejected ... ok
+test memory::tests::pending_is_not_authoritative ... ok
+test memory::tests::project_local_is_strictly_more_specific_than_vault_global ... ok
+test memory::tests::unresolved_evidence_cannot_participate ... ok
+test memory::tests::vault_global_applies_everywhere_project_local_does_not ... ok
+test locator::tests::post_open_identity_mismatch_fails_closed ... ok
+test locator::tests::file_without_identity_is_a_mismatch_not_a_pass ... ok
+test migration::tests::duplicate_identity_is_omitted_and_blocks_a_complete_migration ... ok
+test locator::tests::post_open_verification_accepts_matching_identity ... ok
+test index::tests::stale_index_is_labeled_but_still_returns_results ... ok
+test index::tests::full_rebuild_and_incremental_updates_produce_identical_search_results ... ok
+test index::tests::project_scoped_search_excludes_other_projects_results ... ok
+test import::tests::selected_merge_assigns_new_ids_and_rewrites_references ... ok
+test project::tests::a_payload_schema_version_newer_than_supported_is_refused ... ok
+test migration::tests::requesting_an_unadmittable_id_is_refused_not_silently_skipped ... ok
+test index::tests::rebuild_indexes_notes_actions_and_decisions_but_not_sources_or_relations ... ok
+test migration::tests::complete_migration_of_a_clean_vault_preserves_exact_bytes_and_identity ... ok
+test project::tests::action_dependency_direct_and_transitive_cycles_are_rejected ... ok
+test migration::tests::malformed_file_blocks_complete_but_selected_import_still_works ... ok
+test project::tests::action_dependency_must_exist_and_be_in_the_same_project ... ok
+test project::tests::action_starts_open_and_decision_starts_draft ... ok
+test migration::tests::new_root_no_clobber ... ok
+test project::tests::action_transition_conflicts_on_a_stale_expected_revision ... ok
+test project::tests::completing_without_a_summary_is_rejected ... ok
+test project::tests::action_lifecycle_table_allows_every_documented_transition ... ok
+test project::tests::field_limits_are_rejected_before_any_transaction_opens ... ok
+test project::tests::completion_with_unmet_dependency_requires_an_override_reason ... ok
+test project::tests::completion_succeeds_without_override_once_dependency_is_done ... ok
+test project::tests::create_open_archive_unarchive_project_round_trips ... ok
+test migration::tests::gold_fixtures_with_crlf_unicode_and_unknown_fields_migrate_byte_identically ... ok
+test project::tests::golden_fixture_future_unsupported_payload_is_refused ... ok
+test project::tests::golden_fixture_unknown_optional_fields_survive_a_read_then_write_round_trip ... ok
+test project::tests::forbidden_action_transitions_are_rejected ... ok
+test project::tests::list_project_records_scopes_correctly_and_excludes_other_projects ... ok
+test project::tests::note_requires_an_existing_project_and_rejects_wrong_kind_reference ... ok
+test project::tests::note_update_conflicts_exactly_like_any_other_typed_record ... ok
+test project::tests::note_tombstone_untombstone_round_trips_and_preserves_history ... ok
+test migration::tests::interrupted_migration_writes_a_manifest_and_leaves_source_untouched ... ok
+test project::tests::only_a_draft_decision_can_be_accepted ... ok
+test project::tests::valid_interval_accepts_a_well_formed_half_open_range ... ok
+test project::tests::reopening_without_a_reason_is_rejected ... ok
+test project::tests::valid_interval_rejects_malformed_and_inverted_bounds ... ok
+test project::tests::withdraw_requires_a_reason_and_preserves_prior_history ... ok
+test project::tests::unknown_fields_survive_a_read_then_write_round_trip ... ok
+test project::tests::supersede_preserves_prior_accepted_history_and_links_a_relation ... ok
+test proposal::tests::accept_refuses_a_stale_expected_revision_leaving_the_proposal_pending ... ok
+test proposal::tests::accept_applies_only_the_selected_operation_and_marks_accepted ... ok
+test proposal::tests::admit_accepts_a_well_formed_note_edit_proposal ... ok
+test proposal::tests::accepting_an_already_accepted_proposal_is_refused_never_double_applied ... ok
+test project::tests::supersede_rejects_a_cycle_between_two_decisions ... ok
+test project::tests::supersede_requires_both_decisions_accepted_and_same_key ... ok
+test proposal::tests::admit_refuses_an_operation_targeting_an_undisclosed_object ... ok
+test proposal::tests::admit_refuses_malformed_json ... ok
+test proposal::tests::admit_refuses_zero_operations ... ok
+test proposal::tests::admit_refuses_too_many_operations ... ok
+test proposal::tests::admit_refuses_an_oversized_proposal ... ok
+test proposal::tests::admit_refuses_an_unknown_receipt_id ... ok
+test proposal::tests::agent_actor_is_used_for_content_commits_never_the_reviewing_owner ... ok
+test proposal::tests::arbitrary_instruction_text_is_stored_inert_never_interpreted ... ok
+test proposal::tests::admit_refuses_an_unrecognized_operation_kind ... ok
+test proposal::tests::complete_action_operation_completes_the_action ... ok
+test proposal::tests::draft_decision_operation_uses_agent_proposal_basis ... ok
+test proposal::tests::duplicate_delivery_produces_two_independent_pending_proposals ... ok
+test recovery::tests::a_new_normal_open_is_blocked_while_recovery_holds_exclusive_access ... ok
+test recovery::tests::destination_already_published_is_refused_without_touching_the_original ... ok
+test recovery::tests::missing_database_with_guard_present_is_refused_before_any_preservation ... ok
+test proposal::tests::evidence_relation_operation_creates_a_relation ... ok
+test proposal::tests::expire_transitions_state_like_reject ... ok
+test proposal::tests::reject_requires_a_reason_and_transitions_state ... ok
+test recovery::tests::clean_store_recovers_to_new_root_with_matching_state ... ok
+test recovery::tests::recovery_is_refused_while_a_normal_connection_holds_shared_access ... ok
+test recovery::tests::refused_recovery_writes_a_refusal_incident_manifest_and_preserves_evidence ... ok
+test recovery::tests::tampered_resulting_head_hash_is_irrecoverable_and_original_untouched ... ok
+test recovery::tests::successful_recovery_writes_a_verified_incident_manifest ... ok
+test relation::tests::links_a_decision_to_a_source_as_supporting_evidence ... ok
+test relation::tests::endpoints_are_pinned_to_the_revision_current_at_creation ... ok
+test recovery::tests::second_crash_during_recovery_itself_never_loses_the_preserved_original ... ok
+test relation::tests::missing_endpoint_is_refused_before_any_mutation ... ok
+test relation::tests::rejects_a_cross_project_endpoint ... ok
+test relation::tests::rejects_a_self_loop ... ok
+test relation::tests::supersedes_rejects_a_direct_cycle ... ok
+test relation::tests::rejects_a_project_or_relation_as_an_endpoint ... ok
+test relation::tests::supersedes_rejects_a_transitive_cycle ... ok
+test relation::tests::supersedes_requires_decision_endpoints ... ok
+test resume::tests::checkpoint_narrows_relevant_notes_and_changes ... ok
+test resume::tests::empty_project_has_an_empty_resume_view ... ok
+test resume::tests::resume_never_writes_a_checkpoint ... ok
+test resume::tests::resume_output_is_stable_across_repeated_calls_at_the_same_snapshot ... ok
+test resume::tests::next_actions_excludes_terminal_states ... ok
+test resume::tests::current_decisions_and_conflicts_are_separated ... ok
+test resume::tests::stale_evidence_lists_only_non_match_latest_checks ... ok
+test source_check::tests::a_fault_during_check_commit_leaves_no_partial_admission ... ok
+test source_check::tests::admit_changed_source_requires_the_correct_expected_revision ... ok
+test source_check::tests::admit_changed_source_replaces_the_capture_only_on_explicit_call ... ok
+test source_check::tests::check_refuses_a_manual_reference_with_no_local_file ... ok
+test source_check::tests::check_history_is_append_only_and_chronological ... ok
+test source_check::tests::recheck_refuses_a_symlink_swapped_in_after_admission ... ok
+test source_check::tests::recheck_reports_changed_without_auto_replacing_the_capture ... ok
+test temporal::tests::confidence_cannot_break_a_tie_that_evidence_cannot ... ok
+test source_check::tests::recheck_reports_denied_when_the_path_becomes_a_directory ... ok
+test temporal::tests::confidence_cannot_change_outcome ... ok
+test temporal::tests::current_and_historical_truth_differ ... ok
+test source_check::tests::reselect_source_refuses_a_move_with_different_bytes ... ok
+test temporal::tests::incomparable_scopes_yield_contradiction_not_a_winner ... ok
+test temporal::tests::no_answer_when_nothing_matches ... ok
+test source_check::tests::reselect_source_accepts_a_move_with_identical_bytes ... ok
+test temporal::tests::pending_is_excluded_from_resolution ... ok
+test temporal::tests::rejects_all_five_invalid_supersession_classes ... ok
+test temporal::tests::recorded_time_bounds_what_was_known ... ok
+test temporal::tests::retracted_is_never_admissible_even_with_a_valid_interval ... ok
+test temporal::tests::superseded_with_valid_until_answers_for_the_interval_it_governed ... ok
+test temporal::tests::superseded_without_valid_until_is_excluded_at_every_point_in_time ... ok
+test temporal::tests::unverified_cannot_supersede_user_confirmed ... ok
+test temporal::tests::superseded_cannot_reactivate ... ok
+test temporal::tests::valid_supersession_is_accepted ... ok
+test temporal::tests::verification_outranks_basis ... ok
+test temporal::tests::vault_global_never_outranks_conflicting_project_local ... ok
+test vault::tests::allowlist_admits_only_supported_extensions ... ok
+test source_check::tests::recheck_reports_match_when_bytes_are_unchanged ... ok
+test source_check::tests::recheck_reports_missing_when_the_file_is_deleted ... ok
+test vault::tests::atomic_write_preserves_unknown_frontmatter ... ok
+test vault::tests::corrupt_vault_json_fails_visibly ... ok
+test vault::tests::corrupt_bad_uuid_fails_visibly ... ok
+test vault::tests::atomic_write_fault_matrix_proves_no_partial_success ... ok
+test vault::tests::event_append_for_writer_requires_matching_vault ... ok
+test vault::tests::duplicate_uuid_is_surfaced_as_conflict_and_both_retained ... ok
+test vault::tests::forensic_preserved_before_destructive_cleanup_mid_log_malformed_not_repaired ... ok
+test vault::tests::legacy_missing_vault_json_is_upgraded_atomically ... ok
+test vault::tests::control_dir_reparse_point_is_refused_not_followed ... ok
+test vault::tests::hash_chain_break_fails_closed ... ok
+test vault::tests::losing_writer_performs_no_mutation_before_lock_denial ... ok
+test vault::tests::legacy_write_requires_lock_still_fails_without_writer ... ok
+test vault::tests::open_read_never_creates_metadata_on_legacy_vault ... ok
+test vault::tests::open_read_on_vault_with_existing_metadata_is_still_byte_identical ... ok
+test vault::tests::open_write_acquires_lock_before_any_startup_mutation_no_split_brain_identity ... ok
+test vault::tests::kill_and_restart_spanning_canonical_write_and_event_append ... ok
+test vault::tests::reserved_dirs_are_excluded_from_knowledge ... ok
+test vault::tests::second_writer_fails_visibly ... ok
+test vault::tests::second_writer_still_fails_visibly_and_no_auto_steal ... ok
+test vault::tests::readers_do_not_need_the_lock ... ok
+test vault::tests::stale_lock_diagnostics_not_used_as_auth ... ok
+test vault::tests::mid_log_gap_fails_closed_and_not_repaired_as_torn ... ok
+test vault::tests::torn_final_record_is_detected_preserved_and_repaired_before_writable_open ... ok
+test vault::tests::vault_add_object_via_writer_preserves_allowlists ... ok
+test vault::tests::unsupported_newer_format_fails_visibly ... ok
+test vault::tests::vault_meta_uses_atomic_write_not_direct_write ... ok
+test vault::tests::vault_meta_created_and_validated ... ok
+test vault::tests::write_rejects_reserved_and_unsupported_and_traversal ... ok
+test vault::tests::vault_writer_requires_lock_read_only_cannot_mint_writer ... ok
+test vault::tests::d2_short_write_fault_schedule_matrix ... ok
+test recovery::tests::d4_bit_corruption_fault_schedule_matrix ... ok
+test canonical::tests::d1_commit_atomicity_fault_schedule_matrix ... ok
+test backup::tests::d5_backup_cancellation_fault_schedule_matrix ... ok
+test decision_state::tests::production_resolver_agrees_with_the_reference_oracle_across_random_scenarios ... ok
+test recovery::tests::d3_competing_opens_fault_schedule_matrix ... ok
+test migration::tests::d5_migration_interruption_fault_schedule_matrix ... ok
+
+test result: ok. 328 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 36.46s
+
+     Running unittests src\main.rs (target\debug\deps\fehrest-3b3634d8090b8900.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests bench\V0\harness.rs (target\debug\deps\fehrest_bench_v0-5458270aa2dc20d4.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests bench\R1\harness\main.rs (target\debug\deps\fehrest_r1-97b5c896d5abce14.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\bin\flake-bench-recover.rs (target\debug\deps\flake_bench_recover-9a9ad5ac6a36e437.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\bin\flake-fault-workload.rs (target\debug\deps\flake_fault_workload-d97604d36846866c.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\bin\flake-migrate.rs (target\debug\deps\flake_migrate-ad6938d0fc9339b6.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\flake_fault_workload_binary.rs (target\debug\deps\flake_fault_workload_binary-fbcb72ab4970b78a.exe)
+
+running 5 tests
+test standalone_binary_rejects_missing_arguments ... ok
+test standalone_binary_rejects_a_non_numeric_target ... ok
+test standalone_binary_creates_a_fresh_vault_and_commits_to_target_seq ... ok
+test standalone_binary_commits_nothing_new_when_target_is_already_reached ... ok
+test standalone_binary_resumes_from_existing_head_seq_without_redoing_or_skipping_work ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.13s
+
+     Running tests\flake_migrate_binary.rs (target\debug\deps\flake_migrate_binary-e871ee1b7ce2173a.exe)
+
+running 4 tests
+vault created: C:\Users\Shehr\AppData\Local\Temp\flake-migrate-binary-test-source-01a0ab05-c0bf-7d41-bf7f-04948e9af0eb
+vault created: C:\Users\Shehr\AppData\Local\Temp\flake-migrate-binary-test-source-01a0ab05-c0bf-7d41-bf7f-048be4bad957
+test standalone_binary_version_and_help_do_not_touch_any_filesystem_path ... ok
+vault created: C:\Users\Shehr\AppData\Local\Temp\flake-migrate-binary-test-source-01a0ab05-c0bf-7d41-bf7f-047f82a40a63
+vault created: C:\Users\Shehr\AppData\Local\Temp\flake-migrate-binary-test-dest-exists-01a0ab05-c4fa-7b01-afc1-bd162c83212e
+test standalone_binary_preview_reports_both_gold_fixtures_admitted ... ok
+test standalone_binary_import_refuses_to_clobber_an_existing_format_2_root ... ok
+test standalone_binary_import_produces_a_real_openable_format_2_vault ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.18s
+
+     Running tests\integration.rs (target\debug\deps\integration-ca542583608c050c.exe)
+
+running 10 tests
+test as4_no_memory_yields_no_answer_not_a_guess ... ok
+test as2_as_of_past_reflects_what_was_true_then ... ok
+test content_claiming_to_be_verified_is_not_verified ... ok
+test as5_project_a_memory_never_appears_for_project_b ... ok
+test as3_inseparable_candidates_report_contradiction ... ok
+test as1_current_decision_is_current_and_superseded_is_labelled ... ok
+test as6_budget_is_respected_omissions_recorded_envelopes_intact ... ok
+test as7_manifest_lists_exactly_what_was_emitted ... ok
+test compilation_is_deterministic_for_identical_inputs ... ok
+test as8_deleting_derived_state_entirely_and_rebuilding_is_equivalent ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+     Running tests\kill_tests.rs (target\debug\deps\kill_tests-e91a4b424ae3a088.exe)
+
+running 23 tests
+test k08_vault_global_cannot_outrank_project_local ... ok
+test k07_cross_project_contamination_blocked ... ok
+test k10_superseded_cannot_reactivate ... ok
+test k02_instruction_shaped_vault_content_remains_evidence ... ok
+test k06_package_manifest_mismatch_fails ... ok
+test k04_in_scope_but_not_served_is_not_observed_evidence ... ok
+test k09_pending_never_becomes_authoritative_and_flooding_does_not_help ... ok
+test k21_agent_path_cannot_mint_user_authority ... ok
+test k20_budget_pressure_never_strips_security_metadata ... ok
+test k23_content_cannot_forge_envelope_fields ... ok
+test k12_symlink_escape_fails ... ok
+test k22_derived_locator_cannot_escape_the_vault ... ok
+test k17_oversized_query_is_bounded ... ok
+test k11_duplicate_uuid_is_a_conflict ... ok
+test k14_authorize_then_swap_fails_closed ... ok
+test k24b_permanent_state_amplification_is_bounded ... ok
+test k24_concurrent_writer_is_rejected_visibly ... ok
+test k16_poisoned_derived_index_cannot_grant_authority ... ok
+test k17_fts_syntax_in_user_text_is_literal ... ok
+test k15_identity_survives_rename_and_case_rename ... ok
+test k18_reorder_and_replay_are_surfaced ... ok
+test k05_partial_tamper_is_detected ... ok
+test k13_windows_directory_reparse_escape_fails ... ok
+
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+

@@ -1,0 +1,113 @@
+{
+  "n": 10000,
+  "rows": {
+    "cli_help_version_cold": {
+      "p50_ms": 9.32,
+      "p95_ms": 12.69,
+      "max_ms": 20.04,
+      "target_p95_ms": 100,
+      "maximum_ms": 500,
+      "within_target": true,
+      "within_maximum": true
+    },
+    "search_m_worst_case_full_corpus_match": {
+      "p50_ms": 6227.33,
+      "p95_ms": 6480.26,
+      "max_ms": 6774.38,
+      "note": "query term ('Lorem') present in literally every record's shared filler text -- not a plan section-27 gate row, an explicitly separate worst-case observation"
+    },
+    "project_open_readonly_m": {
+      "p50_ms": 16.69,
+      "p95_ms": 26.77,
+      "max_ms": 34.33,
+      "target_p95_warm_ms": 250,
+      "maximum_warm_ms": 1000,
+      "within_target": true,
+      "within_maximum": true,
+      "note": "also covers 'clean startup integrity quick checks M' -- CanonicalStore::open's own guard/schema checks run on every command, no separate CLI surface exists"
+    },
+    "project_detail_read": {
+      "p50_ms": 16.0,
+      "p95_ms": 27.25,
+      "max_ms": 30.0,
+      "target_p95_warm_ms": 100,
+      "maximum_warm_ms": 500,
+      "within_target": true,
+      "within_maximum": true
+    },
+    "save_write_ack_64kib": {
+      "p50_ms": 25.15,
+      "p95_ms": 35.82,
+      "max_ms": 38.88,
+      "measured_body_bytes": 8000,
+      "deviation": "measured at 8 KiB, not 64 KiB, due to Windows CLI-arg length limit -- see comment above",
+      "target_p95_ms": 150,
+      "maximum_ms": 750,
+      "within_target": true,
+      "within_maximum": true
+    },
+    "search_m_50_results": {
+      "p50_ms": 57.41,
+      "p95_ms": 68.68,
+      "max_ms": 90.98,
+      "target_p95_warm_ms": 150,
+      "maximum_warm_ms": 500,
+      "within_target": true,
+      "within_maximum": true
+    },
+    "resume_m": {
+      "p50_ms": 421.72,
+      "p95_ms": 482.58,
+      "max_ms": 514.95,
+      "target_p95_warm_ms": 250,
+      "maximum_warm_ms": 1000,
+      "within_target": false,
+      "within_maximum": true
+    },
+    "full_fts_rebuild_m": {
+      "seconds": 65.979,
+      "target_seconds": 30,
+      "maximum_seconds": 120,
+      "within_target": false,
+      "within_maximum": true
+    },
+    "full_export_import_m": {
+      "export_seconds": 131.533,
+      "import_seconds": 66.017,
+      "target_seconds_each": 60,
+      "maximum_seconds_each": 180,
+      "within_target": false,
+      "within_maximum": true
+    },
+    "full_verify_recovery_m": {
+      "seconds": 0.45,
+      "target_seconds": 60,
+      "maximum_seconds": 180,
+      "within_target": true,
+      "within_maximum": true,
+      "verified_object_count": 10031
+    },
+    "core_rss_m": {
+      "peak_rss_mib": 26.44,
+      "target_mib": 128,
+      "maximum_mib": 256,
+      "within_target": true,
+      "within_maximum": true,
+      "measured": true
+    },
+    "storage_growth": {
+      "vault_bytes": 16650240,
+      "approx_unique_payload_bytes": 6110000,
+      "ratio": 2.725,
+      "maximum_ratio": 3.0,
+      "within_maximum": true,
+      "excluded_derived_fts_index_bytes": 10416128,
+      "excluded_recovery_preservation_backup_bytes": 16651004
+    }
+  },
+  "limitations": [
+    "M dataset is 10,000 create-only records (100,000-revision churn half of the plan's M definition not reached; see module docstring)."
+  ],
+  "dataset_generation_seconds": 219.455,
+  "ok": true
+}

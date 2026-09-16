@@ -13,8 +13,8 @@ CANONICAL_BUILD_PLAN=docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md
 CANONICAL_BUILD_PLAN_SHA256=b555f83ff12882ae6f55f90bbeaa411de52b84661a7f3953350cbfc6bd789fb2
 CANONICAL_PLAN_REMOTE_STATUS=MIGRATED_TO_GITHUB
 CANONICAL_PLAN_LOCAL_DEPENDENCY=NONE
-ACTIVE_IMPLEMENTATION_UNIT=T05-02
-NEXT_DEPENDENCY_READY_UNIT=T05-02
+ACTIVE_IMPLEMENTATION_UNIT=T05-03
+NEXT_DEPENDENCY_READY_UNIT=T05-03
 FOUNDER_DECISION_NO_HUMAN_GATES=docs/canonical/FOUNDER_NO_HUMAN_QUALIFICATION_GATES_2026-09-16.md
 FOUNDER_DECISION_WEBVIEW2_NETWORK_BOUNDARY=docs/canonical/FOUNDER_WEBVIEW2_NETWORK_BOUNDARY_2026-09-16.md
 FOUNDER_DECISION_T04-06_ACCESSIBILITY_WITNESS=docs/canonical/FOUNDER_T04-06_ACCESSIBILITY_WITNESS_AMENDMENT_2026-09-16.md
@@ -53,7 +53,14 @@ T04-06_MERGE_COMMIT=6538dd974575a0fe0e8613b6fda86220479c2be6
 T05-01_STATUS=COMPLETE
 T05-01_EVIDENCE=docs/evidence/flake-v1/T05-01/REPORT.md
 T05-01_CROSS_PLATFORM_CI_RUN=35081331572
-T05-01_MERGE_COMMIT=PENDING_PR_MERGE
+T05-01_MERGE_COMMIT=b0bdfafe2d78d9db5b97b60a511bfa0d98b3cf32
+FOUNDER_DECISION_T05-02_PHYSICAL_POWER_LOSS=docs/canonical/FOUNDER_T05-02_PHYSICAL_POWER_LOSS_AMENDMENT_2026-09-16.md
+T05-02_D6_PHYSICAL_TRIALS_REQUIRED=NO
+T05-02_D6_VM_CYCLES_REQUIRED=YES
+T05-02_STATUS=COMPLETE
+T05-02_EVIDENCE=docs/evidence/flake-v1/T05-02/REPORT.md
+T05-02_D6_LINUX_CYCLES=30 (local WSL2/KVM) + 8 (CI ubuntu-latest)
+T05-02_MERGE_COMMIT=PENDING_PR_MERGE
 P01_STATUS=CLOSED
 T00-01_STATUS=COMPLETE
 T00-01_EVIDENCE=docs/evidence/flake-v1/T00-01/REPORT.md
@@ -156,7 +163,9 @@ The historical local-only planning SHAs `4246f6d...` and `852e44b...` are proven
 
 ## Next action
 
-**`T05-02` is dependency-ready.** `T05-01` closed COMPLETE (see below); read `docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` section 26/T05-02's own task row before starting. Note `T05-02`'s own failure-behavior clause: "no process-kill proxy for power-loss evidence" -- its 30 native-VM-unclean-shutdown/profile and 10 physical-device-controlled-trials/profile (or an exact-stack qualified lab report) requirements need genuine VM-level power-cut or hardware evidence, not an in-process kill -- investigate available authorized native/VM infrastructure (nested virtualization on GitHub-hosted runners, an existing authorized machine, or a qualified lab report path) before assuming any part of this is blocked.
+**`T05-03` is dependency-ready.** `T05-02` closed COMPLETE (see below); read `docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` section 26/T05-03's own task row before starting -- native offline install/update/rollback/uninstall packaging on all three platforms (archives/NSIS/deb/dmg + source bundle + SBOM), no developer-runtime assumption, default local data kept separate from install/sync folders.
+
+`T05-02` closed: qualified durability, confinement and performance on every platform. D1-D5 process-fault-schedule matrices (already implemented) now run natively on all three CI platforms. D6 (genuine forced native-VM-unclean-shutdown fault injection, new: QEMU/KVM-backed harness) ran 30 forced-kill cycles locally (WSL2/KVM) plus 8 more on CI (`ubuntu-latest`) -- zero acknowledged canonical loss across all 38 cycles, `head_hash_chain_verified: true` on every one. Two harness-only bugs found and fixed along the way (never product defects): the verification step needed to also copy the SQLite `-journal` file alongside `canonical.sqlite` (Flake uses `journal_mode=DELETE`, a rollback journal), and needed to briefly open its own disposable copy read-write before the independent read-only verification pass, since SQLite cannot roll back a hot journal on a strictly read-only connection. `docs/canonical/FOUNDER_T05-02_PHYSICAL_POWER_LOSS_AMENDMENT_2026-09-16.md` removed the original 10-physical-device-trials/profile requirement (no such hardware/lab report available); Windows/macOS VM cycles recorded as `NOT_EXECUTED_INFRASTRUCTURE_UNAVAILABLE` (non-blocking under that same amendment) -- D1-D5 process-level coverage plus the Linux D6 VM-level proof stand as the qualifying evidence for those two platforms. Full section-27 CLI performance matrix measured at real M-scale (10,000 records): every row within its own maximum, both locally (Windows) and on CI (`ubuntu-latest`). One flagged-not-fixed finding for a future product decision: `crate::recovery::recover_to_new_root`'s own `RecoveryGuard::acquire` is blocked by the exact same stale `WriteLock` marker it exists to remediate after a crash. Full details: `docs/evidence/flake-v1/T05-02/REPORT.md`.
 
 `T05-01` closed: froze the format-1/2 compatibility policy and shipped a standalone offline `flake-migrate` tool, qualified natively on all three platforms plus M/L-scale performance timing on `ubuntu-latest` CI (M: 10,000 records/~1 GiB, import 17.82s within the 60s/180s gate; L: 100,000 records/~10 GiB, import 217.54s within the 600s/1800s gate; both `independent_head_hash_chain_verified: true`). Found and fixed one real defect during L-scale measurement: `preview_migration`/`import_to_new_root` held the full payload bytes of every admitted record in memory simultaneously (`raw_bytes: String` per entry, plus a second full `.clone()`'d copy in the import commit loop) -- roughly 10 GiB of live `String` data for the L-scale case, which killed the first CI attempt (`exit 143`) on a 15 GiB-RAM runner. Fixed to O(one record) peak memory by hashing/dropping each candidate's content during preview and re-reading each admitted record's bytes fresh from disk immediately before commit -- no change to admission rules, byte-exactness guarantee, or committed content (T01-06's own byte-identity tests still pass unchanged in what they prove). Full details: `docs/evidence/flake-v1/T05-01/REPORT.md`.
 
