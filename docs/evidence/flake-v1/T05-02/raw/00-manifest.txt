@@ -1,0 +1,15 @@
+T05-02 raw evidence manifest
+Generated: 2026-09-16 (see REPORT.md for full timeline)
+
+docs/evidence/flake-v1/T05-02/raw/01-fault-workload-binary-tests-windows.txt  bytes=673  sha256=4c7e3589e540b15c239c892e2f6c71d21cd8ee677dfdfea14a0320420ba7fe6a
+docs/evidence/flake-v1/T05-02/raw/02-full-test-suite-windows.txt  bytes=31348  sha256=2b39f002512195198ca5e2e3c1155e338d082ddc15da3336d4f3a28aee0da386
+docs/evidence/flake-v1/T05-02/raw/03-fmt-check-windows.txt  bytes=0  sha256=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+docs/evidence/flake-v1/T05-02/raw/04-clippy-windows.txt  bytes=72  sha256=3dbebdfe57c58e155ac8a657a434094c1504a64a2cee500df8a6e14e483660d2
+docs/evidence/flake-v1/T05-02/raw/05-cargo-audit-windows.txt  bytes=257  sha256=142123563f75e88996cacc5d2eecec087571e7e747c6610b6e35eeb46fe75eb3
+docs/evidence/flake-v1/T05-02/results/d6-linux-30cycle-results.json  bytes=21599  sha256=723efa171b20dfa50a5d68acc9186ac02c7ad82b0076d6720c6b979847ea4f7d
+docs/evidence/flake-v1/T05-02/results/section27-n100-windows-local-smoke.json  bytes=2989  sha256=3f92df5955ba88a05cf9001090af8653e29f06df7997216e237567a60a93c2b6
+docs/evidence/flake-v1/T05-02/checks/d6_vm_unclean_shutdown.sh  bytes=10431  sha256=3b989b82ff29bf33e6b081c882a5bef47cdaada70d761ae96c093bc29eb8fe4c
+docs/evidence/flake-v1/T05-02/checks/fault-workload.service  bytes=280  sha256=3cc75dd4a5e0e33676da631d2115dbecafb931fa77bcde4101220a0870d8cb7d
+docs/evidence/flake-v1/T05-02/checks/section27_performance.py  bytes=13517  sha256=1e1b551a08460611468e536434fef145f420853193d0e7d3c084ae36a89ea386
+docs/evidence/flake-v1/T05-02/checks/verify_fault_cycle.py  bytes=1876  sha256=85a636ef35ce972545f4de7807c2be702423e12a85faf58b549d7377bcb20278
+# section27-m-scale-windows-local.json added by a follow-up commit on this task's PR once the background M-scale run (real disk headroom, restored mid-task) completes.

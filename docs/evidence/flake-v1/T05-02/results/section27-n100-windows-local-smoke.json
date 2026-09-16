@@ -1,0 +1,105 @@
+{
+  "n": 100,
+  "rows": {
+    "cli_help_version_cold": {
+      "p50_ms": 14.01,
+      "p95_ms": 23.36,
+      "max_ms": 27.37,
+      "target_p95_ms": 100,
+      "maximum_ms": 500,
+      "within_target": true,
+      "within_maximum": true
+    },
+    "project_open_readonly_m": {
+      "p50_ms": 16.14,
+      "p95_ms": 29.26,
+      "max_ms": 32.47,
+      "target_p95_warm_ms": 250,
+      "maximum_warm_ms": 1000,
+      "within_target": true,
+      "within_maximum": true,
+      "note": "also covers 'clean startup integrity quick checks M' -- CanonicalStore::open's own guard/schema checks run on every command, no separate CLI surface exists"
+    },
+    "project_detail_read": {
+      "p50_ms": 16.26,
+      "p95_ms": 29.36,
+      "max_ms": 31.0,
+      "target_p95_warm_ms": 100,
+      "maximum_warm_ms": 500,
+      "within_target": true,
+      "within_maximum": true
+    },
+    "save_write_ack_64kib": {
+      "p50_ms": 27.81,
+      "p95_ms": 38.27,
+      "max_ms": 47.13,
+      "measured_body_bytes": 8000,
+      "deviation": "measured at 8 KiB, not 64 KiB, due to Windows CLI-arg length limit -- see comment above",
+      "target_p95_ms": 150,
+      "maximum_ms": 750,
+      "within_target": true,
+      "within_maximum": true
+    },
+    "search_m_50_results": {
+      "p50_ms": 22.45,
+      "p95_ms": 35.28,
+      "max_ms": 40.27,
+      "target_p95_warm_ms": 150,
+      "maximum_warm_ms": 500,
+      "within_target": true,
+      "within_maximum": true
+    },
+    "resume_m": {
+      "p50_ms": 23.69,
+      "p95_ms": 37.59,
+      "max_ms": 95.25,
+      "target_p95_warm_ms": 250,
+      "maximum_warm_ms": 1000,
+      "within_target": true,
+      "within_maximum": true
+    },
+    "full_fts_rebuild_m": {
+      "seconds": 0.981,
+      "target_seconds": 30,
+      "maximum_seconds": 120,
+      "within_target": true,
+      "within_maximum": true
+    },
+    "full_export_import_m": {
+      "export_seconds": 0.374,
+      "import_seconds": 2.032,
+      "target_seconds_each": 60,
+      "maximum_seconds_each": 180,
+      "within_target": true,
+      "within_maximum": true
+    },
+    "full_verify_recovery_m": {
+      "seconds": 0.049,
+      "target_seconds": 60,
+      "maximum_seconds": 180,
+      "within_target": true,
+      "within_maximum": true,
+      "verified_object_count": 131
+    },
+    "core_rss_m": {
+      "peak_rss_mib": 7.4,
+      "target_mib": 128,
+      "maximum_mib": 256,
+      "within_target": true,
+      "within_maximum": true,
+      "measured": true
+    },
+    "storage_growth": {
+      "vault_bytes": 1500045,
+      "approx_unique_payload_bytes": 297000,
+      "ratio": 5.051,
+      "maximum_ratio": 3.0,
+      "within_maximum": false
+    }
+  },
+  "limitations": [
+    "M dataset is 10,000 create-only records (100,000-revision churn half of the plan's M definition not reached; see module docstring)."
+  ],
+  "dataset_generation_seconds": 3.622,
+  "ok": false
+}

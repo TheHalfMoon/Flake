@@ -1,0 +1,197 @@
+name: t05-02-durability-qualification
+
+# T05-02's own cross-platform gate ("All three profiles and their
+# actual filesystems/devices; no cross-compile-only evidence") plus its
+# D6 native-unclean-shutdown gate, amended by
+# docs/canonical/FOUNDER_T05-02_PHYSICAL_POWER_LOSS_AMENDMENT_2026-09-16.md
+# to drop the physical-device power-interruption requirement while
+# keeping everything else (D1-D5, 30-cycle native-VM-unclean-shutdown,
+# three-platform requirement) in force.
+#
+# `qualify`: full root Rust gates (fmt/clippy/`cargo test --locked
+# --all-targets`, covering the D1-D5 deterministic fault-schedule
+# matrices already built at T01-01..T01-06 plus this task's own
+# `flake-fault-workload` binary tests) natively on all three platforms,
+# mirroring the precedent already established by
+# t04-06-cross-platform.yml / t05-01-migration-qualification.yml.
+#
+# `d6-vm-unclean-shutdown-linux`: genuine forced native-VM-unclean-
+# shutdown fault injection (docs/evidence/flake-v1/T05-02/checks/
+# d6_vm_unclean_shutdown.sh) on ubuntu-latest, using QEMU with KVM
+# acceleration where the runner exposes /dev/kvm and falling back to
+# software emulation otherwise (`-machine accel=kvm:tcg` -- GitHub's
+# own KVM availability on hosted Linux runners is unofficial/
+# inconsistent, so this must not hard-fail when it is absent). Runs a
+# lighter cycle count than the qualifying evidence run (see
+# docs/evidence/flake-v1/T05-02/REPORT.md for the authoritative 30-cycle
+# run, executed on this session's own WSL2/KVM-backed development host)
+# -- a deliberate, disk/time-budget-driven scope decision recorded
+# honestly here, the same pattern T05-01 already used for M-vs-L-scale
+# timing.
+#
+# `section27-performance`: the full section-27 CLI operation-timing
+# matrix at M-scale (docs/evidence/flake-v1/T05-02/checks/
+# section27_performance.py), on ubuntu-latest. Run here rather than on
+# this session's own Windows workstation: that host's local disk is
+# already at 100% capacity (a pre-existing, documented constraint --
+# see T05-01's own evidence for the same host) and generating a
+# 10,000-record dataset there failed outright with "disk is full" mid-
+# run. This session's local evidence is therefore a smaller (n=100)
+# smoke-level validation that the harness itself is correct (see
+# docs/evidence/flake-v1/T05-02/REPORT.md), with this CI job producing
+# the actual qualifying M-scale numbers on a runner with real headroom
+# -- the identical local-S/CI-M-or-L split T05-01 already established.
+#
+# Windows and macOS native-VM-unclean-shutdown cycles are NOT attempted
+# here: Windows GitHub-hosted runners do not reliably support nested
+# virtualization (unofficial/experimental at best), and this session's
+# own Windows workstation has no enabled Hyper-V management feature or
+# prepared Windows guest image (enabling Hyper-V requires admin
+# elevation and a host reboot this session was explicitly told not to
+# perform solely for this already-amended, non-blocking gate). Apple
+# Silicon macos-latest runners cannot run nested VMs at all (Apple's own
+# Virtualization Framework limitation) and no Mac hardware is available.
+# See docs/evidence/flake-v1/T05-02/REPORT.md for the full
+# WHAT_WAS_NOT_TESTED/WHY/SUBSTITUTE/RESIDUAL_RISK record for both.
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      d6_linux_cycles:
+        description: "Number of D6 forced-kill cycles to run on ubuntu-latest"
+        default: "8"
+
+jobs:
+  qualify:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Root Rust gates (fmt, clippy, full test suite incl. D1-D5 fault schedules)
+        shell: bash
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy --all-targets --locked -- -D warnings
+          cargo test --locked --all-targets
+
+      - name: Root Rust advisories
+        shell: bash
+        run: |
+          cargo install cargo-audit --locked
+          cargo audit
+
+      - name: Build release binaries
+        shell: bash
+        run: cargo build --release --locked --bin fehrest --bin flake-migrate --bin flake-fault-workload
+
+  d6-vm-unclean-shutdown-linux:
+    needs: qualify
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build flake-fault-workload (release)
+        run: cargo build --release --locked --bin flake-fault-workload
+
+      - name: Install QEMU/VM tooling
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq qemu-system-x86 qemu-utils
+
+      - name: Report KVM availability (informational, non-blocking -- see workflow header)
+        run: |
+          if [ -e /dev/kvm ]; then
+            echo "kvm_available=yes"; ls -la /dev/kvm
+          else
+            echo "kvm_available=no (falling back to TCG software emulation, per this workflow's own accel=kvm:tcg)"
+          fi
+
+      - name: Download base Ubuntu minimal cloud image
+        run: |
+          mkdir -p /tmp/d6
+          wget -q https://cloud-images.ubuntu.com/minimal/releases/noble/release/ubuntu-24.04-minimal-cloudimg-amd64.img \
+            -O /tmp/d6/base.img
+
+      - name: Run D6 forced-kill cycles + independent verification
+        run: |
+          chmod +x docs/evidence/flake-v1/T05-02/checks/d6_vm_unclean_shutdown.sh
+          sudo bash docs/evidence/flake-v1/T05-02/checks/d6_vm_unclean_shutdown.sh \
+            /tmp/d6/base.img \
+            "$(pwd)/target/release/flake-fault-workload" \
+            /tmp/d6/run \
+            "${{ inputs.d6_linux_cycles || '8' }}" \
+            "${{ github.run_id }}" \
+            /tmp/d6/run/results.json
+
+      - name: Assert D6 result is genuinely ok
+        run: |
+          python3 -c "
+          import json
+          r = json.load(open('/tmp/d6/run/results.json'))
+          assert r['ok'], f'D6 harness reported failure: {json.dumps(r, indent=2)}'
+          print(f\"D6 OK: {r['kill_cycles_run']} forced-kill cycles, all verified, final head reached\")
+          "
+
+      - name: Upload D6 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: t05-02-d6-linux-ci-${{ github.run_id }}
+          path: |
+            /tmp/d6/run/results.json
+            /tmp/d6/run/cycles.jsonl
+          if-no-files-found: error
+
+  section27-performance:
+    needs: qualify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build release binaries
+        run: cargo build --release --locked --bin fehrest --bin flake-bench-recover
+
+      - name: Install psutil (RSS measurement; CI tooling only, not a product dependency)
+        run: pip install --quiet psutil
+
+      - name: Run section-27 M-scale performance matrix
+        run: |
+          python3 docs/evidence/flake-v1/T05-02/checks/section27_performance.py \
+            --fehrest-bin ./target/release/fehrest \
+            --recover-bin ./target/release/flake-bench-recover \
+            --n 10000 \
+            --work-dir /tmp/perf-m-scale \
+            --out docs/evidence/flake-v1/T05-02/results/section27-m-scale-ci-${{ github.run_id }}.json
+
+      - name: Assert every measured row is within its own maximum
+        run: |
+          python3 -c "
+          import json
+          r = json.load(open('docs/evidence/flake-v1/T05-02/results/section27-m-scale-ci-${{ github.run_id }}.json'))
+          failed = {k: v for k, v in r['rows'].items() if isinstance(v, dict) and v.get('within_maximum') is False}
+          assert not failed, f'rows exceeding their own maximum: {json.dumps(failed, indent=2)}'
+          print('All measured section-27 rows within their own maximum.')
+          "
+
+      - name: Upload performance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: t05-02-section27-m-scale-${{ github.run_id }}
+          path: docs/evidence/flake-v1/T05-02/results/section27-m-scale-ci-${{ github.run_id }}.json
+          if-no-files-found: error
