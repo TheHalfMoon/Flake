@@ -1,6 +1,19 @@
 :root {
   color-scheme: light dark;
   font-family: system-ui, sans-serif;
+  /* #c0392b on white is 5.44:1 (WCAG AA pass); on black it is only
+     3.86:1 (WCAG AA fail, minimum 4.5:1 for normal text) -- this app
+     declares `color-scheme: light dark`, so a dark host background is a
+     legitimate, expected rendering, not an edge case. #ff6b6b on black
+     is 7.57:1; T04-06's automated contrast check computes both ratios
+     and would fail the build again if either regresses. */
+  --error-color: #c0392b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --error-color: #ff6b6b;
+  }
 }
 
 .shell {
@@ -32,7 +45,7 @@ input {
 }
 
 .error {
-  color: #c0392b;
+  color: var(--error-color);
   margin-top: 1rem;
 }
 
@@ -58,12 +71,12 @@ input {
 .save-state-not-saved-conflict,
 .save-state-not-saved-error,
 .save-state-outcome-unknown {
-  color: #c0392b;
+  color: var(--error-color);
   opacity: 1;
 }
 
 .save-error {
-  border: 1px solid #c0392b;
+  border: 1px solid var(--error-color);
   padding: 0.5rem;
   margin-top: 0.5rem;
 }
