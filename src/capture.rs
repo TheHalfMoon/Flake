@@ -780,17 +780,15 @@ mod tests {
         #[cfg(unix)]
         std::os::unix::fs::symlink(&target, &link).unwrap();
         #[cfg(windows)]
-        let symlink_created = std::os::windows::fs::symlink_file(&target, &link).is_ok();
-        #[cfg(not(windows))]
-        let symlink_created = true;
-
-        #[cfg(windows)]
-        if !symlink_created {
-            // Creating a file symlink on Windows can require an elevated
-            // privilege/dev-mode the CI runner may lack; skip rather than
-            // fabricate a pass this environment cannot exercise.
-            cleanup(&root);
-            return;
+        {
+            let symlink_created = std::os::windows::fs::symlink_file(&target, &link).is_ok();
+            if !symlink_created {
+                // Creating a file symlink on Windows can require an elevated
+                // privilege/dev-mode the CI runner may lack; skip rather than
+                // fabricate a pass this environment cannot exercise.
+                cleanup(&root);
+                return;
+            }
         }
 
         let err = {

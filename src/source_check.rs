@@ -565,16 +565,16 @@ mod tests {
         #[cfg(unix)]
         std::os::unix::fs::symlink(&elsewhere, &file_path).unwrap();
         #[cfg(windows)]
-        let symlink_created = std::os::windows::fs::symlink_file(&elsewhere, &file_path).is_ok();
-        #[cfg(not(windows))]
-        let symlink_created = true;
-        #[cfg(windows)]
-        if !symlink_created {
-            // Same documented environment limitation `capture.rs`'s own
-            // symlink test already carries: creating a file symlink on
-            // Windows can require dev-mode/elevation the CI runner lacks.
-            cleanup(&root);
-            return;
+        {
+            let symlink_created =
+                std::os::windows::fs::symlink_file(&elsewhere, &file_path).is_ok();
+            if !symlink_created {
+                // Same documented environment limitation `capture.rs`'s own
+                // symlink test already carries: creating a file symlink on
+                // Windows can require dev-mode/elevation the CI runner lacks.
+                cleanup(&root);
+                return;
+            }
         }
 
         let (_, check) = check_source(&mut store, "owner", &source_id).unwrap();

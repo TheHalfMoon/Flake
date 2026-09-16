@@ -1,0 +1,24 @@
+{
+  "baseline_correct": 8,
+  "baseline_success_rate": 1.0,
+  "case_count": 8,
+  "deficit_pp": 0.0,
+  "flake_correct": 8,
+  "flake_success_rate": 1.0,
+  "high_consequence_misses": 0,
+  "route": "PASS",
+  "tier_breakdown": {
+    "T1": {
+      "flake_correct": 2
+    },
+    "T2": {
+      "flake_correct": 2
+    },
+    "T3": {
+      "flake_correct": 2
+    },
+    "T4": {
+      "flake_correct": 2
+    }
+  }
+}
