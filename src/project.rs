@@ -50,8 +50,15 @@
 //!   [`CanonicalStore::list_current_objects`] is a full scan, not an index.
 //! - `Decision` tombstone/delete (§15 lists `tombstoned` among possible
 //!   lifecycle values; `T02-03`'s own task contract names only evidence
-//!   linkage, owner-only acceptance, override/supersession and valid-time —
-//!   delete/tombstone UI is `T04`'s "archive/tombstone confirmation" scope).
+//!   linkage, owner-only acceptance, override/supersession and valid-time).
+//!   `T04-03` ("archive/tombstone confirmation" scope) covers `Decision`
+//!   soft-removal via the already-existing `withdraw_decision` lifecycle
+//!   transition (§15's `Withdrawn` is exactly this record kind's own
+//!   tombstone-equivalent state — no separate boolean flag was added,
+//!   since `DecisionLifecycle` already has one) and adds `Note::tombstoned`'s
+//!   own setter (`tombstone_note`/`untombstone_note`, mirroring
+//!   `archive_project`/`unarchive_project`'s shape), since `Note` had the
+//!   field from `T02-01` on but no way to set it until now.
 //! - A floating (always-resolve-to-current) `Relation` endpoint policy —
 //!   see `relation.rs` module docs, "Endpoint revision policy".
 //! - CLI polish beyond the plain subcommands this task's own acceptance
@@ -740,6 +747,78 @@ pub fn update_note(
         title: title.map(str::to_string),
         body: body.to_string(),
         tombstoned: existing.tombstoned,
+        unknown: existing.unknown.clone(),
+    });
+    let (outcome, record) = commit_update(
+        writer,
+        actor,
+        RecordOrigin::User,
+        note_id,
+        expected_revision_id,
+        record,
+    )?;
+    Ok((
+        outcome,
+        match record {
+            RecordPayload::Note(n) => n,
+            _ => unreachable!(),
+        },
+    ))
+}
+
+/// Tombstone a note (`T04`'s "archive/tombstone confirmation" scope,
+/// deferred here from `T02-03` — see this module's own "Scope boundary"
+/// doc comment above). Mirrors `archive_project`'s shape: a new revision
+/// records `tombstoned: true`; the prior revision remains in immutable
+/// history (I05) — this is a lifecycle flag flip, never a destructive
+/// rewrite or content deletion. `expected_revision_id` follows `update_note`'s
+/// own convention (never a silent last-writer-wins).
+pub fn tombstone_note(
+    writer: &mut CanonicalWriter<'_>,
+    actor: &str,
+    note_id: &str,
+    expected_revision_id: &str,
+) -> Result<(CommandOutcome, Note)> {
+    set_note_tombstoned(writer, actor, note_id, expected_revision_id, true)
+}
+
+/// Reverse of [`tombstone_note`] — also a new revision, not a rewrite of
+/// the tombstoning revision.
+pub fn untombstone_note(
+    writer: &mut CanonicalWriter<'_>,
+    actor: &str,
+    note_id: &str,
+    expected_revision_id: &str,
+) -> Result<(CommandOutcome, Note)> {
+    set_note_tombstoned(writer, actor, note_id, expected_revision_id, false)
+}
+
+fn set_note_tombstoned(
+    writer: &mut CanonicalWriter<'_>,
+    actor: &str,
+    note_id: &str,
+    expected_revision_id: &str,
+    tombstoned: bool,
+) -> Result<(CommandOutcome, Note)> {
+    let (_, existing_payload) = writer
+        .store()
+        .read_current(note_id)?
+        .ok_or_else(|| Error::Project(format!("no note exists with id {note_id}")))?;
+    let existing = match RecordPayload::from_json(&existing_payload)? {
+        RecordPayload::Note(n) => n,
+        other => {
+            return Err(Error::Project(format!(
+                "object {note_id} is not a note, found {}",
+                other.kind_str()
+            )))
+        }
+    };
+    let record = RecordPayload::Note(Note {
+        payload_schema_version: RECORD_PAYLOAD_SCHEMA_VERSION,
+        project_id: existing.project_id.clone(),
+        title: existing.title.clone(),
+        body: existing.body.clone(),
+        tombstoned,
         unknown: existing.unknown.clone(),
     });
     let (outcome, record) = commit_update(
@@ -1687,6 +1766,76 @@ mod tests {
             .unwrap();
         assert!(current.contains("v2"));
         let _ = updated_outcome;
+
+        cleanup(&root);
+    }
+
+    #[test]
+    fn note_tombstone_untombstone_round_trips_and_preserves_history() {
+        let root = tmp();
+        let mut store = CanonicalStore::create(&root).unwrap();
+        let (project_outcome, _) = {
+            let mut writer = store.writer().unwrap();
+            create_project(&mut writer, "owner", "P", None).unwrap()
+        };
+        let (note_outcome, note) = {
+            let mut writer = store.writer().unwrap();
+            create_note(
+                &mut writer,
+                "owner",
+                &project_outcome.object_id,
+                Some("Title"),
+                "Body text",
+            )
+            .unwrap()
+        };
+        assert!(!note.tombstoned);
+
+        let (tombstone_outcome, tombstoned) = {
+            let mut writer = store.writer().unwrap();
+            tombstone_note(
+                &mut writer,
+                "owner",
+                &note_outcome.object_id,
+                &note_outcome.revision_id,
+            )
+            .unwrap()
+        };
+        assert!(tombstoned.tombstoned);
+        // Content is preserved, never cleared, by a tombstone -- it is a
+        // lifecycle flag flip, not a content deletion.
+        assert_eq!(tombstoned.title, Some("Title".to_string()));
+        assert_eq!(tombstoned.body, "Body text");
+
+        // Stale expected_revision_id conflicts exactly like `update_note`.
+        let err = {
+            let mut writer = store.writer().unwrap();
+            tombstone_note(
+                &mut writer,
+                "owner",
+                &note_outcome.object_id,
+                &note_outcome.revision_id, // stale: superseded by tombstone_outcome
+            )
+            .unwrap_err()
+        };
+        assert!(format!("{err}").contains("expected revision conflict"));
+
+        let (_, untombstoned) = {
+            let mut writer = store.writer().unwrap();
+            untombstone_note(
+                &mut writer,
+                "owner",
+                &note_outcome.object_id,
+                &tombstone_outcome.revision_id,
+            )
+            .unwrap()
+        };
+        assert!(!untombstoned.tombstoned);
+
+        // History preserved: create, tombstone, untombstone -- three
+        // distinct revisions, none rewritten.
+        let history = store.history(&note_outcome.object_id).unwrap();
+        assert_eq!(history.len(), 3);
 
         cleanup(&root);
     }

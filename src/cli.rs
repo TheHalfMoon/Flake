@@ -102,6 +102,8 @@ FORMAT-2 COMMANDS (T02-01; --vault names a separate format-2 store root):
   project-show      Show a project                --id <uuid>
   note-create       Create a note                 --project <uuid> --body T [--title T]
   note-update       Replace a note's title/body   --id <uuid> --expect <revision-uuid> --body T [--title T]
+  note-tombstone    Tombstone a note               --id <uuid> --expect <revision-uuid>
+  note-untombstone  Reverse note-tombstone         --id <uuid> --expect <revision-uuid>
   action-create     Create an action              --project <uuid> --title T [--body T] [--depends-on id1,id2]
   decision-create   Create a decision             --project <uuid> --key K --statement T [--rationale T] [--basis evidence|user-judgment|agent-proposal] [--verification unreviewed|user-reviewed] [--valid-from TS] [--valid-to TS]
   record-show       Show any typed record          --id <uuid> [--preview N]
@@ -510,6 +512,38 @@ pub fn run(argv: &[String]) -> Result<i32> {
                 args.require("body")?,
             )?;
             println!("{} {}", outcome.object_id, outcome.revision_id);
+            Ok(0)
+        }
+
+        "note-tombstone" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let mut writer = store.writer()?;
+            let (outcome, note) = project::tombstone_note(
+                &mut writer,
+                CLI_ACTOR,
+                args.require("id")?,
+                args.require("expect")?,
+            )?;
+            println!(
+                "{} {} tombstoned={}",
+                outcome.object_id, outcome.revision_id, note.tombstoned
+            );
+            Ok(0)
+        }
+
+        "note-untombstone" => {
+            let mut store = CanonicalStore::open(args.vault_root()?)?;
+            let mut writer = store.writer()?;
+            let (outcome, note) = project::untombstone_note(
+                &mut writer,
+                CLI_ACTOR,
+                args.require("id")?,
+                args.require("expect")?,
+            )?;
+            println!(
+                "{} {} tombstoned={}",
+                outcome.object_id, outcome.revision_id, note.tombstoned
+            );
             Ok(0)
         }
 

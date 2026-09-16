@@ -1,0 +1,307 @@
+{
+  "runId": "2026-09-16T04-10-45-938Z",
+  "overallOk": false,
+  "tmpRoot": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-03-e2e-i5yoDu",
+  "cliVaultPath": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-03-e2e-i5yoDu\\cli-vault",
+  "desktopVaultPath": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-03-e2e-i5yoDu\\desktop-parent\\desktop-vault",
+  "steps": [
+    {
+      "name": "exe-exists",
+      "ok": true,
+      "detail": {
+        "path": "C:\\Users\\Shehr\\work\\Flake\\desktop\\src-tauri\\target\\debug\\flake-desktop.exe"
+      },
+      "ts": "2026-09-16T04:10:45.944Z"
+    },
+    {
+      "name": "cli-exe-exists",
+      "ok": true,
+      "detail": {
+        "path": "C:\\Users\\Shehr\\work\\Flake\\target\\debug\\fehrest.exe"
+      },
+      "ts": "2026-09-16T04:10:45.944Z"
+    },
+    {
+      "name": "cli-workflow",
+      "ok": true,
+      "detail": {
+        "vaultPath": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-03-e2e-i5yoDu\\cli-vault"
+      },
+      "ts": "2026-09-16T04:10:46.156Z"
+    },
+    {
+      "name": "vite-dev-server-ready",
+      "ok": true,
+      "detail": {},
+      "ts": "2026-09-16T04:10:47.896Z"
+    },
+    {
+      "name": "launch",
+      "ok": true,
+      "detail": {
+        "pid": 24964
+      },
+      "ts": "2026-09-16T04:10:48.483Z"
+    },
+    {
+      "name": "bridge-ready",
+      "ok": true,
+      "detail": {
+        "url": "http://localhost:1420/"
+      },
+      "ts": "2026-09-16T04:10:49.600Z"
+    },
+    {
+      "name": "vault-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "path": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-03-e2e-i5yoDu\\desktop-parent\\desktop-vault",
+          "vault_id": "01a0a869-0389-76b5-9e95-e2e7dbbe1511"
+        }
+      },
+      "ts": "2026-09-16T04:10:49.635Z"
+    },
+    {
+      "name": "project-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a869-03aa-7496-b58e-660318865e2d",
+          "name": "Workflow Project",
+          "description": null,
+          "active": true
+        }
+      },
+      "ts": "2026-09-16T04:10:49.649Z"
+    },
+    {
+      "name": "empty-state-backend",
+      "ok": true,
+      "detail": {
+        "emptyNotes": {
+          "ok": true,
+          "result": []
+        },
+        "emptyActions": {
+          "ok": true,
+          "result": []
+        },
+        "emptyDecisions": {
+          "ok": true,
+          "result": []
+        }
+      },
+      "ts": "2026-09-16T04:10:49.670Z"
+    },
+    {
+      "name": "empty-state-ui-text",
+      "ok": false,
+      "detail": {
+        "notesEmptyUi": false,
+        "actionsEmptyUi": false,
+        "decisionsEmptyUi": false
+      },
+      "ts": "2026-09-16T04:10:49.678Z"
+    },
+    {
+      "name": "note-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a869-03d8-7603-8683-6e5cefdf43b4",
+          "project_id": "01a0a869-03aa-7496-b58e-660318865e2d",
+          "title": "Meeting notes",
+          "body": "Discussed the roadmap.",
+          "revision_id": "01a0a869-03d8-7603-8683-6e5dad5f4c8a"
+        }
+      },
+      "ts": "2026-09-16T04:10:49.694Z"
+    },
+    {
+      "name": "action-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a869-03e4-7657-97b5-2e4c5f6d329c",
+          "project_id": "01a0a869-03aa-7496-b58e-660318865e2d",
+          "title": "Ship the update",
+          "body": null,
+          "state": "open",
+          "dependency_ids": [],
+          "completion_summary": null,
+          "revision_id": "01a0a869-03e4-7657-97b5-2e4d1ec1f09e"
+        }
+      },
+      "ts": "2026-09-16T04:10:49.705Z"
+    },
+    {
+      "name": "action-start",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a869-03e4-7657-97b5-2e4c5f6d329c",
+          "project_id": "01a0a869-03aa-7496-b58e-660318865e2d",
+          "title": "Ship the update",
+          "body": null,
+          "state": "doing",
+          "dependency_ids": [],
+          "completion_summary": null,
+          "revision_id": "01a0a869-03f1-71c5-a44c-9e4a5446615a"
+        }
+      },
+      "ts": "2026-09-16T04:10:49.718Z"
+    },
+    {
+      "name": "action-complete",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a869-03e4-7657-97b5-2e4c5f6d329c",
+          "project_id": "01a0a869-03aa-7496-b58e-660318865e2d",
+          "title": "Ship the update",
+          "body": null,
+          "state": "done",
+          "dependency_ids": [],
+          "completion_summary": "Shipped v1",
+          "revision_id": "01a0a869-03fd-7107-aaa0-e476c3d18edf"
+        }
+      },
+      "ts": "2026-09-16T04:10:49.731Z"
+    },
+    {
+      "name": "action-conflict-refused",
+      "ok": false,
+      "detail": {
+        "ok": false,
+        "error": "project error: invalid action transition: Done -> Done is not an allowed transition"
+      },
+      "ts": "2026-09-16T04:10:49.739Z"
+    },
+    {
+      "name": "action-conflict-did-not-overwrite",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": [
+          {
+            "id": "01a0a869-03e4-7657-97b5-2e4c5f6d329c",
+            "project_id": "01a0a869-03aa-7496-b58e-660318865e2d",
+            "title": "Ship the update",
+            "body": null,
+            "state": "done",
+            "dependency_ids": [],
+            "completion_summary": "Shipped v1",
+            "revision_id": "01a0a869-03fd-7107-aaa0-e476c3d18edf"
+          }
+        ]
+      },
+      "ts": "2026-09-16T04:10:49.747Z"
+    },
+    {
+      "name": "decision-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a869-041c-77b7-8f52-6bb1b2194731",
+          "project_id": "01a0a869-03aa-7496-b58e-660318865e2d",
+          "decision_key": "ship-strategy",
+          "statement": "Ship weekly",
+          "rationale": null,
+          "basis": "user_judgment",
+          "verification": "unreviewed",
+          "lifecycle": "draft",
+          "valid_from": null,
+          "valid_to": null,
+          "revision_id": "01a0a869-041c-77b7-8f52-6bb22b4298f3"
+        }
+      },
+      "ts": "2026-09-16T04:10:49.761Z"
+    },
+    {
+      "name": "decision-accept",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a869-041c-77b7-8f52-6bb1b2194731",
+          "project_id": "01a0a869-03aa-7496-b58e-660318865e2d",
+          "decision_key": "ship-strategy",
+          "statement": "Ship weekly",
+          "rationale": null,
+          "basis": "user_judgment",
+          "verification": "unreviewed",
+          "lifecycle": "accepted",
+          "valid_from": null,
+          "valid_to": null,
+          "revision_id": "01a0a869-0428-7303-956c-8b72d55b993f"
+        }
+      },
+      "ts": "2026-09-16T04:10:49.774Z"
+    },
+    {
+      "name": "relation-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a869-0437-77ba-b5ba-91fba690bd39",
+          "project_id": "01a0a869-03aa-7496-b58e-660318865e2d",
+          "relation_type": "relates_to",
+          "from_object_id": "01a0a869-03d8-7603-8683-6e5cefdf43b4",
+          "to_object_id": "01a0a869-041c-77b7-8f52-6bb1b2194731",
+          "note": "supports the plan"
+        }
+      },
+      "ts": "2026-09-16T04:10:49.788Z"
+    },
+    {
+      "name": "resume-view-sane",
+      "ok": true,
+      "detail": {
+        "nextActionIds": [],
+        "currentDecisionKeys": [
+          "ship-strategy"
+        ]
+      },
+      "ts": "2026-09-16T04:10:49.834Z"
+    },
+    {
+      "name": "project-archive",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a869-03aa-7496-b58e-660318865e2d",
+          "name": "Workflow Project",
+          "description": null,
+          "active": false
+        }
+      },
+      "ts": "2026-09-16T04:10:50.048Z"
+    },
+    {
+      "name": "archived-state-ui-text",
+      "ok": false,
+      "detail": {
+        "textSnippet": "Flake\n\nPhase T -- experimental, not a product. Everything stays local and offline.\n\nVault name (for Create / Restore)\nCreate new vault\nOpen existing vault\nRestore from backup"
+      },
+      "ts": "2026-09-16T04:10:50.869Z"
+    },
+    {
+      "name": "canonical-state-matches-cli",
+      "ok": false,
+      "detail": {
+        "error": "Error: Command failed: python C:\\Users\\Shehr\\work\\Flake\\docs\\evidence\\flake-v1\\T04-03\\e2e-test\\compare_canonical_state.py C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-03-e2e-i5yoDu\\cli-vault\\.fehrest\\canonical.sqlite C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-03-e2e-i5yoDu\\desktop-parent\\desktop-vault\\.fehrest\\canonical.sqlite\nTraceback (most recent call last):\r\n  File \"C:\\Users\\Shehr\\work\\Flake\\docs\\evidence\\flake-v1\\T04-03\\e2e-test\\compare_canonical_state.py\", line 23, in <module>\r\n    from sqlite_reader import read_vault  # noqa: E402\r\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nModuleNotFoundError: No module named 'sqlite_reader'\r\n"
+      },
+      "ts": "2026-09-16T04:10:51.429Z"
+    }
+  ]
+}

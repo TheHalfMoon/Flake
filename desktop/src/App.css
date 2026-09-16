@@ -81,3 +81,63 @@ input {
   padding: 0.5rem;
   min-height: 8rem;
 }
+
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin: 0.75rem 0;
+  border-bottom: 1px solid currentColor;
+}
+
+.tabs button {
+  border: none;
+  background: none;
+  padding: 0.4rem 0.6rem;
+  cursor: pointer;
+}
+
+.tab-active {
+  /* Never color-only: an underline plus bold weight, so the active tab
+     reads correctly for anyone who can't distinguish the color change. */
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+.state-label {
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+
+.action-transitions,
+.decision-transitions {
+  display: flex;
+  gap: 0.4rem;
+  margin: 0.25rem 0 0.75rem 0;
+  flex-wrap: wrap;
+}
+
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.confirm-box {
+  background: canvas;
+  color: canvastext;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  padding: 1rem;
+  max-width: 24rem;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}

@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { NoteEditor, type NoteInfo } from "./NoteEditor";
+import { ActionsPanel } from "./ActionsPanel";
+import { DecisionsPanel } from "./DecisionsPanel";
+import { RelationsPanel } from "./RelationsPanel";
+import { ResumePanel } from "./ResumePanel";
+import { SearchPanel } from "./SearchPanel";
+import { useConfirm } from "./Confirm";
+import type { ProjectSummary } from "./types";
 import "./App.css";
 
 interface VaultInfo {
@@ -8,12 +15,7 @@ interface VaultInfo {
   vault_id: string;
 }
 
-interface ProjectSummary {
-  id: string;
-  name: string;
-  description: string | null;
-  active: boolean;
-}
+type Tab = "notes" | "actions" | "decisions" | "search" | "resume";
 
 async function pickDirectory(): Promise<string | null> {
   return invoke<string | null>("pick_directory");
@@ -29,6 +31,8 @@ export default function App() {
   const [openProject, setOpenProject] = useState<ProjectSummary | null>(null);
   const [notes, setNotes] = useState<NoteInfo[]>([]);
   const [selectedNoteId, setSelectedNoteId] = useState<string | "new" | null>(null);
+  const [tab, setTab] = useState<Tab>("notes");
+  const { requestConfirm, confirmDialog } = useConfirm();
 
   async function refreshNotes(vaultPath: string, projectId: string) {
     try {
@@ -43,6 +47,7 @@ export default function App() {
     if (!vault) return;
     setOpenProject(p);
     setSelectedNoteId(null);
+    setTab("notes");
     await refreshNotes(vault.path, p.id);
   }
 
@@ -125,6 +130,32 @@ export default function App() {
     }
   }
 
+  async function handleArchiveToggle(p: ProjectSummary) {
+    if (!vault) return;
+    try {
+      if (p.active) {
+        await invoke("project_archive", { vaultPath: vault.path, projectId: p.id });
+      } else {
+        await invoke("project_unarchive", { vaultPath: vault.path, projectId: p.id });
+      }
+      await refreshProjects(vault);
+    } catch (e) {
+      setError(String(e));
+    }
+  }
+
+  async function handleNoteTombstoneToggle(n: NoteInfo, tombstoned: boolean) {
+    if (!vault || !openProject) return;
+    try {
+      const cmd = tombstoned ? "note_untombstone" : "note_tombstone";
+      await invoke(cmd, { vaultPath: vault.path, noteId: n.id, expectedRevisionId: n.revision_id });
+      setSelectedNoteId(null);
+      await refreshNotes(vault.path, openProject.id);
+    } catch (e) {
+      setError(String(e));
+    }
+  }
+
   if (!vault) {
     return (
       <main className="shell">
@@ -153,39 +184,82 @@ export default function App() {
       selectedNoteId && selectedNoteId !== "new" ? notes.find((n) => n.id === selectedNoteId) ?? null : null;
     return (
       <main className="shell">
+        {confirmDialog}
         <h1>Flake</h1>
         <button onClick={() => setOpenProject(null)}>&larr; Back to projects</button>
         <p className="notice">
           Project: {openProject.name}
           {openProject.description ? ` -- ${openProject.description}` : ""}
         </p>
-        <section>
-          <h2>Notes</h2>
-          <ul>
-            {notes.map((n) => (
-              <li key={n.id}>
-                <button onClick={() => setSelectedNoteId(n.id)}>{n.title || "(untitled)"}</button>
-              </li>
-            ))}
-          </ul>
-          <button onClick={() => setSelectedNoteId("new")}>New note</button>
-        </section>
-        {(selectedNoteId === "new" || selectedNote) && (
-          <section>
-            <NoteEditor
-              vaultPath={vault.path}
-              projectId={openProject.id}
-              note={selectedNote}
-              onSaved={(saved) => {
-                setNotes((prev) => {
-                  const exists = prev.some((n) => n.id === saved.id);
-                  return exists ? prev.map((n) => (n.id === saved.id ? saved : n)) : [...prev, saved];
-                });
-                setSelectedNoteId(saved.id);
-              }}
-            />
-          </section>
+        <nav className="tabs">
+          {(["notes", "actions", "decisions", "search", "resume"] as Tab[]).map((t) => (
+            <button
+              key={t}
+              className={tab === t ? "tab-active" : ""}
+              onClick={() => setTab(t)}
+              aria-current={tab === t}
+            >
+              {t[0].toUpperCase() + t.slice(1)}
+            </button>
+          ))}
+        </nav>
+
+        {tab === "notes" && (
+          <>
+            <section>
+              <h2>Notes</h2>
+              {notes.length === 0 ? (
+                <p>No notes yet.</p>
+              ) : (
+                <ul>
+                  {notes.map((n) => (
+                    <li key={n.id}>
+                      <button onClick={() => setSelectedNoteId(n.id)}>{n.title || "(untitled)"}</button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <button onClick={() => setSelectedNoteId("new")}>New note</button>
+            </section>
+            {(selectedNoteId === "new" || selectedNote) && (
+              <section>
+                <NoteEditor
+                  vaultPath={vault.path}
+                  projectId={openProject.id}
+                  note={selectedNote}
+                  onSaved={(saved) => {
+                    setNotes((prev) => {
+                      const exists = prev.some((n) => n.id === saved.id);
+                      return exists ? prev.map((n) => (n.id === saved.id ? saved : n)) : [...prev, saved];
+                    });
+                    setSelectedNoteId(saved.id);
+                  }}
+                />
+                {selectedNote && (
+                  <>
+                    <button
+                      onClick={() =>
+                        requestConfirm(
+                          `Tombstone note "${selectedNote.title || "(untitled)"}"? Its content is kept in history, but it will no longer be listed.`,
+                          () => void handleNoteTombstoneToggle(selectedNote, false)
+                        )
+                      }
+                    >
+                      Tombstone this note
+                    </button>
+                    <RelationsPanel vaultPath={vault.path} projectId={openProject.id} objectId={selectedNote.id} />
+                  </>
+                )}
+              </section>
+            )}
+          </>
         )}
+
+        {tab === "actions" && <ActionsPanel vaultPath={vault.path} projectId={openProject.id} />}
+        {tab === "decisions" && <DecisionsPanel vaultPath={vault.path} projectId={openProject.id} />}
+        {tab === "search" && <SearchPanel vaultPath={vault.path} projectId={openProject.id} />}
+        {tab === "resume" && <ResumePanel vaultPath={vault.path} projectId={openProject.id} />}
+
         {error && <p className="error">{error}</p>}
       </main>
     );
@@ -193,6 +267,7 @@ export default function App() {
 
   return (
     <main className="shell">
+      {confirmDialog}
       <h1>Flake</h1>
       <p className="notice">Vault: {vault.path}</p>
       <section>
@@ -205,9 +280,21 @@ export default function App() {
               <li key={p.id}>
                 <strong>{p.name}</strong>
                 {p.description ? ` -- ${p.description}` : ""}
-                {!p.active && " (archived)"}
                 {" "}
-                <button onClick={() => void handleOpenProject(p)}>Open</button>
+                <span className="state-label">{p.active ? "Active" : "Archived"}</span>{" "}
+                <button onClick={() => void handleOpenProject(p)}>Open</button>{" "}
+                <button
+                  onClick={() =>
+                    requestConfirm(
+                      p.active
+                        ? `Archive project "${p.name}"? It will be marked inactive; nothing is deleted.`
+                        : `Unarchive project "${p.name}"? It will be marked active again.`,
+                      () => void handleArchiveToggle(p)
+                    )
+                  }
+                >
+                  {p.active ? "Archive" : "Unarchive"}
+                </button>
               </li>
             ))}
           </ul>
