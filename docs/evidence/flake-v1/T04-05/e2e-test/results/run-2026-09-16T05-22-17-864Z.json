@@ -1,0 +1,498 @@
+{
+  "runId": "2026-09-16T05-22-17-864Z",
+  "overallOk": true,
+  "tmpRoot": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-05-e2e-85DAgE",
+  "vaultPath": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-05-e2e-85DAgE\\parent\\original-vault",
+  "steps": [
+    {
+      "name": "exe-exists",
+      "ok": true,
+      "detail": {
+        "path": "C:\\Users\\Shehr\\work\\Flake\\desktop\\src-tauri\\target\\debug\\flake-desktop.exe"
+      },
+      "ts": "2026-09-16T05:22:17.872Z"
+    },
+    {
+      "name": "vite-dev-server-ready",
+      "ok": true,
+      "detail": {},
+      "ts": "2026-09-16T05:22:20.377Z"
+    },
+    {
+      "name": "launch",
+      "ok": true,
+      "detail": {
+        "pid": 18520
+      },
+      "ts": "2026-09-16T05:22:20.390Z"
+    },
+    {
+      "name": "bridge-ready",
+      "ok": true,
+      "detail": {
+        "url": "http://localhost:1420/"
+      },
+      "ts": "2026-09-16T05:22:23.833Z"
+    },
+    {
+      "name": "vault-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "path": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-05-e2e-85DAgE\\parent\\original-vault",
+          "vault_id": "01a0a8aa-8a05-7294-89f1-b843bdd696d4"
+        }
+      },
+      "ts": "2026-09-16T05:22:23.939Z"
+    },
+    {
+      "name": "project-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a8aa-8a52-726b-a3dd-be65dba90717",
+          "name": "T04-05 Project",
+          "description": null,
+          "active": true
+        }
+      },
+      "ts": "2026-09-16T05:22:23.964Z"
+    },
+    {
+      "name": "note-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a8aa-8a77-77ad-a2c4-ed532d38c4e9",
+          "project_id": "01a0a8aa-8a52-726b-a3dd-be65dba90717",
+          "title": "Backup content",
+          "body": "This content must survive backup, restore, export, import and recovery unchanged.",
+          "revision_id": "01a0a8aa-8a77-77ad-a2c4-ed54eebc4bb0"
+        }
+      },
+      "ts": "2026-09-16T05:22:24.003Z"
+    },
+    {
+      "name": "filler-note-0",
+      "ok": true,
+      "detail": {
+        "ok": true
+      },
+      "ts": "2026-09-16T05:22:24.363Z"
+    },
+    {
+      "name": "filler-note-1",
+      "ok": true,
+      "detail": {
+        "ok": true
+      },
+      "ts": "2026-09-16T05:22:24.693Z"
+    },
+    {
+      "name": "filler-note-2",
+      "ok": true,
+      "detail": {
+        "ok": true
+      },
+      "ts": "2026-09-16T05:22:25.045Z"
+    },
+    {
+      "name": "filler-note-3",
+      "ok": true,
+      "detail": {
+        "ok": true
+      },
+      "ts": "2026-09-16T05:22:25.399Z"
+    },
+    {
+      "name": "original-vault-snapshot-before-backup",
+      "ok": true,
+      "detail": {
+        "transaction_head_seq": 6,
+        "vault_id": "01a0a8aa-8a05-7294-89f1-b843bdd696d4",
+        "object_count": 6,
+        "head_hash_chain_verified": true
+      },
+      "ts": "2026-09-16T05:22:25.856Z"
+    },
+    {
+      "name": "backup-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "source_root": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-05-e2e-85DAgE\\parent\\original-vault",
+          "backup_root": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-05-e2e-85DAgE\\backup-parent\\backup-1",
+          "manifest": {
+            "schema": "flake-backup-manifest-v1",
+            "kind": "full-backup",
+            "vault_id": "01a0a8aa-8a05-7294-89f1-b843bdd696d4",
+            "snapshot_head_seq": 6,
+            "snapshot_head_hash": "a8953bfb4f9cef37db213799175c45ca26f8414311cc33b122f0b62edffe5c1d",
+            "created_at": "2026-09-15T19346Z",
+            "members": [
+              {
+                "path": "vault.json",
+                "length": 157,
+                "sha256": "94f1dcfb041ca8de76fe9205b4ad67caf1f29142057fbe4c55ce138ecc4a92c3"
+              },
+              {
+                "path": "canonical.sqlite",
+                "length": 3244032,
+                "sha256": "57a3df45ce617f75ead8491b00d5ed18d496783b7925f05943e5598a53f33b78"
+              }
+            ],
+            "verified": true
+          }
+        }
+      },
+      "ts": "2026-09-16T05:22:26.408Z"
+    },
+    {
+      "name": "backup-members-independently-byte-verified",
+      "ok": true,
+      "detail": [
+        {
+          "path": "vault.json",
+          "expectedSha": "94f1dcfb041ca8de76fe9205b4ad67caf1f29142057fbe4c55ce138ecc4a92c3",
+          "actualSha": "94f1dcfb041ca8de76fe9205b4ad67caf1f29142057fbe4c55ce138ecc4a92c3",
+          "matches": true
+        },
+        {
+          "path": "canonical.sqlite",
+          "expectedSha": "57a3df45ce617f75ead8491b00d5ed18d496783b7925f05943e5598a53f33b78",
+          "actualSha": "57a3df45ce617f75ead8491b00d5ed18d496783b7925f05943e5598a53f33b78",
+          "matches": true
+        }
+      ],
+      "ts": "2026-09-16T05:22:26.416Z"
+    },
+    {
+      "name": "backup-no-clobber-refused",
+      "ok": true,
+      "detail": {
+        "ok": false,
+        "error": "backup error: backup destination already published: C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-05-e2e-85DAgE\\backup-parent\\backup-1\\.fehrest"
+      },
+      "ts": "2026-09-16T05:22:26.426Z"
+    },
+    {
+      "name": "original-vault-unchanged-after-backup",
+      "ok": true,
+      "detail": {
+        "before": {
+          "transaction_head_seq": 6,
+          "vault_id": "01a0a8aa-8a05-7294-89f1-b843bdd696d4",
+          "object_count": 6,
+          "head_hash_chain_verified": true
+        },
+        "after": {
+          "transaction_head_seq": 6,
+          "vault_id": "01a0a8aa-8a05-7294-89f1-b843bdd696d4",
+          "object_count": 6,
+          "head_hash_chain_verified": true
+        }
+      },
+      "ts": "2026-09-16T05:22:26.948Z"
+    },
+    {
+      "name": "restore-from-backup",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "backup_root": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-05-e2e-85DAgE\\backup-parent\\backup-1",
+          "restored_root": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-05-e2e-85DAgE\\restore-parent\\restored-vault",
+          "vault_id": "01a0a8aa-8a05-7294-89f1-b843bdd696d4",
+          "restored_transaction_head_seq": 6,
+          "restored_object_count": 6
+        }
+      },
+      "ts": "2026-09-16T05:22:27.308Z"
+    },
+    {
+      "name": "restored-vault-matches-original",
+      "ok": true,
+      "detail": {
+        "original": {
+          "transaction_head_seq": 6,
+          "vault_id": "01a0a8aa-8a05-7294-89f1-b843bdd696d4",
+          "object_count": 6,
+          "head_hash_chain_verified": true
+        },
+        "restored": {
+          "transaction_head_seq": 6,
+          "vault_id": "01a0a8aa-8a05-7294-89f1-b843bdd696d4",
+          "object_count": 6,
+          "head_hash_chain_verified": true
+        }
+      },
+      "ts": "2026-09-16T05:22:27.653Z"
+    },
+    {
+      "name": "cancel-nonexistent-operation-returns-false",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": false
+      },
+      "ts": "2026-09-16T05:22:27.670Z"
+    },
+    {
+      "name": "backup-cancellation-race-outcome",
+      "ok": true,
+      "detail": {
+        "raceOutcome": "genuinely-cancelled",
+        "raceBackupRes": {
+          "ok": false,
+          "error": "backup error: backup cancelled before publication"
+        },
+        "raceCancelRes": {
+          "ok": true,
+          "result": true
+        }
+      },
+      "ts": "2026-09-16T05:22:27.689Z"
+    },
+    {
+      "name": "cancelled-backup-left-no-published-destination",
+      "ok": true,
+      "detail": {
+        "raceDestExists": false
+      },
+      "ts": "2026-09-16T05:22:27.697Z"
+    },
+    {
+      "name": "export-preview",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "kind": "export-project",
+          "project_id": "01a0a8aa-8a52-726b-a3dd-be65dba90717",
+          "record_count": 6,
+          "revision_count": 6,
+          "snapshot_head_seq": 6
+        }
+      },
+      "ts": "2026-09-16T05:22:28.026Z"
+    },
+    {
+      "name": "export-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "dest_root": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-05-e2e-85DAgE\\export-parent\\export-1",
+          "manifest": {
+            "schema": "flake-export-manifest-v1",
+            "kind": "export-project",
+            "vault_id": "01a0a8aa-8a05-7294-89f1-b843bdd696d4",
+            "project_id": "01a0a8aa-8a52-726b-a3dd-be65dba90717",
+            "snapshot_head_seq": 6,
+            "snapshot_head_hash": "a8953bfb4f9cef37db213799175c45ca26f8414311cc33b122f0b62edffe5c1d",
+            "created_at": "2026-09-16T05:22:28Z",
+            "record_count": 6,
+            "revision_count": 6,
+            "omissions": [],
+            "members": [
+              {
+                "path": "README.md",
+                "length": 1438,
+                "sha256": "7dd124a2a679a5d93868df7c2c9dbce9a8082f1144ab2a0f9920d9be1248808c"
+              },
+              {
+                "path": "revisions/01a0a8aa-8a52-726b-a3dd-be65dba90717/1-01a0a8aa-8a52-726b-a3dd-be663b275844.json",
+                "length": 529,
+                "sha256": "e74eb3b14449e0fdf17de5cf0d6e483f25fb4c4ff1bc8554068ac41ddc0bd14f"
+              },
+              {
+                "path": "revisions/01a0a8aa-8a77-77ad-a2c4-ed532d38c4e9/2-01a0a8aa-8a77-77ad-a2c4-ed54eebc4bb0.json",
+                "length": 659,
+                "sha256": "7a421be844d1cb3788e907d5047c5cf34e22356230bd1d3ddd9a2f4000af2a75"
+              },
+              {
+                "path": "revisions/01a0a8aa-8a77-77ad-a2c4-ed532d38c4e9/2-01a0a8aa-8a77-77ad-a2c4-ed54eebc4bb0.md",
+                "length": 81,
+                "sha256": "4bbeb7d8ee1cb0d35b99d748d3fd99731f2d84593f34d5cdd1fc9426b6996c97"
+              },
+              {
+                "path": "revisions/01a0a8aa-8b5d-70bd-a4e4-7cb6804cf63f/3-01a0a8aa-8b5d-70bd-a4e4-7cb7daad7bad.json",
+                "length": 800572,
+                "sha256": "a7f5c77d6e3485cea214d167231f72a3db102608a80c2b2f87f097f25ceb7fad"
+              },
+              {
+                "path": "revisions/01a0a8aa-8b5d-70bd-a4e4-7cb6804cf63f/3-01a0a8aa-8b5d-70bd-a4e4-7cb7daad7bad.md",
+                "length": 800000,
+                "sha256": "cafb091ba391cae6f99dac0e615c4b76614b5bf6d8c33c70f5569b75bf8c3218"
+              },
+              {
+                "path": "revisions/01a0a8aa-8cb5-7435-a477-55f1c2ae99ba/4-01a0a8aa-8cb5-7435-a477-55f203ffd2e1.json",
+                "length": 800572,
+                "sha256": "a2f782062adcd7f458515971345dff7430af6048f659ef14de9181ea117f44bf"
+              },
+              {
+                "path": "revisions/01a0a8aa-8cb5-7435-a477-55f1c2ae99ba/4-01a0a8aa-8cb5-7435-a477-55f203ffd2e1.md",
+                "length": 800000,
+                "sha256": "cafb091ba391cae6f99dac0e615c4b76614b5bf6d8c33c70f5569b75bf8c3218"
+              },
+              {
+                "path": "revisions/01a0a8aa-8de8-738c-8ce3-d28137d448e4/5-01a0a8aa-8de8-738c-8ce3-d282bbe5d5cc.json",
+                "length": 800572,
+                "sha256": "f73aa71a8fdd47ba7e61cfdbf4d893779970ee2fd86f6e6e7759992dd166d27f"
+              },
+              {
+                "path": "revisions/01a0a8aa-8de8-738c-8ce3-d28137d448e4/5-01a0a8aa-8de8-738c-8ce3-d282bbe5d5cc.md",
+                "length": 800000,
+                "sha256": "cafb091ba391cae6f99dac0e615c4b76614b5bf6d8c33c70f5569b75bf8c3218"
+              },
+              {
+                "path": "revisions/01a0a8aa-8f4e-7078-8969-5a593839df8a/6-01a0a8aa-8f4e-7078-8969-5a5a8cdc4cbc.json",
+                "length": 800572,
+                "sha256": "9fc0a3c2a1ffd3098dc30c33fc0c158a37c41744c32d0ffe1b35a037750e77ff"
+              },
+              {
+                "path": "revisions/01a0a8aa-8f4e-7078-8969-5a593839df8a/6-01a0a8aa-8f4e-7078-8969-5a5a8cdc4cbc.md",
+                "length": 800000,
+                "sha256": "cafb091ba391cae6f99dac0e615c4b76614b5bf6d8c33c70f5569b75bf8c3218"
+              }
+            ],
+            "integrity_root": "164145fc69e531d8dddabed0ee0ac7b27b2d7a643959f3ea2e93122b6d3bf9b6"
+          }
+        }
+      },
+      "ts": "2026-09-16T05:22:28.970Z"
+    },
+    {
+      "name": "export-independently-verified",
+      "ok": true,
+      "detail": {
+        "record_count": 6,
+        "dangling_references": [],
+        "manifest_kind": "export-project",
+        "manifest_integrity_root": "164145fc69e531d8dddabed0ee0ac7b27b2d7a643959f3ea2e93122b6d3bf9b6"
+      },
+      "ts": "2026-09-16T05:22:29.436Z"
+    },
+    {
+      "name": "second-vault-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "path": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-05-e2e-85DAgE\\second-vault-parent\\second-vault",
+          "vault_id": "01a0a8aa-9fc6-701b-9eb6-690ce720f671"
+        }
+      },
+      "ts": "2026-09-16T05:22:29.480Z"
+    },
+    {
+      "name": "import-preview",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "kind": "export-project",
+          "source_vault_id": "01a0a8aa-8a05-7294-89f1-b843bdd696d4",
+          "project_id": "01a0a8aa-8a52-726b-a3dd-be65dba90717",
+          "record_count": 6,
+          "revision_count": 6,
+          "conflicts": []
+        }
+      },
+      "ts": "2026-09-16T05:22:30.150Z"
+    },
+    {
+      "name": "import-selected-merge",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "dest_root": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-05-e2e-85DAgE\\second-vault-parent\\second-vault",
+          "mode": "selected-merge",
+          "imported_object_count": 6,
+          "imported_revision_count": 6,
+          "id_map": {
+            "01a0a8aa-8f4e-7078-8969-5a593839df8a": "01a0a8aa-a793-7718-86de-f71f7df66d98",
+            "01a0a8aa-8de8-738c-8ce3-d28137d448e4": "01a0a8aa-a702-71ab-9f71-4f276721b745",
+            "01a0a8aa-8a77-77ad-a2c4-ed532d38c4e9": "01a0a8aa-a501-71ed-95ca-2c96c7b2f7b2",
+            "01a0a8aa-8cb5-7435-a477-55f1c2ae99ba": "01a0a8aa-a62e-761a-ab8d-d8e4692e5313",
+            "01a0a8aa-8a52-726b-a3dd-be65dba90717": "01a0a8aa-a4b8-74a9-b3dd-5e638b68a7a0",
+            "01a0a8aa-8b5d-70bd-a4e4-7cb6804cf63f": "01a0a8aa-a584-72e1-9bc6-a65620d4a0db"
+          }
+        }
+      },
+      "ts": "2026-09-16T05:22:31.638Z"
+    },
+    {
+      "name": "imported-project-visible-with-new-identity",
+      "ok": true,
+      "detail": {
+        "id": "01a0a8aa-a4b8-74a9-b3dd-5e638b68a7a0",
+        "name": "T04-05 Project",
+        "description": null,
+        "active": true
+      },
+      "ts": "2026-09-16T05:22:31.767Z"
+    },
+    {
+      "name": "imported-note-content-matches",
+      "ok": true,
+      "detail": {
+        "id": "01a0a8aa-a501-71ed-95ca-2c96c7b2f7b2",
+        "project_id": "01a0a8aa-a4b8-74a9-b3dd-5e638b68a7a0",
+        "title": "Backup content",
+        "body": "This content must survive backup, restore, export, import and recovery unchanged.",
+        "revision_id": "01a0a8aa-a501-71ed-95ca-2c97b3de94af"
+      },
+      "ts": "2026-09-16T05:22:32.343Z"
+    },
+    {
+      "name": "import-preview-unsupported-directory-refused-cleanly",
+      "ok": true,
+      "detail": {
+        "ok": false,
+        "error": "vault error: cannot read C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-05-e2e-85DAgE\\empty-not-a-package\\.fehrest-export\\export-manifest.json: The system cannot find the path specified. (os error 3)"
+      },
+      "ts": "2026-09-16T05:22:32.358Z"
+    },
+    {
+      "name": "vault-recover",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "original_root": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-05-e2e-85DAgE\\parent\\original-vault",
+          "recovered_root": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-05-e2e-85DAgE\\recover-parent\\recovered-vault",
+          "vault_id": "01a0a8aa-8a05-7294-89f1-b843bdd696d4",
+          "preserved_at": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-05-e2e-85DAgE\\parent\\original-vault\\.fehrest\\recovery-preserved-01a0a8aa-ab38-7049-8018-5dc96782a5e9",
+          "verified_transaction_head_seq": 6,
+          "verified_object_count": 6
+        }
+      },
+      "ts": "2026-09-16T05:22:32.596Z"
+    },
+    {
+      "name": "recovered-vault-matches-and-original-unchanged",
+      "ok": true,
+      "detail": {
+        "recovered": {
+          "transaction_head_seq": 6,
+          "vault_id": "01a0a8aa-8a05-7294-89f1-b843bdd696d4",
+          "object_count": 6,
+          "head_hash_chain_verified": true
+        },
+        "originalAfter": {
+          "transaction_head_seq": 6,
+          "vault_id": "01a0a8aa-8a05-7294-89f1-b843bdd696d4",
+          "object_count": 6,
+          "head_hash_chain_verified": true
+        }
+      },
+      "ts": "2026-09-16T05:22:33.774Z"
+    }
+  ]
+}

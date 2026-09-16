@@ -9,6 +9,7 @@ import { SearchPanel } from "./SearchPanel";
 import { SourcesPanel } from "./SourcesPanel";
 import { GrantsPanel } from "./GrantsPanel";
 import { ProposalsPanel } from "./ProposalsPanel";
+import { DataManagementPanel } from "./DataManagementPanel";
 import { useConfirm } from "./Confirm";
 import type { ProjectSummary } from "./types";
 import "./App.css";
@@ -18,7 +19,7 @@ interface VaultInfo {
   vault_id: string;
 }
 
-type Tab = "notes" | "actions" | "decisions" | "search" | "resume" | "sources" | "grants" | "proposals";
+type Tab = "notes" | "actions" | "decisions" | "search" | "resume" | "sources" | "grants" | "proposals" | "data";
 
 async function pickDirectory(): Promise<string | null> {
   return invoke<string | null>("pick_directory");
@@ -195,7 +196,7 @@ export default function App() {
           {openProject.description ? ` -- ${openProject.description}` : ""}
         </p>
         <nav className="tabs">
-          {(["notes", "actions", "decisions", "search", "resume", "sources", "grants", "proposals"] as Tab[]).map((t) => (
+          {(["notes", "actions", "decisions", "search", "resume", "sources", "grants", "proposals", "data"] as Tab[]).map((t) => (
             <button
               key={t}
               className={tab === t ? "tab-active" : ""}
@@ -265,6 +266,7 @@ export default function App() {
         {tab === "sources" && <SourcesPanel vaultPath={vault.path} projectId={openProject.id} />}
         {tab === "grants" && <GrantsPanel vaultPath={vault.path} projectId={openProject.id} />}
         {tab === "proposals" && <ProposalsPanel vaultPath={vault.path} projectId={openProject.id} />}
+        {tab === "data" && <DataManagementPanel vaultPath={vault.path} projectId={openProject.id} />}
 
         {error && <p className="error">{error}</p>}
       </main>

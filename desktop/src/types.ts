@@ -206,6 +206,90 @@ export type ProposedOperation =
     }
   | { kind: "complete_action"; action_id: string; expected_revision_id: string; summary: string };
 
+export interface ManifestMember {
+  path: string;
+  length: number;
+  sha256: string;
+}
+
+export interface BackupManifest {
+  schema: string;
+  kind: string;
+  vault_id: string;
+  snapshot_head_seq: number;
+  snapshot_head_hash: string | null;
+  created_at: string;
+  members: ManifestMember[];
+  verified: boolean;
+}
+
+export interface BackupReport {
+  source_root: string;
+  backup_root: string;
+  manifest: BackupManifest;
+}
+
+export interface RestoreReport {
+  backup_root: string;
+  restored_root: string;
+  vault_id: string;
+  restored_transaction_head_seq: number;
+  restored_object_count: number;
+}
+
+export interface RecoveryReport {
+  original_root: string;
+  recovered_root: string;
+  vault_id: string;
+  preserved_at: string;
+  verified_transaction_head_seq: number;
+}
+
+export interface ExportManifest {
+  schema: string;
+  kind: string;
+  vault_id: string;
+  project_id: string | null;
+  snapshot_head_seq: number;
+  snapshot_head_hash: string | null;
+  created_at: string;
+  record_count: number;
+  revision_count: number;
+  omissions: string[];
+  members: ManifestMember[];
+  integrity_root: string;
+}
+
+export interface ExportReport {
+  dest_root: string;
+  manifest: ExportManifest;
+}
+
+export interface ExportPreview {
+  kind: string;
+  project_id: string | null;
+  record_count: number;
+  revision_count: number;
+  snapshot_head_seq: number;
+}
+
+export interface ImportPreview {
+  kind: string;
+  source_vault_id: string;
+  project_id: string | null;
+  record_count: number;
+  revision_count: number;
+  conflicts: string[];
+}
+
+export interface ImportReport {
+  dest_root: string;
+  mode: string;
+  imported_object_count: number;
+  imported_revision_count: number;
+  id_map: Record<string, string>;
+}
+
 export interface ProposalEntry {
   id: string;
   project_id: string;

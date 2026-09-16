@@ -88,7 +88,7 @@ fn now_iso8601_placeholder() -> String {
 
 /// What a successful recovery actually did and verified — never a bare
 /// "PASS" (§28: no `PASS`/`SAFE` claim without exact supporting detail).
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct RecoveryReport {
     pub original_root: PathBuf,
     pub recovered_root: PathBuf,

@@ -13,8 +13,8 @@ CANONICAL_BUILD_PLAN=docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md
 CANONICAL_BUILD_PLAN_SHA256=b555f83ff12882ae6f55f90bbeaa411de52b84661a7f3953350cbfc6bd789fb2
 CANONICAL_PLAN_REMOTE_STATUS=MIGRATED_TO_GITHUB
 CANONICAL_PLAN_LOCAL_DEPENDENCY=NONE
-ACTIVE_IMPLEMENTATION_UNIT=T04-05
-NEXT_DEPENDENCY_READY_UNIT=T04-05
+ACTIVE_IMPLEMENTATION_UNIT=T04-06
+NEXT_DEPENDENCY_READY_UNIT=T04-06
 FOUNDER_DECISION_NO_HUMAN_GATES=docs/canonical/FOUNDER_NO_HUMAN_QUALIFICATION_GATES_2026-09-16.md
 FOUNDER_DECISION_WEBVIEW2_NETWORK_BOUNDARY=docs/canonical/FOUNDER_WEBVIEW2_NETWORK_BOUNDARY_2026-09-16.md
 T03-08_EXECUTION_CONTRACT=AUTOMATED_CONTINUITY_QUALIFICATION
@@ -37,7 +37,10 @@ T04-03_EVIDENCE=docs/evidence/flake-v1/T04-03/REPORT.md
 T04-03_MERGE_COMMIT=bd3c3930ab235f00e385d72a1f3f3693b3a3e6b1
 T04-04_STATUS=COMPLETE
 T04-04_EVIDENCE=docs/evidence/flake-v1/T04-04/REPORT.md
-T04-04_MERGE_COMMIT=PENDING_PR_MERGE
+T04-04_MERGE_COMMIT=7eb19a2275fd85b4059a9fc7660175db08e5d1b3
+T04-05_STATUS=COMPLETE
+T04-05_EVIDENCE=docs/evidence/flake-v1/T04-05/REPORT.md
+T04-05_MERGE_COMMIT=PENDING_PR_MERGE
 P01_STATUS=CLOSED
 T00-01_STATUS=COMPLETE
 T00-01_EVIDENCE=docs/evidence/flake-v1/T00-01/REPORT.md
@@ -140,7 +143,7 @@ The historical local-only planning SHAs `4246f6d...` and `852e44b...` are proven
 
 ## Next action
 
-**`T04-05` is dependency-ready.** `T04-04` closed COMPLETE (see below); read `docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` section 26/T04-05's own task row before starting.
+**`T04-06` is dependency-ready.** `T04-05` closed COMPLETE (see below); read `docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` section 26/T04-06's own task row before starting.
 
 Preserved historical blocker record (superseded, not deleted -- the underlying WebView2 observation itself remains true and unchanged):
 
@@ -165,6 +168,8 @@ RESOLUTION=founder ruled OPTION_1_AMENDED: the acceptance clause is read,
   WEBVIEW2_PLATFORM_BACKGROUND_TRAFFIC=OBSERVED remains true and is recorded
   as a documented platform limitation, not a Flake product failure
 ```
+
+`T04-05` closed: backup, recovery, import and export exposed safely from the desktop. Additive-only `src/` change: `#[derive(Serialize)]` on `backup.rs`'s `BackupReport`/`RestoreReport`, `recovery.rs`'s `RecoveryReport`, `export.rs`'s `ExportReport`/`ExportPreview`, `import.rs`'s `ImportPreview`/`ImportReport` -- zero logic change, confirmed by the unchanged 326/326 Rust suite. 9 new typed desktop commands: `vault_backup` (genuinely cancellable -- a real `Arc<AtomicBool>` flag checked inside Core's own copy loop, run via `spawn_blocking` so a concurrent `cancel_operation` call can actually land) / `vault_restore_from_backup`, `vault_recover`, `export_preview`/`vault_export`, `import_preview`/`vault_import_selected` (merge into an *existing* vault, distinct from `T04-01`'s `vault_restore` into a brand-new one). No new native dialog capability -- every destination/source reuses `T04-01`'s already-admitted `pick_directory`. Verified via a scripted E2E combining this task's own two named techniques: independent SHA-256 byte verification of every backup/export member (never trusting Core's own `verified` flag alone) and original-vault comparison (reading the source vault directly before/after every operation via T02-07's unmodified `sqlite_reader.py`, proving it is untouched). A genuinely-raced concurrent cancellation actually interrupted a backup mid-flight on the qualifying run, confirmed to leave no published destination. Full details: `docs/evidence/flake-v1/T04-05/REPORT.md`.
 
 `T04-04` closed: resumption and agent review as one evidence-linked flow. No `src/` change -- every Core capability this task exposes (`checkpoint.rs`/`grant.rs`/`disclosure.rs`/`proposal.rs`/`source_check.rs`) was already built, tested, and `Serialize`-ready from `T03-01`/`T03-03`/`T03-04`/`T03-05`. 13 new typed desktop commands: checkpoint mark/reset (behind an explicit, named confirmation -- "no accidental checkpoint"), full source-status listing/checking (generalizing `resume()`'s own stale-evidence scan to every source, not only non-`Match` ones), grant issue/revoke, package preview (no receipt persisted) and compile (receipt-before-emission, persisted, still no file write -- the destination-file write itself is `T04-05`'s own scope), and full proposal review (admit by pasting raw text -- no new native file-open dialog -- list/accept-selected/reject). "Desktop package/proposal result matches CLI" is proven as genuine same-vault interoperability in both directions (a desktop-issued grant/receipt admitted+accepted via the CLI, and a CLI-issued grant/receipt admitted+accepted via the desktop bridge), plus byte-identical deterministic package compilation (`emitted_sha256` equality) between the CLI and desktop code paths on an identical grant/request. A real security property was confirmed live rather than assumed: accepting a proposal's `DraftDecision` operation only admits a `Draft`-lifecycle decision -- it never auto-grants `Accepted` authority; only a separate, explicit owner `decision_accept` call does, confirmed visible to the CLI only after that separate call (§16 "agent content is evidence, never authority"). This task's own E2E run also found and fixed two real bugs: a same-second timestamp tie-break bug in the new `list_sources` (fixed to tie-break on the check object's own UUIDv7 ID) and a missing struct-level `#[serde(default)]` on a bundled options struct. Full details: `docs/evidence/flake-v1/T04-04/REPORT.md`.
 

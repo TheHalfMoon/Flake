@@ -1,0 +1,14 @@
+[2026-09-16T05:21:45.147Z] === T04-05 backup/recovery/import/export E2E run 2026-09-16T05-21-45-138Z ===
+[2026-09-16T05:21:45.150Z] STEP OK   exe-exists :: {"path":"C:\\Users\\Shehr\\work\\Flake\\desktop\\src-tauri\\target\\debug\\flake-desktop.exe"}
+[2026-09-16T05:21:46.966Z] STEP OK   vite-dev-server-ready :: {}
+[2026-09-16T05:21:48.053Z] STEP OK   launch :: {"pid":3332}
+[2026-09-16T05:21:50.561Z] STEP OK   bridge-ready :: {"url":"http://localhost:1420/"}
+[2026-09-16T05:21:50.624Z] STEP OK   vault-create :: {"ok":true,"result":{"path":"C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-05-e2e-k63Eg4\\parent\\original-vault","vault_id":"01a0a8aa-07f6-7524-9e0d-10fda7b33819"}}
+[2026-09-16T05:21:50.647Z] STEP OK   project-create :: {"ok":true,"result":{"id":"01a0a8aa-082a-77a4-a418-d696913e15a2","name":"T04-05 Project","description":null,"active":true}}
+[2026-09-16T05:21:50.663Z] STEP OK   note-create :: {"ok":true,"result":{"id":"01a0a8aa-0841-73db-9617-b8562e098319","project_id":"01a0a8aa-082a-77a4-a418-d696913e15a2","title":"Backup content","body":"This content must survive backup, restore, export, import and recovery unchanged.","revision_id":"01a0a8aa-0841-73db-9617-b857b1dfaf0e"}}
+[2026-09-16T05:21:50.819Z] STEP OK   filler-note-0 :: {"ok":true}
+[2026-09-16T05:21:51.015Z] STEP OK   filler-note-1 :: {"ok":true}
+[2026-09-16T05:21:51.155Z] STEP OK   filler-note-2 :: {"ok":true}
+[2026-09-16T05:21:51.275Z] STEP OK   filler-note-3 :: {"ok":true}
+[2026-09-16T05:21:51.427Z] STEP FAIL desktop-workflow :: {"error":"Error: Command failed: python -c \nimport sys, json\nsys.path.insert(0, \"C:\\\\Users\\\\Shehr\\\\work\\\\Flake\\\\tools\\\\independent-verify\")\nfrom sqlite_reader import read_vault\nresult = read_vault(\"C:\\\\Users\\\\Shehr\\\\AppData\\\\Local\\\\Temp\\\\flake-t04-05-e2e-k63Eg4\\\\parent\\\\original-vault\\\\.fehrest\\\\canonical.sqlite\")\nprint(json.dumps({\n    \"transaction_head_seq\": result[\"vault_row\"][\"transaction_head_seq\"],\n    \"vault_id\": result[\"vault_row\"][\"vault_id\"],\n    \"object_count\": len(result[\"current_object\"]),\n    \"head_hash_chain_verified\
+[2026-09-16T05:21:51.728Z] === run complete. overallOk=false. json=C:\Users\Shehr\work\Flake\docs\evidence\flake-v1\T04-05\e2e-test\results\run-2026-09-16T05-21-45-138Z.json log=C:\Users\Shehr\work\Flake\docs\evidence\flake-v1\T04-05\e2e-test\results\run-2026-09-16T05-21-45-138Z.log ===
