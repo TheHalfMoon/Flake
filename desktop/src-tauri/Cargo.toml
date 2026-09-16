@@ -24,7 +24,21 @@ tauri-build = { version = "=2.6.3", default-features = false, features = [] }
 
 [dependencies]
 tauri = { version = "=2.11.5", default-features = false, features = ["wry", "common-controls-v6"] }
-tauri-plugin-dialog = { version = "=2.7.3", default-features = false }
+# `default-features = false` deliberately scopes this crate down from
+# tauri-plugin-dialog's own upstream defaults (T04-01's own minimization
+# choice) -- but its own default feature set is exactly what selects a
+# native dialog *backend* on Linux (`gtk3`, enabling `rfd`'s own `gtk3`
+# feature transitively); disabling defaults without re-adding a backend
+# left `rfd` -- the crate this plugin uses internally for the native
+# folder picker `pick_directory` already relies on, T04-01's own sole
+# native capability -- with zero backend selected at all on Linux,
+# which is a hard build failure there (`rfd`'s own build script: "You
+# need to choose at least one backend: gtk3 or xdg-portal features"),
+# not merely a runtime behavior difference. `gtk3` is re-added narrowly:
+# it only pulls in GTK toolkit *bindings* for the dialog this crate
+# already shows, not any new capability -- Windows/macOS need no
+# backend feature here (their native dialogs are always available).
+tauri-plugin-dialog = { version = "=2.7.3", default-features = false, features = ["gtk3"] }
 serde = { version = "1", default-features = false, features = ["derive", "std"] }
 serde_json = { version = "1", default-features = false, features = ["std"] }
 fehrest = { path = "../.." }
