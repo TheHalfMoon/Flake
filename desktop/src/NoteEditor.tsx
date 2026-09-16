@@ -175,6 +175,7 @@ export function NoteEditor({
       ) : (
         <textarea
           className="note-body"
+          aria-label="Note body"
           value={body}
           onChange={(e) => markDirty(title, e.target.value)}
           rows={16}

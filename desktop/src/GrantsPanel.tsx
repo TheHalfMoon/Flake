@@ -189,7 +189,13 @@ export function GrantsPanel({ vaultPath, projectId }: { vaultPath: string; proje
               ))}
             </ul>
           )}
-          <textarea className="note-body" readOnly value={preview.wire} rows={10} />
+          <textarea
+            className="note-body"
+            aria-label="Previewed package wire content"
+            readOnly
+            value={preview.wire}
+            rows={10}
+          />
         </div>
       )}
 
@@ -199,7 +205,13 @@ export function GrantsPanel({ vaultPath, projectId }: { vaultPath: string; proje
             Receipt persisted: {compiled.receipt_id} -- selected: {compiled.receipt.selected.length}, emitted{" "}
             {compiled.receipt.emitted_byte_count} bytes (sha256 {compiled.receipt.emitted_sha256.slice(0, 12)}…)
           </p>
-          <textarea className="note-body" readOnly value={compiled.wire} rows={10} />
+          <textarea
+            className="note-body"
+            aria-label="Compiled package wire content"
+            readOnly
+            value={compiled.wire}
+            rows={10}
+          />
         </div>
       )}
 

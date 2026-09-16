@@ -1,0 +1,430 @@
+{
+  "runId": "2026-09-16T06-51-15-975Z",
+  "overallOk": true,
+  "tmpRoot": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-06-golden-eyZsXM",
+  "vaultPath": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-06-golden-eyZsXM\\parent\\golden-vault",
+  "steps": [
+    {
+      "name": "exe-exists",
+      "ok": true,
+      "detail": {
+        "path": "C:\\Users\\Shehr\\work\\Flake\\desktop\\src-tauri\\target\\debug\\flake-desktop.exe"
+      },
+      "ts": "2026-09-16T06:51:15.991Z"
+    },
+    {
+      "name": "vite-dev-server-ready",
+      "ok": true,
+      "detail": {},
+      "ts": "2026-09-16T06:51:19.180Z"
+    },
+    {
+      "name": "launch-1",
+      "ok": true,
+      "detail": {
+        "pid": 16868
+      },
+      "ts": "2026-09-16T06:51:22.536Z"
+    },
+    {
+      "name": "create-vault",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "path": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-06-golden-eyZsXM\\parent\\golden-vault",
+          "vault_id": "01a0a8fc-0043-725a-90ab-57ce995629fa"
+        }
+      },
+      "ts": "2026-09-16T06:51:22.607Z"
+    },
+    {
+      "name": "create-project",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a8fc-0079-707a-96f1-14f75e267bb5",
+          "name": "Golden Path Project",
+          "description": null,
+          "active": true
+        }
+      },
+      "ts": "2026-09-16T06:51:22.626Z"
+    },
+    {
+      "name": "capture-note",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a8fc-0091-716c-a265-a99f5583a446",
+          "project_id": "01a0a8fc-0079-707a-96f1-14f75e267bb5",
+          "title": "Capture step",
+          "body": "Captured content.",
+          "revision_id": "01a0a8fc-0091-716c-a265-a9a0183e8dd1"
+        }
+      },
+      "ts": "2026-09-16T06:51:22.648Z"
+    },
+    {
+      "name": "evidence-source-import",
+      "ok": true,
+      "detail": {
+        "sourceId": "01a0a8fc-023e-7bb1-88ef-e5f16a226a19"
+      },
+      "ts": "2026-09-16T06:51:23.080Z"
+    },
+    {
+      "name": "evidence-relation-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a8fc-0253-7646-8fc8-c7b764f9b3c2",
+          "project_id": "01a0a8fc-0079-707a-96f1-14f75e267bb5",
+          "relation_type": "supports",
+          "from_object_id": "01a0a8fc-023e-7bb1-88ef-e5f16a226a19",
+          "to_object_id": "01a0a8fc-0091-716c-a265-a99f5583a446",
+          "note": "supports the capture"
+        }
+      },
+      "ts": "2026-09-16T06:51:23.097Z"
+    },
+    {
+      "name": "action-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a8fc-0263-737e-ba29-dce290bf3257",
+          "project_id": "01a0a8fc-0079-707a-96f1-14f75e267bb5",
+          "title": "Golden action",
+          "body": null,
+          "state": "open",
+          "dependency_ids": [],
+          "completion_summary": null,
+          "revision_id": "01a0a8fc-0263-737e-ba29-dce303889cd0"
+        }
+      },
+      "ts": "2026-09-16T06:51:23.115Z"
+    },
+    {
+      "name": "action-complete",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a8fc-0263-737e-ba29-dce290bf3257",
+          "project_id": "01a0a8fc-0079-707a-96f1-14f75e267bb5",
+          "title": "Golden action",
+          "body": null,
+          "state": "done",
+          "dependency_ids": [],
+          "completion_summary": "done",
+          "revision_id": "01a0a8fc-0281-74da-bae3-aa3c5eaceb42"
+        }
+      },
+      "ts": "2026-09-16T06:51:23.145Z"
+    },
+    {
+      "name": "decision-accept",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a8fc-0290-72fa-a437-bac2520592d2",
+          "project_id": "01a0a8fc-0079-707a-96f1-14f75e267bb5",
+          "decision_key": "golden-decision",
+          "statement": "Golden statement",
+          "rationale": null,
+          "basis": "user_judgment",
+          "verification": "unreviewed",
+          "lifecycle": "accepted",
+          "valid_from": null,
+          "valid_to": null,
+          "revision_id": "01a0a8fc-029f-7507-b29f-2cfbdab45749"
+        }
+      },
+      "ts": "2026-09-16T06:51:23.174Z"
+    },
+    {
+      "name": "keyboard-every-interactive-element-individually-focusable",
+      "ok": true,
+      "detail": [
+        {
+          "tag": "INPUT",
+          "text": "my-project-vault",
+          "focusable": true
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Create new vault",
+          "focusable": true
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Open existing vault",
+          "focusable": true
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Restore from backup",
+          "focusable": true
+        }
+      ],
+      "ts": "2026-09-16T06:51:23.180Z"
+    },
+    {
+      "name": "keyboard-ctrl-s-handler-present-in-source",
+      "ok": true,
+      "detail": {
+        "checked": "NoteEditor.tsx handleKeyDown"
+      },
+      "ts": "2026-09-16T06:51:23.186Z"
+    },
+    {
+      "name": "zoom-200-percent-no-horizontal-overflow",
+      "ok": true,
+      "detail": {
+        "scrollWidth": 1000,
+        "clientWidth": 1000
+      },
+      "ts": "2026-09-16T06:51:23.412Z"
+    },
+    {
+      "name": "resume-view",
+      "ok": true,
+      "detail": {
+        "headSeq": 9
+      },
+      "ts": "2026-09-16T06:51:23.434Z"
+    },
+    {
+      "name": "resume-checkpoint-mark",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a8fc-03b9-71a7-a47a-eeae3f8beb3e",
+          "payload_schema_version": 1,
+          "project_id": "01a0a8fc-0079-707a-96f1-14f75e267bb5",
+          "owner": "owner",
+          "reviewed_through_seq": 9,
+          "reset_reason": null,
+          "revision_id": "01a0a8fc-03b9-71a7-a47a-eeaf00de44f8"
+        }
+      },
+      "ts": "2026-09-16T06:51:23.460Z"
+    },
+    {
+      "name": "interrupt-kill",
+      "ok": true,
+      "detail": {
+        "pid": 16868
+      },
+      "ts": "2026-09-16T06:51:23.779Z"
+    },
+    {
+      "name": "interrupt-relaunch",
+      "ok": true,
+      "detail": {
+        "pid": 7808
+      },
+      "ts": "2026-09-16T06:51:24.835Z"
+    },
+    {
+      "name": "interrupt-content-survived",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": [
+          {
+            "id": "01a0a8fc-0091-716c-a265-a99f5583a446",
+            "project_id": "01a0a8fc-0079-707a-96f1-14f75e267bb5",
+            "title": "Capture step",
+            "body": "Captured content.",
+            "revision_id": "01a0a8fc-0091-716c-a265-a9a0183e8dd1"
+          }
+        ]
+      },
+      "ts": "2026-09-16T06:51:24.857Z"
+    },
+    {
+      "name": "proposal-admit-and-accept",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a8fc-096e-74c7-81a7-f4df72845c9d",
+          "payload_schema_version": 1,
+          "project_id": "01a0a8fc-0079-707a-96f1-14f75e267bb5",
+          "receipt_id": "01a0a8fc-095b-77ca-96ad-2f0f36e293c5",
+          "declared_agent": "golden-agent",
+          "declared_model": null,
+          "declared_tool": null,
+          "inbound_sha256": "be5581fe7530155d85765e5a5e6b65b7fd3a60fc257af456dac1596f9f8899f3",
+          "inbound_byte_count": 198,
+          "raw_bytes_utf8": "{\"receipt_id\":\"01a0a8fc-095b-77ca-96ad-2f0f36e293c5\",\"declared_agent\":\"golden-agent\",\"operations\":[{\"kind\":\"draft_decision\",\"decision_key\":\"golden-proposed\",\"statement\":\"Proposed via golden path\"}]}",
+          "operations": [
+            {
+              "kind": "draft_decision",
+              "decision_key": "golden-proposed",
+              "statement": "Proposed via golden path",
+              "rationale": null
+            }
+          ],
+          "status": "accepted",
+          "accepted_operation_indices": [
+            0
+          ],
+          "review_reason": null,
+          "reviewed_by": "owner",
+          "reviewed_at": "2026-09-16T06:51:24Z",
+          "submitted_at": "2026-09-16T06:51:24Z",
+          "revision_id": "01a0a8fc-0985-7304-a097-6f661bcc039e"
+        }
+      },
+      "ts": "2026-09-16T06:51:24.943Z"
+    },
+    {
+      "name": "export",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "dest_root": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-06-golden-eyZsXM\\export-parent\\golden-export",
+          "manifest": {
+            "schema": "flake-export-manifest-v1",
+            "kind": "export-project",
+            "vault_id": "01a0a8fc-0043-725a-90ab-57ce995629fa",
+            "project_id": "01a0a8fc-0079-707a-96f1-14f75e267bb5",
+            "snapshot_head_seq": 15,
+            "snapshot_head_hash": "6465eb8cae54ac1a0ab5a83310d336551c91073864cf803699e4e99c33561fb1",
+            "created_at": "2026-09-16T06:51:24Z",
+            "record_count": 8,
+            "revision_count": 11,
+            "omissions": [],
+            "members": [
+              {
+                "path": "README.md",
+                "length": 1438,
+                "sha256": "7dd124a2a679a5d93868df7c2c9dbce9a8082f1144ab2a0f9920d9be1248808c"
+              },
+              {
+                "path": "revisions/01a0a8fc-0079-707a-96f1-14f75e267bb5/1-01a0a8fc-0079-707a-96f1-14f89d881a0b.json",
+                "length": 534,
+                "sha256": "1445e3cc74c41ca8f82e79eeec328b30af34fcfaa9d868646c32ad37944c84c7"
+              },
+              {
+                "path": "revisions/01a0a8fc-0091-716c-a265-a99f5583a446/2-01a0a8fc-0091-716c-a265-a9a0183e8dd1.json",
+                "length": 593,
+                "sha256": "15e22bc55ca15d061b3168a030bc08567172f732a8054c2437a30abb7da9301f"
+              },
+              {
+                "path": "revisions/01a0a8fc-0091-716c-a265-a99f5583a446/2-01a0a8fc-0091-716c-a265-a9a0183e8dd1.md",
+                "length": 17,
+                "sha256": "4e6db0bd47de41b79a94d4da7398e4284ed77957ff3c09d7af4f672c9a357348"
+              },
+              {
+                "path": "revisions/01a0a8fc-023e-7bb1-88ef-e5f16a226a19/3-01a0a8fc-023e-7bb1-88ef-e604c4063d89.json",
+                "length": 1113,
+                "sha256": "e2b490d2c8208ed4c5662f47d96577a2f3300dc3da836e0325012486e7c16e17"
+              },
+              {
+                "path": "revisions/01a0a8fc-0253-7646-8fc8-c7b764f9b3c2/4-01a0a8fc-0253-7646-8fc8-c7b8cb5b48b7.json",
+                "length": 827,
+                "sha256": "7c8cdfac71bbbc2a130cc835852ab4d17f4e833d78748eaf27ffafbb3a9f935d"
+              },
+              {
+                "path": "revisions/01a0a8fc-0263-737e-ba29-dce290bf3257/5-01a0a8fc-0263-737e-ba29-dce303889cd0.json",
+                "length": 698,
+                "sha256": "f7b838cc4bf6be73db2346216bf984897d2f6fb007b448e2d589002e149af983"
+              },
+              {
+                "path": "revisions/01a0a8fc-0263-737e-ba29-dce290bf3257/6-01a0a8fc-0275-700a-9cec-7d64ef307297.json",
+                "length": 833,
+                "sha256": "a7c8a4466321cab499019410a0940411102413c6833abafa2ba1e27f63da56ef"
+              },
+              {
+                "path": "revisions/01a0a8fc-0263-737e-ba29-dce290bf3257/7-01a0a8fc-0281-74da-bae3-aa3c5eaceb42.json",
+                "length": 861,
+                "sha256": "163c929f1809285594889ec1cb1279299202409b4a56653a70d06e4dcda1eac0"
+              },
+              {
+                "path": "revisions/01a0a8fc-0290-72fa-a437-bac2520592d2/8-01a0a8fc-0290-72fa-a437-bac3ae5c7a43.json",
+                "length": 804,
+                "sha256": "1eb0213ce56aeef8df5822499390a1e354bc00b5ad6d2097053fa403d89c9fc8"
+              },
+              {
+                "path": "revisions/01a0a8fc-0290-72fa-a437-bac2520592d2/9-01a0a8fc-029f-7507-b29f-2cfbdab45749.json",
+                "length": 866,
+                "sha256": "dda94da13385b4e7aa32a2666bccacd510e2a123d6c5542c7d82cf200d46fcdf"
+              },
+              {
+                "path": "revisions/01a0a8fc-03b9-71a7-a47a-eeae3f8beb3e/10-01a0a8fc-03b9-71a7-a47a-eeaf00de44f8.json",
+                "length": 610,
+                "sha256": "4320867779570d34acab1b103af342063f933d43ac27351c5e8e130bae7631bc"
+              },
+              {
+                "path": "revisions/01a0a8fc-097e-7718-a15d-5bf9a3c6baa3/14-01a0a8fc-097e-7718-a15d-5bfa25f70f08.json",
+                "length": 836,
+                "sha256": "34e58f0b723acf6ca4fd8016872f54487d3a4b95e70f4e91d3edf28f14cb85b1"
+              }
+            ],
+            "integrity_root": "7bde411ef8c6b0730efe021762a277ec4a1273de00d92dcb619c7880076e68f7"
+          }
+        }
+      },
+      "ts": "2026-09-16T06:51:25.012Z"
+    },
+    {
+      "name": "backup",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "source_root": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-06-golden-eyZsXM\\parent\\golden-vault",
+          "backup_root": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-06-golden-eyZsXM\\backup-parent\\golden-backup",
+          "manifest": {
+            "schema": "flake-backup-manifest-v1",
+            "kind": "full-backup",
+            "vault_id": "01a0a8fc-0043-725a-90ab-57ce995629fa",
+            "snapshot_head_seq": 15,
+            "snapshot_head_hash": "6465eb8cae54ac1a0ab5a83310d336551c91073864cf803699e4e99c33561fb1",
+            "created_at": "2026-09-15T24685Z",
+            "members": [
+              {
+                "path": "vault.json",
+                "length": 157,
+                "sha256": "5548243dc89104cb8fa9d323dfbc219fc2eaad81073a2362e3941f26ea80e5fa"
+              },
+              {
+                "path": "canonical.sqlite",
+                "length": 53248,
+                "sha256": "f877bd1c3b1e34b3fae4cc62e73ed6275dedc6a73787ecc52cd3cff2e4118062"
+              }
+            ],
+            "verified": true
+          }
+        }
+      },
+      "ts": "2026-09-16T06:51:25.071Z"
+    },
+    {
+      "name": "restore",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "backup_root": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-06-golden-eyZsXM\\backup-parent\\golden-backup",
+          "restored_root": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-06-golden-eyZsXM\\restore-parent\\golden-restored",
+          "vault_id": "01a0a8fc-0043-725a-90ab-57ce995629fa",
+          "restored_transaction_head_seq": 15,
+          "restored_object_count": 11
+        }
+      },
+      "ts": "2026-09-16T06:51:25.095Z"
+    }
+  ]
+}

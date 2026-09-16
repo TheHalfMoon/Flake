@@ -13,13 +13,17 @@ CANONICAL_BUILD_PLAN=docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md
 CANONICAL_BUILD_PLAN_SHA256=b555f83ff12882ae6f55f90bbeaa411de52b84661a7f3953350cbfc6bd789fb2
 CANONICAL_PLAN_REMOTE_STATUS=MIGRATED_TO_GITHUB
 CANONICAL_PLAN_LOCAL_DEPENDENCY=NONE
-ACTIVE_IMPLEMENTATION_UNIT=T04-06
-NEXT_DEPENDENCY_READY_UNIT=T04-06
+ACTIVE_IMPLEMENTATION_UNIT=T05-01
+NEXT_DEPENDENCY_READY_UNIT=T05-01
 FOUNDER_DECISION_NO_HUMAN_GATES=docs/canonical/FOUNDER_NO_HUMAN_QUALIFICATION_GATES_2026-09-16.md
 FOUNDER_DECISION_WEBVIEW2_NETWORK_BOUNDARY=docs/canonical/FOUNDER_WEBVIEW2_NETWORK_BOUNDARY_2026-09-16.md
+FOUNDER_DECISION_T04-06_ACCESSIBILITY_WITNESS=docs/canonical/FOUNDER_T04-06_ACCESSIBILITY_WITNESS_AMENDMENT_2026-09-16.md
 T03-08_EXECUTION_CONTRACT=AUTOMATED_CONTINUITY_QUALIFICATION
 T05-06_EXECUTION_CONTRACT=AUTOMATED_LONG_HORIZON_CONTINUITY_SOAK
 R11_CONTRACT=AUTOMATED_CONTINUITY_AND_SOAK
+T04-06_EXECUTION_CONTRACT=AUTOMATED_TECHNICAL_ACCESSIBILITY_QUALIFICATION
+T04-06_HUMAN_ACCESSIBILITY_REVIEW_REQUIRED=NO
+T04-06_NATIVE_PLATFORM_PROFILES_REQUIRED=WINDOWS,MACOS,LINUX
 EXECUTABLE_REPOSITORY_WORK=AVAILABLE
 P03_STATUS=CLOSED
 T04-01_STATUS=COMPLETE
@@ -40,7 +44,12 @@ T04-04_EVIDENCE=docs/evidence/flake-v1/T04-04/REPORT.md
 T04-04_MERGE_COMMIT=7eb19a2275fd85b4059a9fc7660175db08e5d1b3
 T04-05_STATUS=COMPLETE
 T04-05_EVIDENCE=docs/evidence/flake-v1/T04-05/REPORT.md
-T04-05_MERGE_COMMIT=PENDING_PR_MERGE
+T04-05_MERGE_COMMIT=0c8dceba29b523adbfb166135241a10202717df6
+P04_STATUS=CLOSED
+T04-06_STATUS=COMPLETE
+T04-06_EVIDENCE=docs/evidence/flake-v1/T04-06/REPORT.md
+T04-06_CROSS_PLATFORM_CI_RUN=35066083071
+T04-06_MERGE_COMMIT=PENDING_PR_MERGE
 P01_STATUS=CLOSED
 T00-01_STATUS=COMPLETE
 T00-01_EVIDENCE=docs/evidence/flake-v1/T00-01/REPORT.md
@@ -143,7 +152,7 @@ The historical local-only planning SHAs `4246f6d...` and `852e44b...` are proven
 
 ## Next action
 
-**`T04-06` is dependency-ready.** `T04-05` closed COMPLETE (see below); read `docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` section 26/T04-06's own task row before starting.
+**`T05-01` is dependency-ready.** `T04-06` closed COMPLETE, closing `P04` (see below); read `docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` section 26/T05-01's own task row before starting.
 
 Preserved historical blocker record (superseded, not deleted -- the underlying WebView2 observation itself remains true and unchanged):
 
@@ -168,6 +177,8 @@ RESOLUTION=founder ruled OPTION_1_AMENDED: the acceptance clause is read,
   WEBVIEW2_PLATFORM_BACKGROUND_TRAFFIC=OBSERVED remains true and is recorded
   as a documented platform limitation, not a Flake product failure
 ```
+
+`T04-06` closed: native usability and accessibility of the complete desktop qualified, natively, on all three required platforms -- closing `P04`. `docs/canonical/FOUNDER_T04-06_ACCESSIBILITY_WITNESS_AMENDMENT_2026-09-16.md` replaced this task's own live-human-witness accessibility checklist with an automated technical qualification, without reducing the three-native-platform requirement. `.github/workflows/t04-06-cross-platform.yml` (a Windows/macOS/Linux matrix using already-authorized GitHub-hosted native runners, not only this session's own Windows workstation) proved, natively on all three, in one successful run (`35066083071`): root Rust `fmt`/`clippy`/`test --locked --lib` (326/326, identical deterministic suite -- "canonical results match CLI oracle" proven cross-platform, not merely asserted), `cargo audit`/`npm audit` (0 vulnerabilities each), desktop build, a new automated static accessibility checker (9 checks: interactive-element semantics, focus-order integrity, accessible names, no active imported content, system-theme respect, layout-overflow risk, non-color-only state indicators, computed WCAG AA contrast, bundle network-surface), and a native launch/clean-shutdown smoke test. One real product fix was found only because this task built on Linux for the first time: `tauri-plugin-dialog`'s disabled default features had left `rfd` (the crate `pick_directory` depends on) with zero native dialog backend selected there, a hard Linux build failure invisible on Windows/macOS -- fixed by re-adding exactly the `gtk3` feature. The static checker also found and fixed three real missing-accessible-name gaps and one real WCAG AA contrast failure (the shared error-red color was 3.86:1 against a dark background, below the 4.5:1 minimum -- this app declares `color-scheme: light dark`, so that is a legitimate rendering, not an edge case). A chained Windows golden-path E2E additionally ran the task's own named create->capture->evidence->decision/action->interrupt->resume->proposal->export->restore flow end to end in one continuous session, plus live keyboard-focusability and 200% zoom-overflow checks -- honestly recording that CDP's synthetic Tab-key dispatch does not reliably drive WebView2's native focus traversal, so that specific check uses direct element-focusability instead, cross-checked against the static tabIndex-integrity result. Full details: `docs/evidence/flake-v1/T04-06/REPORT.md`.
 
 `T04-05` closed: backup, recovery, import and export exposed safely from the desktop. Additive-only `src/` change: `#[derive(Serialize)]` on `backup.rs`'s `BackupReport`/`RestoreReport`, `recovery.rs`'s `RecoveryReport`, `export.rs`'s `ExportReport`/`ExportPreview`, `import.rs`'s `ImportPreview`/`ImportReport` -- zero logic change, confirmed by the unchanged 326/326 Rust suite. 9 new typed desktop commands: `vault_backup` (genuinely cancellable -- a real `Arc<AtomicBool>` flag checked inside Core's own copy loop, run via `spawn_blocking` so a concurrent `cancel_operation` call can actually land) / `vault_restore_from_backup`, `vault_recover`, `export_preview`/`vault_export`, `import_preview`/`vault_import_selected` (merge into an *existing* vault, distinct from `T04-01`'s `vault_restore` into a brand-new one). No new native dialog capability -- every destination/source reuses `T04-01`'s already-admitted `pick_directory`. Verified via a scripted E2E combining this task's own two named techniques: independent SHA-256 byte verification of every backup/export member (never trusting Core's own `verified` flag alone) and original-vault comparison (reading the source vault directly before/after every operation via T02-07's unmodified `sqlite_reader.py`, proving it is untouched). A genuinely-raced concurrent cancellation actually interrupted a backup mid-flight on the qualifying run, confirmed to leave no published destination. Full details: `docs/evidence/flake-v1/T04-05/REPORT.md`.
 

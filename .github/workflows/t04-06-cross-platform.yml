@@ -1,0 +1,90 @@
+name: t04-06-cross-platform-qualification
+
+# T04-06's own "all three native profiles mandatory for this exit" gate,
+# under docs/canonical/FOUNDER_T04-06_ACCESSIBILITY_WITNESS_AMENDMENT_2026-09-16.md's
+# automated-technical-qualification replacement for the human-witness
+# checklist this task originally named. Uses GitHub-hosted native
+# runners for each OS -- not just this session's own Windows workstation
+# -- per that decision's own instruction not to treat one workstation's
+# OS as proof the other platforms are unreachable.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  qualify:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Linux Tauri system dependencies
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf build-essential xvfb
+
+      - name: Root Rust gates (Core canonical-result parity with the CLI/reference oracle, native per OS)
+        shell: bash
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy --all-targets -- -D warnings
+          cargo test --locked --lib
+
+      - name: Root Rust advisories
+        shell: bash
+        run: |
+          cargo install cargo-audit --locked
+          cargo audit
+
+      - name: Frontend build
+        shell: bash
+        working-directory: desktop
+        run: |
+          npm ci
+          npm run build
+          npm audit
+
+      - name: Desktop Rust gates
+        shell: bash
+        working-directory: desktop/src-tauri
+        run: |
+          cargo fmt -- --check
+          cargo clippy --all-targets -- -D warnings
+          cargo build
+          cargo audit
+
+      - name: Static accessibility + bundle network-surface checks (S08, non-color-only, contrast, focus order, accessible names)
+        shell: bash
+        run: python3 docs/evidence/flake-v1/T04-06/checks/static_accessibility_checks.py
+
+      - name: Native launch smoke test (headless via Xvfb)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: xvfb-run -a node docs/evidence/flake-v1/T04-06/checks/native_launch_smoke_test.mjs
+
+      - name: Native launch smoke test
+        if: runner.os != 'Linux'
+        shell: bash
+        run: node docs/evidence/flake-v1/T04-06/checks/native_launch_smoke_test.mjs
+
+      - name: Upload evidence artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: t04-06-evidence-${{ matrix.os }}
+          path: docs/evidence/flake-v1/T04-06/results/
+          if-no-files-found: ignore

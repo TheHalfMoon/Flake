@@ -190,7 +190,11 @@ function SupersedePicker({
   }
   return (
     <span>
-      <select value={selected} onChange={(e) => setSelected(e.target.value)}>
+      <select
+        aria-label="Decision to supersede with"
+        value={selected}
+        onChange={(e) => setSelected(e.target.value)}
+      >
         {candidates.map((c) => (
           <option key={c.id} value={c.id}>
             {c.statement}

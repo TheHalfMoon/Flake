@@ -1,0 +1,48 @@
+{
+  "runId": "win32-2026-09-16T07-20-14-366Z",
+  "overallOk": true,
+  "steps": [
+    {
+      "name": "platform",
+      "ok": true,
+      "detail": {
+        "platform": "win32",
+        "arch": "x64",
+        "exePath": "D:\\a\\Flake\\Flake\\desktop\\src-tauri\\target\\debug\\flake-desktop.exe"
+      },
+      "ts": "2026-09-16T07:20:14.367Z"
+    },
+    {
+      "name": "binary-exists",
+      "ok": true,
+      "detail": {
+        "exePath": "D:\\a\\Flake\\Flake\\desktop\\src-tauri\\target\\debug\\flake-desktop.exe"
+      },
+      "ts": "2026-09-16T07:20:14.370Z"
+    },
+    {
+      "name": "spawned",
+      "ok": true,
+      "detail": {
+        "pid": 8160
+      },
+      "ts": "2026-09-16T07:20:14.381Z"
+    },
+    {
+      "name": "alive-after-3s",
+      "ok": true,
+      "detail": {
+        "spawnError": null
+      },
+      "ts": "2026-09-16T07:20:17.383Z"
+    },
+    {
+      "name": "clean-shutdown",
+      "ok": true,
+      "detail": {
+        "exited": true
+      },
+      "ts": "2026-09-16T07:20:17.384Z"
+    }
+  ]
+}

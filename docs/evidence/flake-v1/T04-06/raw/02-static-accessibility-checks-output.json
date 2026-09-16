@@ -1,0 +1,60 @@
+{
+  "all_ok": true,
+  "checks": [
+    {
+      "name": "no-custom-interactive-elements",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "no-tabindex-disruption",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "inputs-have-accessible-names",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "no-dangerously-set-inner-html",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "system-theme-color-scheme-respected",
+      "ok": true,
+      "detail": {
+        "found": true
+      }
+    },
+    {
+      "name": "no-fixed-pixel-width-overflow-risk",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "non-color-only-state-indicators",
+      "ok": true,
+      "detail": {
+        "checked": [
+          "state-label",
+          "tab-active"
+        ]
+      }
+    },
+    {
+      "name": "error-color-contrast-meets-wcag-aa",
+      "ok": true,
+      "detail": {
+        "light-mode-#c0392b-on-white": 5.44,
+        "dark-mode-#ff6b6b-on-black": 7.57
+      }
+    },
+    {
+      "name": "no-network-surface-in-bundle",
+      "ok": true,
+      "detail": []
+    }
+  ]
+}
