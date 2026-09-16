@@ -31,6 +31,9 @@ fn main() {
             commands::vault_restore,
             commands::list_projects,
             commands::create_project,
+            commands::list_notes,
+            commands::note_create,
+            commands::note_update,
         ])
         .run(tauri::generate_context!())
         .expect("error while running the Flake desktop shell");

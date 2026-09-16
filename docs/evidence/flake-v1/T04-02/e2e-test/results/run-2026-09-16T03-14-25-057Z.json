@@ -1,0 +1,66 @@
+{
+  "runId": "2026-09-16T03-14-25-057Z",
+  "overallOk": false,
+  "tmpRoot": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-02-e2e-vs8gnF",
+  "steps": [
+    {
+      "name": "exe-exists",
+      "ok": true,
+      "detail": {
+        "path": "C:\\Users\\Shehr\\work\\Flake\\desktop\\src-tauri\\target\\debug\\flake-desktop.exe"
+      },
+      "ts": "2026-09-16T03:14:25.060Z"
+    },
+    {
+      "name": "vite-dev-server-ready",
+      "ok": true,
+      "detail": {},
+      "ts": "2026-09-16T03:14:26.933Z"
+    },
+    {
+      "name": "launch",
+      "ok": true,
+      "detail": {
+        "pid": 20732
+      },
+      "ts": "2026-09-16T03:14:27.685Z"
+    },
+    {
+      "name": "bridge-ready",
+      "ok": true,
+      "detail": {
+        "url": "http://localhost:1420/"
+      },
+      "ts": "2026-09-16T03:14:29.014Z"
+    },
+    {
+      "name": "vault-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "path": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-02-e2e-vs8gnF\\parent\\t04-02-vault",
+          "vault_id": "01a0a835-6e1f-72b6-9aae-afb4b8ec5437"
+        }
+      },
+      "ts": "2026-09-16T03:14:29.047Z"
+    },
+    {
+      "name": "project-create",
+      "ok": false,
+      "detail": {
+        "ok": false,
+        "error": "invalid args `vaultPath` for command `create_project`: command create_project missing required key vaultPath"
+      },
+      "ts": "2026-09-16T03:14:29.054Z"
+    },
+    {
+      "name": "e2e-flow",
+      "ok": false,
+      "detail": {
+        "error": "TypeError: Cannot read properties of undefined (reading 'id')\n    at main (file:///C:/Users/Shehr/work/Flake/docs/evidence/flake-v1/T04-02/e2e-test/run-e2e-test.mjs:197:38)"
+      },
+      "ts": "2026-09-16T03:14:29.058Z"
+    }
+  ]
+}

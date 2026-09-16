@@ -1,0 +1,175 @@
+{
+  "runId": "2026-09-16T03-18-03-851Z",
+  "overallOk": true,
+  "tmpRoot": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-02-e2e-ws0b6I",
+  "steps": [
+    {
+      "name": "exe-exists",
+      "ok": true,
+      "detail": {
+        "path": "C:\\Users\\Shehr\\work\\Flake\\desktop\\src-tauri\\target\\debug\\flake-desktop.exe"
+      },
+      "ts": "2026-09-16T03:18:03.855Z"
+    },
+    {
+      "name": "vite-dev-server-ready",
+      "ok": true,
+      "detail": {},
+      "ts": "2026-09-16T03:18:05.348Z"
+    },
+    {
+      "name": "launch",
+      "ok": true,
+      "detail": {
+        "pid": 14788
+      },
+      "ts": "2026-09-16T03:18:05.358Z"
+    },
+    {
+      "name": "bridge-ready",
+      "ok": true,
+      "detail": {
+        "url": "http://localhost:1420/"
+      },
+      "ts": "2026-09-16T03:18:06.945Z"
+    },
+    {
+      "name": "vault-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "path": "C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-02-e2e-ws0b6I\\parent\\t04-02-vault",
+          "vault_id": "01a0a838-c175-7241-8f5d-c785b8eb843e"
+        }
+      },
+      "ts": "2026-09-16T03:18:07.039Z"
+    },
+    {
+      "name": "project-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a838-c1c9-76fe-abab-af947a94d440",
+          "name": "T04-02 E2E Project",
+          "description": null,
+          "active": true
+        }
+      },
+      "ts": "2026-09-16T03:18:07.058Z"
+    },
+    {
+      "name": "note-create",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a838-c1da-72c8-94a9-3622e494e82e",
+          "project_id": "01a0a838-c1c9-76fe-abab-af947a94d440",
+          "title": "E2E note",
+          "body": "# Heading\n\n**bold** and *italic* and `code`\n\n- item one\n- item two\n\n[a link](https://example.invalid/x) ![an image](https://example.invalid/y.png)\n\n添加注释 ✨ émigré café",
+          "revision_id": "01a0a838-c1da-72c8-94a9-362345eac2b2"
+        }
+      },
+      "ts": "2026-09-16T03:18:07.070Z"
+    },
+    {
+      "name": "note-create-independent-verify",
+      "ok": true,
+      "detail": {
+        "expectedBody": "# Heading\n\n**bold** and *italic* and `code`\n\n- item one\n- item two\n\n[a link](https://example.invalid/x) ![an image](https://example.invalid/y.png)\n\n添加注释 ✨ émigré café",
+        "actualBody": "# Heading\n\n**bold** and *italic* and `code`\n\n- item one\n- item two\n\n[a link](https://example.invalid/x) ![an image](https://example.invalid/y.png)\n\n添加注释 ✨ émigré café",
+        "revisionMatch": true
+      },
+      "ts": "2026-09-16T03:18:07.220Z"
+    },
+    {
+      "name": "note-update",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "result": {
+          "id": "01a0a838-c1da-72c8-94a9-3622e494e82e",
+          "project_id": "01a0a838-c1c9-76fe-abab-af947a94d440",
+          "title": "E2E note (edited)",
+          "body": "# Heading\n\n**bold** and *italic* and `code`\n\n- item one\n- item two\n\n[a link](https://example.invalid/x) ![an image](https://example.invalid/y.png)\n\n添加注释 ✨ émigré café\n\nAppended after first save.",
+          "revision_id": "01a0a838-c2a5-757a-b175-b65ffb110d71"
+        }
+      },
+      "ts": "2026-09-16T03:18:07.368Z"
+    },
+    {
+      "name": "note-update-revision-advanced",
+      "ok": true,
+      "detail": {
+        "rev1": "01a0a838-c1da-72c8-94a9-362345eac2b2",
+        "rev2": "01a0a838-c2a5-757a-b175-b65ffb110d71"
+      },
+      "ts": "2026-09-16T03:18:07.369Z"
+    },
+    {
+      "name": "note-update-independent-verify",
+      "ok": true,
+      "detail": {
+        "expectedBody": "# Heading\n\n**bold** and *italic* and `code`\n\n- item one\n- item two\n\n[a link](https://example.invalid/x) ![an image](https://example.invalid/y.png)\n\n添加注释 ✨ émigré café\n\nAppended after first save.",
+        "actualBody": "# Heading\n\n**bold** and *italic* and `code`\n\n- item one\n- item two\n\n[a link](https://example.invalid/x) ![an image](https://example.invalid/y.png)\n\n添加注释 ✨ émigré café\n\nAppended after first save.",
+        "revisionMatch": true
+      },
+      "ts": "2026-09-16T03:18:07.469Z"
+    },
+    {
+      "name": "conflict-refused",
+      "ok": true,
+      "detail": {
+        "ok": false,
+        "error": "canonical store error: expected revision conflict: object 01a0a838-c1da-72c8-94a9-3622e494e82e is at revision 01a0a838-c2a5-757a-b175-b65ffb110d71, not the expected 01a0a838-c1da-72c8-94a9-362345eac2b2"
+      },
+      "ts": "2026-09-16T03:18:07.478Z"
+    },
+    {
+      "name": "conflict-did-not-overwrite",
+      "ok": true,
+      "detail": {
+        "expectedBody": "# Heading\n\n**bold** and *italic* and `code`\n\n- item one\n- item two\n\n[a link](https://example.invalid/x) ![an image](https://example.invalid/y.png)\n\n添加注释 ✨ émigré café\n\nAppended after first save.",
+        "actualBody": "# Heading\n\n**bold** and *italic* and `code`\n\n- item one\n- item two\n\n[a link](https://example.invalid/x) ![an image](https://example.invalid/y.png)\n\n添加注释 ✨ émigré café\n\nAppended after first save."
+      },
+      "ts": "2026-09-16T03:18:07.602Z"
+    },
+    {
+      "name": "large-body-save",
+      "ok": true,
+      "detail": {
+        "ok": true,
+        "bodyLength": 900019
+      },
+      "ts": "2026-09-16T03:18:07.750Z"
+    },
+    {
+      "name": "large-body-independent-verify",
+      "ok": true,
+      "detail": {
+        "expectedBytes": 900032,
+        "actualBytes": 900032
+      },
+      "ts": "2026-09-16T03:18:07.850Z"
+    },
+    {
+      "name": "over-limit-refused",
+      "ok": true,
+      "detail": {
+        "ok": false,
+        "error": "project error: note body exceeds limit: 1100000 > 1048576 bytes"
+      },
+      "ts": "2026-09-16T03:18:07.929Z"
+    },
+    {
+      "name": "over-limit-did-not-land",
+      "ok": true,
+      "detail": {
+        "stillLargeBody": true
+      },
+      "ts": "2026-09-16T03:18:08.035Z"
+    }
+  ]
+}

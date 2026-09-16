@@ -1,0 +1,4 @@
+raw/01-cargo-tree-forbidden-plugins.txt	37	sha256=0a08890cf4380e92cac61df67c9603c64884ee1687be57f4dc80be3969e03857
+raw/02-cargo-audit.txt	1609	sha256=3a5f40d9ce03d71cd068a237310bf8e1969e1cd6cbf9015d39148430a1985278
+raw/03-npm-audit.txt	24	sha256=6d8c5c8f3d7684adb070417bd608d01ae90aa3dc26a65af03ffda4955f38d9a3
+raw/04-frontend-build.txt	436	sha256=39f4ecb150fdd95d198eb1ad790fbfcf45fd7ea10029f769b437330ec1d9ee6d

@@ -1,0 +1,9 @@
+[2026-09-16T03:14:25.058Z] === T04-02 note editor E2E test run 2026-09-16T03-14-25-057Z ===
+[2026-09-16T03:14:25.060Z] STEP OK   exe-exists :: {"path":"C:\\Users\\Shehr\\work\\Flake\\desktop\\src-tauri\\target\\debug\\flake-desktop.exe"}
+[2026-09-16T03:14:26.933Z] STEP OK   vite-dev-server-ready :: {}
+[2026-09-16T03:14:27.685Z] STEP OK   launch :: {"pid":20732}
+[2026-09-16T03:14:29.014Z] STEP OK   bridge-ready :: {"url":"http://localhost:1420/"}
+[2026-09-16T03:14:29.047Z] STEP OK   vault-create :: {"ok":true,"result":{"path":"C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-02-e2e-vs8gnF\\parent\\t04-02-vault","vault_id":"01a0a835-6e1f-72b6-9aae-afb4b8ec5437"}}
+[2026-09-16T03:14:29.054Z] STEP FAIL project-create :: {"ok":false,"error":"invalid args `vaultPath` for command `create_project`: command create_project missing required key vaultPath"}
+[2026-09-16T03:14:29.058Z] STEP FAIL e2e-flow :: {"error":"TypeError: Cannot read properties of undefined (reading 'id')\n    at main (file:///C:/Users/Shehr/work/Flake/docs/evidence/flake-v1/T04-02/e2e-test/run-e2e-test.mjs:197:38)"}
+[2026-09-16T03:14:29.443Z] === run complete. overallOk=false. json=C:\Users\Shehr\work\Flake\docs\evidence\flake-v1\T04-02\e2e-test\results\run-2026-09-16T03-14-25-057Z.json log=C:\Users\Shehr\work\Flake\docs\evidence\flake-v1\T04-02\e2e-test\results\run-2026-09-16T03-14-25-057Z.log ===

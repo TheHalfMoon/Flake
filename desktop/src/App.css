@@ -35,3 +35,49 @@ input {
   color: #c0392b;
   margin-top: 1rem;
 }
+
+.note-body {
+  display: block;
+  width: 100%;
+  font-family: inherit;
+  margin-top: 0.25rem;
+}
+
+.note-editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.save-state {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.save-state-not-saved-conflict,
+.save-state-not-saved-error,
+.save-state-outcome-unknown {
+  color: #c0392b;
+  opacity: 1;
+}
+
+.save-error {
+  border: 1px solid #c0392b;
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.conflict-review {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.markdown-preview {
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  padding: 0.5rem;
+  min-height: 8rem;
+}

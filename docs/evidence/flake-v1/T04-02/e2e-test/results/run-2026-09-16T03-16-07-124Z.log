@@ -1,0 +1,10 @@
+[2026-09-16T03:16:07.125Z] === T04-02 note editor E2E test run 2026-09-16T03-16-07-124Z ===
+[2026-09-16T03:16:07.130Z] STEP OK   exe-exists :: {"path":"C:\\Users\\Shehr\\work\\Flake\\desktop\\src-tauri\\target\\debug\\flake-desktop.exe"}
+[2026-09-16T03:16:09.723Z] STEP OK   vite-dev-server-ready :: {}
+[2026-09-16T03:16:09.736Z] STEP OK   launch :: {"pid":10436}
+[2026-09-16T03:16:11.931Z] STEP OK   bridge-ready :: {"url":"http://localhost:1420/"}
+[2026-09-16T03:16:11.995Z] STEP OK   vault-create :: {"ok":true,"result":{"path":"C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-02-e2e-1N6Zk2\\parent\\t04-02-vault","vault_id":"01a0a837-0033-7250-8369-c15149b39b69"}}
+[2026-09-16T03:16:12.022Z] STEP OK   project-create :: {"ok":true,"result":{"id":"01a0a837-0064-778b-af8d-bfc236820981","name":"T04-02 E2E Project","description":null,"active":true}}
+[2026-09-16T03:16:12.037Z] STEP OK   note-create :: {"ok":true,"result":{"id":"01a0a837-007f-75e8-9e88-a983f4c468db","project_id":"01a0a837-0064-778b-af8d-bfc236820981","title":"E2E note","body":"# Heading\n\n**bold** and *italic* and `code`\n\n- item one\n- item two\n\n[a link](https://example.invalid/x) ![an image](https://example.invalid/y.png)\n\n添加注释 ✨ émigré café","revision_id":"01a0a837-007f-75e8-9e88-a984337bff8c"}}
+[2026-09-16T03:16:12.327Z] STEP FAIL e2e-flow :: {"error":"Error: Command failed: python C:\\Users\\Shehr\\work\\Flake\\docs\\evidence\\flake-v1\\T04-02\\e2e-test\\independent_read_note.py C:\\Users\\Shehr\\AppData\\Local\\Temp\\flake-t04-02-e2e-1N6Zk2\\parent\\t04-02-vault\\canonical.sqlite 01a0a837-007f-75e8-9e88-a983f4c468db\nTraceback (most recent call last):\r\n  File \"C:\\Users\\Shehr\\work\\Flake\\docs\\evidence\\flake-v1\\T04-02\\e2e-test\\independent_read_note.py\", line 46, in <module>\r\n    main()\r\n  File \"C:\\Users\\Shehr\\wor
+[2026-09-16T03:16:12.830Z] === run complete. overallOk=false. json=C:\Users\Shehr\work\Flake\docs\evidence\flake-v1\T04-02\e2e-test\results\run-2026-09-16T03-16-07-124Z.json log=C:\Users\Shehr\work\Flake\docs\evidence\flake-v1\T04-02\e2e-test\results\run-2026-09-16T03-16-07-124Z.log ===
