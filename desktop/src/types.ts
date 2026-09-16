@@ -117,3 +117,110 @@ export function outcomeLabel(outcome: DecisionOutcome): string {
   if (outcome === "no_accepted_decision") return "No accepted decision";
   return `Current: ${outcome.current_set}`;
 }
+
+export interface CheckpointInfo {
+  id: string;
+  project_id: string;
+  owner: string;
+  reviewed_through_seq: number;
+  reset_reason: string | null;
+  revision_id: string;
+}
+
+export type SourceCheckStatus = "match" | "changed" | "missing" | "denied";
+
+export interface SourceEntry {
+  id: string;
+  label: string;
+  active: boolean;
+  latest_check_status: SourceCheckStatus | null;
+  latest_check_at: string | null;
+}
+
+export interface SourceCheck {
+  source_id: string;
+  status: SourceCheckStatus;
+  observed_at: string;
+}
+
+export type GrantState = "active" | "revoked";
+
+export interface GrantEntry {
+  id: string;
+  project_id: string;
+  allowed_kinds: string[];
+  allowed_object_ids: string[] | null;
+  privacy_exclusions: string[];
+  byte_budget: number;
+  expires_at: string;
+  state: GrantState;
+  issued_at: string;
+  revision_id: string;
+}
+
+export interface SelectedItem {
+  object_id: string;
+  kind: string;
+}
+
+export interface RejectedItem {
+  object_id: string;
+  kind: string;
+  reason: string;
+}
+
+export interface DisclosureReceipt {
+  request_id: string;
+  grant_id: string;
+  project_id: string;
+  principal_label: string;
+  selected: SelectedItem[];
+  rejected: RejectedItem[];
+  emitted_byte_count: number;
+  emitted_sha256: string;
+  created_at: string;
+}
+
+export interface PackagePreviewResult {
+  receipt: DisclosureReceipt;
+  wire: string;
+}
+
+export interface PackageCompileResult {
+  receipt_id: string;
+  receipt: DisclosureReceipt;
+  wire: string;
+}
+
+export type ProposalStatus = "pending" | "accepted" | "rejected" | "expired";
+
+export type ProposedOperation =
+  | { kind: "note_edit"; note_id: string; expected_revision_id: string; title: string | null; body: string }
+  | { kind: "draft_decision"; decision_key: string; statement: string; rationale: string | null }
+  | {
+      kind: "evidence_relation";
+      relation_type: RelationType;
+      from_object_id: string;
+      to_object_id: string;
+      note: string | null;
+    }
+  | { kind: "complete_action"; action_id: string; expected_revision_id: string; summary: string };
+
+export interface ProposalEntry {
+  id: string;
+  project_id: string;
+  receipt_id: string;
+  declared_agent: string | null;
+  declared_model: string | null;
+  declared_tool: string | null;
+  inbound_sha256: string;
+  inbound_byte_count: number;
+  operations: ProposedOperation[];
+  status: ProposalStatus;
+  accepted_operation_indices: number[];
+  review_reason: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  submitted_at: string;
+  revision_id: string;
+}

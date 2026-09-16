@@ -14,12 +14,18 @@
 use std::path::{Path, PathBuf};
 
 use fehrest::canonical::CanonicalStore;
+use fehrest::capture;
+use fehrest::checkpoint::{self, ReviewCheckpoint};
+use fehrest::disclosure::{self, DisclosureReceipt};
+use fehrest::grant::{self, ExportGrant};
 use fehrest::import::import_full_restore;
 use fehrest::project::{
     self, ActionState, DecisionBasis, DecisionLifecycle, DecisionVerification, RecordPayload,
 };
+use fehrest::proposal::{self, AgentProposal};
 use fehrest::relation::{self, RelationType};
 use fehrest::resume::ResumeView;
+use fehrest::source_check::{self, CheckStatus, SourceCheck};
 
 const DESKTOP_ACTOR: &str = "owner";
 const MAX_NAME_BYTES: usize = 200;
@@ -851,4 +857,366 @@ pub fn search_project(
     }
     out.sort_by(|a, b| a.id.cmp(&b.id));
     Ok(out)
+}
+
+// --- T04-04: resumption/checkpoint/source-status/package/proposal review ---
+// Every type below wraps an already-`Serialize` Core type with `#[serde(flatten)]`
+// plus its object ID -- no new field, no re-derived semantics, no
+// duplicated authority. `ResumeView` itself (used by `resume_view` above)
+// needed no such wrapper since its own object IS the view, not a stored
+// record with an ID of its own.
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct CheckpointInfo {
+    pub id: String,
+    #[serde(flatten)]
+    pub checkpoint: ReviewCheckpoint,
+    pub revision_id: String,
+}
+
+#[tauri::command]
+pub fn checkpoint_current(
+    vault_path: String,
+    project_id: String,
+) -> Result<Option<CheckpointInfo>, String> {
+    let store = CanonicalStore::open(&vault_path).map_err(|e| e.to_string())?;
+    let found = checkpoint::current_checkpoint(&store, &project_id).map_err(|e| e.to_string())?;
+    Ok(found.map(|(id, revision_id, checkpoint)| CheckpointInfo {
+        id,
+        checkpoint,
+        revision_id,
+    }))
+}
+
+#[tauri::command]
+pub fn checkpoint_mark(
+    vault_path: String,
+    project_id: String,
+    expected_revision_id: Option<String>,
+    through: Option<i64>,
+) -> Result<CheckpointInfo, String> {
+    let mut store = CanonicalStore::open(&vault_path).map_err(|e| e.to_string())?;
+    let (outcome, checkpoint) = checkpoint::mark_reviewed_through(
+        &mut store,
+        DESKTOP_ACTOR,
+        &project_id,
+        expected_revision_id.as_deref(),
+        through,
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(CheckpointInfo {
+        id: outcome.object_id,
+        checkpoint,
+        revision_id: outcome.revision_id,
+    })
+}
+
+#[tauri::command]
+pub fn checkpoint_reset(
+    vault_path: String,
+    project_id: String,
+    expected_revision_id: String,
+    through: i64,
+    reason: String,
+) -> Result<CheckpointInfo, String> {
+    let mut store = CanonicalStore::open(&vault_path).map_err(|e| e.to_string())?;
+    let (outcome, checkpoint) = checkpoint::reset_checkpoint(
+        &mut store,
+        DESKTOP_ACTOR,
+        &project_id,
+        &expected_revision_id,
+        through,
+        &reason,
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(CheckpointInfo {
+        id: outcome.object_id,
+        checkpoint,
+        revision_id: outcome.revision_id,
+    })
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct SourceEntry {
+    pub id: String,
+    pub label: String,
+    pub active: bool,
+    /// The most recently recorded check for this source, if any has ever
+    /// been run -- `None` is `T02-01`'s own documented "Unchecked" derived
+    /// read-path label (zero rows in history), not a stored variant.
+    pub latest_check_status: Option<CheckStatus>,
+    pub latest_check_at: Option<String>,
+}
+
+#[tauri::command]
+pub fn list_sources(vault_path: String, project_id: String) -> Result<Vec<SourceEntry>, String> {
+    let store = CanonicalStore::open(&vault_path).map_err(|e| e.to_string())?;
+    let sources = capture::list_project_sources(&store, &project_id).map_err(|e| e.to_string())?;
+    // Every `SourceCheck` is its own append-only object (created fresh by
+    // `check_source`, never updated) -- unlike `Note`/`Action`, there is no
+    // single "current revision" per source to read, so this scans every
+    // `SourceCheck` object and keeps the *most recently created* one (by
+    // its own UUIDv7 object ID, which is sub-second time-ordered) per
+    // `source_id`. `observed_at`'s own RFC 3339 UTC text truncates to
+    // whole seconds, so it cannot break ties between two checks recorded
+    // in the same second -- object ID can. This is the display-only
+    // counterpart of `resume.rs`'s own stale-evidence scan, generalized to
+    // show every source's status, not only the non-`Match` ones
+    // `resume()` itself surfaces.
+    let mut latest_checks: std::collections::HashMap<String, (String, SourceCheck)> =
+        std::collections::HashMap::new();
+    for (check_object_id, _, payload) in store.list_current_objects().map_err(|e| e.to_string())? {
+        if let Ok(RecordPayload::SourceCheck(c)) = RecordPayload::from_json(&payload) {
+            match latest_checks.get(&c.source_id) {
+                Some((existing_id, _)) if *existing_id >= check_object_id => {}
+                _ => {
+                    latest_checks.insert(c.source_id.clone(), (check_object_id, c));
+                }
+            }
+        }
+    }
+    let mut out = Vec::new();
+    for (id, s) in sources {
+        let latest = latest_checks.get(&id).map(|(_, c)| c);
+        out.push(SourceEntry {
+            id,
+            label: s.label,
+            active: s.active,
+            latest_check_status: latest.map(|c| c.status),
+            latest_check_at: latest.map(|c| c.observed_at.clone()),
+        });
+    }
+    out.sort_by(|a, b| a.id.cmp(&b.id));
+    Ok(out)
+}
+
+#[tauri::command]
+pub fn source_check_now(vault_path: String, source_id: String) -> Result<SourceCheck, String> {
+    let mut store = CanonicalStore::open(&vault_path).map_err(|e| e.to_string())?;
+    let (_, check) = source_check::check_source(&mut store, DESKTOP_ACTOR, &source_id)
+        .map_err(|e| e.to_string())?;
+    Ok(check)
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct GrantEntry {
+    pub id: String,
+    #[serde(flatten)]
+    pub grant: ExportGrant,
+    pub revision_id: String,
+}
+
+/// Bundled to keep `grant_issue` under clippy's argument-count limit.
+/// Struct-level `#[serde(default)]` (not just `#[derive(Default)]`) is
+/// required so a caller passing `{}` -- omitting every field, not just
+/// this one -- deserializes via `Default::default()` rather than a
+/// missing-field error; `#[derive(Default)]` alone only provides a Rust
+/// value to fall back to, it does not by itself tell serde to use it for
+/// absent JSON keys.
+#[derive(Debug, Clone, Default, serde::Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct GrantIssueOptions {
+    pub allowed_object_ids: Option<Vec<String>>,
+    pub privacy_exclusions: Vec<String>,
+}
+
+#[tauri::command]
+pub fn grant_issue(
+    vault_path: String,
+    project_id: String,
+    allowed_kinds: Vec<String>,
+    byte_budget: u32,
+    ttl_secs: i64,
+    options: GrantIssueOptions,
+) -> Result<GrantEntry, String> {
+    let mut store = CanonicalStore::open(&vault_path).map_err(|e| e.to_string())?;
+    let mut writer = store.writer().map_err(|e| e.to_string())?;
+    let (outcome, g) = grant::issue_grant(
+        &mut writer,
+        DESKTOP_ACTOR,
+        &project_id,
+        &allowed_kinds,
+        options.allowed_object_ids.as_deref(),
+        &options.privacy_exclusions,
+        byte_budget,
+        ttl_secs,
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(GrantEntry {
+        id: outcome.object_id,
+        grant: g,
+        revision_id: outcome.revision_id,
+    })
+}
+
+#[tauri::command]
+pub fn grant_revoke(
+    vault_path: String,
+    grant_id: String,
+    expected_revision_id: String,
+) -> Result<GrantEntry, String> {
+    let mut store = CanonicalStore::open(&vault_path).map_err(|e| e.to_string())?;
+    let (outcome, g) =
+        grant::revoke_grant(&mut store, DESKTOP_ACTOR, &grant_id, &expected_revision_id)
+            .map_err(|e| e.to_string())?;
+    Ok(GrantEntry {
+        id: outcome.object_id,
+        grant: g,
+        revision_id: outcome.revision_id,
+    })
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct PackagePreviewResult {
+    pub receipt: DisclosureReceipt,
+    pub wire: String,
+}
+
+#[tauri::command]
+pub fn package_preview(
+    vault_path: String,
+    grant_id: String,
+    request_id: String,
+    principal: Option<String>,
+) -> Result<PackagePreviewResult, String> {
+    let store = CanonicalStore::open(&vault_path).map_err(|e| e.to_string())?;
+    let (receipt, wire) = disclosure::preview_disclosure_package(
+        &store,
+        &grant_id,
+        &request_id,
+        principal.as_deref().unwrap_or("agent"),
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(PackagePreviewResult { receipt, wire })
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct PackageCompileResult {
+    pub receipt_id: String,
+    pub receipt: DisclosureReceipt,
+    pub wire: String,
+}
+
+/// Compiles and *persists* the `DisclosureReceipt` (receipt-before-emission,
+/// this task's own durability gate) without writing the package to disk --
+/// unlike the CLI's `package-export`, this never touches the filesystem,
+/// so it needs no native destination dialog (that capability, and the
+/// file write itself, is `T04-05`'s own "expose... export safely" scope).
+/// The returned `wire` is held only in memory for the owner to copy/export
+/// through whatever channel they choose outside this command's own scope.
+#[tauri::command]
+pub fn package_compile(
+    vault_path: String,
+    grant_id: String,
+    request_id: String,
+    principal: Option<String>,
+) -> Result<PackageCompileResult, String> {
+    let mut store = CanonicalStore::open(&vault_path).map_err(|e| e.to_string())?;
+    let (receipt_id, receipt, wire) = disclosure::compile_disclosure_package(
+        &mut store,
+        &grant_id,
+        &request_id,
+        principal.as_deref().unwrap_or("agent"),
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(PackageCompileResult {
+        receipt_id,
+        receipt,
+        wire,
+    })
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct ProposalEntry {
+    pub id: String,
+    #[serde(flatten)]
+    pub proposal: AgentProposal,
+    pub revision_id: String,
+}
+
+#[tauri::command]
+pub fn list_proposals(
+    vault_path: String,
+    project_id: String,
+) -> Result<Vec<ProposalEntry>, String> {
+    let store = CanonicalStore::open(&vault_path).map_err(|e| e.to_string())?;
+    let mut out = Vec::new();
+    for (object_id, revision_id, payload) in
+        store.list_current_objects().map_err(|e| e.to_string())?
+    {
+        if let Ok(RecordPayload::AgentProposal(p)) = RecordPayload::from_json(&payload) {
+            if p.project_id == project_id {
+                out.push(ProposalEntry {
+                    id: object_id,
+                    proposal: p,
+                    revision_id,
+                });
+            }
+        }
+    }
+    out.sort_by(|a, b| a.id.cmp(&b.id));
+    Ok(out)
+}
+
+#[tauri::command]
+pub fn proposal_admit(
+    vault_path: String,
+    project_id: String,
+    raw_text: String,
+) -> Result<ProposalEntry, String> {
+    let mut store = CanonicalStore::open(&vault_path).map_err(|e| e.to_string())?;
+    let (outcome, proposal) =
+        proposal::admit_proposal(&mut store, DESKTOP_ACTOR, &project_id, raw_text.as_bytes())
+            .map_err(|e| e.to_string())?;
+    Ok(ProposalEntry {
+        id: outcome.object_id,
+        proposal,
+        revision_id: outcome.revision_id,
+    })
+}
+
+#[tauri::command]
+pub fn proposal_accept(
+    vault_path: String,
+    proposal_id: String,
+    expected_revision_id: String,
+    selected_indices: Vec<usize>,
+) -> Result<ProposalEntry, String> {
+    let mut store = CanonicalStore::open(&vault_path).map_err(|e| e.to_string())?;
+    let (outcome, proposal) = proposal::accept_proposal(
+        &mut store,
+        DESKTOP_ACTOR,
+        &proposal_id,
+        &expected_revision_id,
+        &selected_indices,
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(ProposalEntry {
+        id: outcome.object_id,
+        proposal,
+        revision_id: outcome.revision_id,
+    })
+}
+
+#[tauri::command]
+pub fn proposal_reject(
+    vault_path: String,
+    proposal_id: String,
+    expected_revision_id: String,
+    reason: String,
+) -> Result<ProposalEntry, String> {
+    let mut store = CanonicalStore::open(&vault_path).map_err(|e| e.to_string())?;
+    let (outcome, proposal) = proposal::reject_proposal(
+        &mut store,
+        DESKTOP_ACTOR,
+        &proposal_id,
+        &expected_revision_id,
+        &reason,
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(ProposalEntry {
+        id: outcome.object_id,
+        proposal,
+        revision_id: outcome.revision_id,
+    })
 }
