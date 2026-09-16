@@ -1,0 +1,48 @@
+{
+  "runId": "darwin-2026-09-16T07-04-32-077Z",
+  "overallOk": true,
+  "steps": [
+    {
+      "name": "platform",
+      "ok": true,
+      "detail": {
+        "platform": "darwin",
+        "arch": "arm64",
+        "exePath": "/Users/runner/work/Flake/Flake/desktop/src-tauri/target/debug/flake-desktop"
+      },
+      "ts": "2026-09-16T07:04:32.087Z"
+    },
+    {
+      "name": "binary-exists",
+      "ok": true,
+      "detail": {
+        "exePath": "/Users/runner/work/Flake/Flake/desktop/src-tauri/target/debug/flake-desktop"
+      },
+      "ts": "2026-09-16T07:04:32.091Z"
+    },
+    {
+      "name": "spawned",
+      "ok": true,
+      "detail": {
+        "pid": 45156
+      },
+      "ts": "2026-09-16T07:04:32.097Z"
+    },
+    {
+      "name": "alive-after-3s",
+      "ok": true,
+      "detail": {
+        "spawnError": null
+      },
+      "ts": "2026-09-16T07:04:35.103Z"
+    },
+    {
+      "name": "clean-shutdown",
+      "ok": true,
+      "detail": {
+        "exited": true
+      },
+      "ts": "2026-09-16T07:04:35.395Z"
+    }
+  ]
+}
