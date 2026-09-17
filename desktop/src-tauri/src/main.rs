@@ -3,6 +3,7 @@
 
 mod commands;
 
+use tauri::Manager;
 use tauri_plugin_dialog::DialogExt;
 
 /// The only native filesystem-path-selection surface in this shell: an
@@ -12,13 +13,45 @@ use tauri_plugin_dialog::DialogExt;
 /// bounded Core-backed commands. This is the "native dialog-mediated
 /// selection as a bounded Core capability" the T04-01 task contract
 /// requires, and it is the only path-producing surface in this crate.
+///
+/// `T05-03` (plan section 25: "Default data paths use the OS's per-user
+/// application-data directory under Flake/vaults") opens the dialog at
+/// that suggested starting location when the OS reports one -- a
+/// starting point the owner can freely navigate away from, never a
+/// forced or scanned location; `default_vault_parent_dir` below is the
+/// read-only counterpart the frontend uses to *display* that same
+/// suggestion before the owner has opened the dialog at all.
 #[tauri::command]
 async fn pick_directory(app: tauri::AppHandle) -> Option<String> {
     let (tx, rx) = std::sync::mpsc::channel();
-    app.dialog().file().pick_folder(move |folder| {
+    let mut builder = app.dialog().file();
+    if let Some(dir) = default_vault_parent_dir_path(&app) {
+        builder = builder.set_directory(dir);
+    }
+    builder.pick_folder(move |folder| {
         let _ = tx.send(folder.map(|f| f.to_string()));
     });
     rx.recv().ok().flatten()
+}
+
+/// The OS's own per-user application-data directory joined with
+/// `vaults` (plan section 25's own exact phrase) -- never created or
+/// written to by this function itself; it is purely informational,
+/// resolved fresh on every call, and both callers below treat "the OS
+/// reports no such directory" as an ordinary `None`, not an error.
+fn default_vault_parent_dir_path(app: &tauri::AppHandle) -> Option<std::path::PathBuf> {
+    app.path().app_data_dir().ok().map(|dir| dir.join("vaults"))
+}
+
+/// Read-only suggestion for the frontend's own "create a new vault"
+/// screen to display as a default location *before* the owner opens the
+/// native picker -- the owner can always pick a different location via
+/// `pick_directory` instead. Returns `None` exactly when the OS-level
+/// resolver itself has nothing to report, never a fabricated fallback
+/// path.
+#[tauri::command]
+fn default_vault_parent_dir(app: tauri::AppHandle) -> Option<String> {
+    default_vault_parent_dir_path(&app).map(|dir| dir.to_string_lossy().to_string())
 }
 
 fn main() {
@@ -27,6 +60,7 @@ fn main() {
         .manage(commands::CancellationRegistry::default())
         .invoke_handler(tauri::generate_handler![
             pick_directory,
+            default_vault_parent_dir,
             commands::vault_create,
             commands::vault_open,
             commands::vault_restore,

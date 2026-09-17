@@ -1,0 +1,145 @@
+name: t05-03-release-candidates
+
+# T05-03's own cross-platform/packaging gate (plan section 25 + V10-V13):
+# builds every unsigned CLI archive and desktop bundle this candidate can
+# produce without private signing credentials (Founder ruling,
+# specs/CURRENT.md), then proves each one installs/launches/updates
+# (reinstall-over-existing)/uninstalls with the pre-install vault
+# retained untouched. Labeled UNSIGNED_DEVELOPER_RC throughout --
+# signing/notarization is T05-04, not this task.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  cli-archive-and-sbom:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Root Rust gates
+        shell: bash
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy --all-targets --locked -- -D warnings
+          cargo test --locked --all-targets
+
+      - name: Root Rust advisories
+        shell: bash
+        run: |
+          cargo install cargo-audit --locked
+          cargo audit
+
+      - name: Build CLI release archive (flake/fehrest/flake-migrate + user guide)
+        shell: bash
+        run: scripts/release/package_cli_archive.sh
+
+      - name: Install cargo-cyclonedx
+        shell: bash
+        run: cargo install cargo-cyclonedx --locked
+
+      - name: Generate SBOMs (CLI + desktop shell)
+        shell: bash
+        run: scripts/release/generate_sbom.sh
+
+      - name: Upload CLI archive + SBOMs
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-archive-and-sbom-${{ matrix.os }}
+          path: |
+            dist/*.zip
+            dist/*.tar.gz
+            dist/*.sha256
+            dist/sbom/*.cdx.json
+          if-no-files-found: error
+
+  desktop-bundle-install-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Linux Tauri system dependencies
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf build-essential
+
+      - name: Build flake CLI (needed by install_test.sh to seed/verify the retained vault)
+        shell: bash
+        run: cargo build --release --locked --bin flake
+
+      - name: Frontend build
+        shell: bash
+        working-directory: desktop
+        run: |
+          npm ci
+          npm run build
+          npm audit
+
+      - name: Build unsigned desktop bundle (UNSIGNED_DEVELOPER_RC)
+        shell: bash
+        working-directory: desktop
+        run: npm run tauri -- build
+
+      - name: Clean-install / launch / update / uninstall qualification, vault-retention proof, no-network-on-launch observation
+        shell: bash
+        run: scripts/release/install_test.sh
+
+      - name: Upload desktop bundle + install-test result
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-bundle-${{ matrix.os }}
+          path: |
+            desktop/src-tauri/target/release/bundle/nsis/*
+            desktop/src-tauri/target/release/bundle/deb/*
+            desktop/src-tauri/target/release/bundle/dmg/*
+            dist/install-test/*.txt
+          if-no-files-found: ignore
+
+  reproducibility:
+    # Two full clean release rebuilds per OS is expensive and, per the
+    # same disk-cost precedent T05-01 already recorded for its own
+    # M/L-scale timing runs, unnecessary to repeat on every profile: the
+    # thing that can genuinely vary per platform (install/uninstall
+    # filesystem semantics) is already covered natively on all three
+    # profiles above. Reproducibility itself is a toolchain-determinism
+    # property, not an OS-semantics one, so one representative profile
+    # is checked here; ubuntu-latest is cheapest.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Two clean builds, byte-for-byte comparison per binary
+        shell: bash
+        run: scripts/release/reproducibility_check.sh
+
+      - name: Upload reproducibility result
+        uses: actions/upload-artifact@v4
+        with:
+          name: reproducibility-result
+          path: dist/reproducibility/reproducibility-result.txt
+          if-no-files-found: error
