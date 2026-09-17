@@ -103,8 +103,44 @@ jobs:
         working-directory: desktop
         run: npm run tauri -- build
 
+      # Diagnostic only (never fails the job): a prior run of this exact
+      # job hung for 48+ minutes inside the NSIS installer's own bundled
+      # WebView2-runtime step before the timeout below existed --
+      # cancelling it showed the installer's own child process
+      # (Flake_..._x64-setup.exe) still alive, never returning. Tauri's
+      # NSIS template (crates/tauri-bundler .../nsis/installer.nsi,
+      # `Section WebView2`) skips installing the runtime only if it finds
+      # an existing registration under one of these two keys; if the
+      # runner's own Edge/WebView2 registers somewhere this check misses,
+      # the template falls through to actually running the bundled
+      # ~180 MB MicrosoftEdgeWebView2RuntimeInstaller.exe, whose own
+      # per-machine install path can require elevation that a
+      # non-interactive CI session can never grant -- a plausible exact
+      # cause of the hang, not yet confirmed against this runner's own
+      # registry. This step records that registry state directly in the
+      # log so the next occurrence (if any) is diagnosed from real
+      # runner data instead of re-guessed.
+      - name: Diagnose WebView2 runtime registration (Windows only, informational)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          echo "-- HKLM\\SOFTWARE\\WOW6432Node\\Microsoft\\EdgeUpdate\\Clients\\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5} --"
+          reg query "HKLM\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" || echo "(not found under WOW6432Node)"
+          echo "-- HKLM\\SOFTWARE\\Microsoft\\EdgeUpdate\\Clients\\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5} --"
+          reg query "HKLM\SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" || echo "(not found under native 64-bit view)"
+          echo "-- HKCU\\SOFTWARE\\Microsoft\\EdgeUpdate\\Clients\\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5} --"
+          reg query "HKCU\SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" || echo "(not found under HKCU)"
+
+      # timeout-minutes: a prior run of this exact step hung 48+ minutes
+      # inside the Windows NSIS installer call (see the diagnostic step
+      # above) with zero further log output -- 4-6x every passing
+      # macOS/Linux run of this same logical step (~5 min each). A short
+      # step-level timeout turns a silent multi-hour hang into a fast,
+      # investigable failure; it does not change what this step tests or
+      # weaken any acceptance criterion.
       - name: Clean-install / launch / update / uninstall qualification, vault-retention proof, no-network-on-launch observation
         shell: bash
+        timeout-minutes: 10
         run: scripts/release/install_test.sh
 
       - name: Upload desktop bundle + install-test result
