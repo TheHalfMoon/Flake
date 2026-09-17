@@ -1,0 +1,26 @@
+Flake
+Copyright 2026 TheHalfMoon
+
+This product includes software developed by TheHalfMoon, licensed under the
+Apache License, Version 2.0 (see LICENSE).
+
+This product also includes third-party software. The complete list of
+third-party components, their exact locked versions, and their licenses --
+including full license text for every license family other than Apache-2.0
+itself -- is recorded in docs/legal/THIRD-PARTY-LICENSES.md. In particular:
+
+  - Several components embedding Unicode data tables are licensed under the
+    Unicode License v3.
+  - Several components are licensed under the zlib License.
+  - Several components (from the Servo cssparser/selectors CSS-parsing
+    stack, used unmodified) are licensed under the Mozilla Public License
+    2.0, a file-level copyleft that does not extend to the rest of this
+    product.
+  - The bundled SQLite C source (compiled via libsqlite3-sys/rusqlite's
+    "bundled" feature) is dedicated to the public domain by its authors.
+
+None of the above requires Flake's own source to be relicensed or disclosed
+beyond what is already public.
+
+Source availability, licensing questions, and vulnerability/issue reporting:
+see docs/release/USER_GUIDE.md and the project's GitHub repository.
