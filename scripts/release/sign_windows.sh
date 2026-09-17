@@ -127,12 +127,22 @@ WIN_ARTIFACT="$(cygpath -w "$ARTIFACT" 2>/dev/null || echo "$ARTIFACT")"
 WIN_CERT="$(cygpath -w "$SIGNING_CERT_PATH" 2>/dev/null || echo "$SIGNING_CERT_PATH")"
 
 echo "==> signing $ARTIFACT (password redacted from this log)"
-"$SIGNTOOL" sign /f "$WIN_CERT" /p "$SIGNING_CERT_PASSWORD" /fd sha256 /tr "$TIMESTAMP_URL" /td sha256 "$WIN_ARTIFACT" \
+# MSYS_NO_PATHCONV=1: Git Bash auto-translates any bare `/word`-shaped
+# argument that looks like a POSIX absolute path into a Windows path
+# before a native (non-MSYS) executable ever sees it -- the exact same
+# class of bug scripts/release/install_test.sh already hit and
+# documented for NSIS's own bare `/S` flag (silently rewritten to
+# `S:/`). signtool's own `/fd`/`/f`/`/p`/`/tr`/`/td` flags are just as
+# vulnerable; confirmed live here by signtool itself reporting `/fd` as
+# entirely missing despite it being present, correctly ordered, on the
+# command line. Disabling Git Bash's path conversion for this one
+# invocation is the standard fix, not a per-flag escape.
+MSYS_NO_PATHCONV=1 "$SIGNTOOL" sign /f "$WIN_CERT" /p "$SIGNING_CERT_PASSWORD" /fd sha256 /tr "$TIMESTAMP_URL" /td sha256 "$WIN_ARTIFACT" \
   > >(sed "s/$SIGNING_CERT_PASSWORD/[REDACTED]/g") 2> >(sed "s/$SIGNING_CERT_PASSWORD/[REDACTED]/g" >&2)
 
 echo "==> verifying signature (chain-trust check via signtool verify /pa)"
 set +e
-"$SIGNTOOL" verify /pa /v "$WIN_ARTIFACT"
+MSYS_NO_PATHCONV=1 "$SIGNTOOL" verify /pa /v "$WIN_ARTIFACT"
 VERIFY_STATUS=$?
 set -e
 
