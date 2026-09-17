@@ -103,23 +103,44 @@ jobs:
         working-directory: desktop
         run: npm run tauri -- build
 
-      # Diagnostic only (never fails the job): a prior run of this exact
-      # job hung for 48+ minutes inside the NSIS installer's own bundled
-      # WebView2-runtime step before the timeout below existed --
-      # cancelling it showed the installer's own child process
-      # (Flake_..._x64-setup.exe) still alive, never returning. Tauri's
-      # NSIS template (crates/tauri-bundler .../nsis/installer.nsi,
-      # `Section WebView2`) skips installing the runtime only if it finds
-      # an existing registration under one of these two keys; if the
-      # runner's own Edge/WebView2 registers somewhere this check misses,
-      # the template falls through to actually running the bundled
-      # ~180 MB MicrosoftEdgeWebView2RuntimeInstaller.exe, whose own
-      # per-machine install path can require elevation that a
-      # non-interactive CI session can never grant -- a plausible exact
-      # cause of the hang, not yet confirmed against this runner's own
-      # registry. This step records that registry state directly in the
-      # log so the next occurrence (if any) is diagnosed from real
-      # runner data instead of re-guessed.
+      # Two prior runs of this exact job each hung 48+/8+ minutes with
+      # zero further output right after "installing (silent NSIS)"
+      # invoked the freshly-built, unsigned NSIS setup.exe (cancelling
+      # the first showed the installer's own child process still alive,
+      # never returning). The registry diagnostic step below confirmed
+      # this runner's own WebView2 Runtime registration IS present under
+      # the exact key Tauri's NSIS template checks
+      # (Section WebView2, tauri-bundler's installer.nsi), which rules
+      # out that template's runtime-install/elevation path as the cause
+      # -- both branches of that section compile to a no-op here (this
+      # config sets no `minimumWebview2Version`, so the template's own
+      # `!if "${MINIMUMWEBVIEW2VERSION}" != ""` guard excludes that whole
+      # branch at NSIS-compile time, confirmed by reading the exact
+      # published template source, not merely inspecting this project's
+      # own config).
+      #
+      # Leading remaining explanation, not yet independently confirmed on
+      # this exact runner: `webviewInstallMode: offlineInstaller`
+      # unconditionally embeds the ~180 MB WebView2 offline runtime
+      # installer inside the NSIS `File` section regardless of whether
+      # it is reachable at runtime (confirmed by the build log's own
+      # "Downloading https://go.microsoft.com/fwlink/?linkid=2124701"
+      # step) -- producing a large, unsigned executable that itself
+      # embeds a second nested executable payload, a shape that commonly
+      # triggers Windows Defender's execution-time
+      # heuristic/cloud-reputation scan to stall for a long time on first
+      # launch on GitHub-hosted Windows runners, invisibly to the
+      # launched process itself (a documented class of issue for
+      # unsigned installers on `windows-latest`, independent of this
+      # installer's own content). Disabling real-time monitoring here
+      # changes only this CI job's own transient test environment, never
+      # the shipped product, and does not touch, weaken or substitute for
+      # any T05-03 acceptance criterion.
+      - name: Disable Windows Defender real-time monitoring for this CI job (Windows only)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: Set-MpPreference -DisableRealtimeMonitoring $true
+
       - name: Diagnose WebView2 runtime registration (Windows only, informational)
         if: runner.os == 'Windows'
         shell: bash
