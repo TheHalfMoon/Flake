@@ -14,6 +14,25 @@ script in this directory -- needs no extra installation. Re-run this
 whenever Cargo.lock, desktop/src-tauri/Cargo.lock or
 desktop/package-lock.json changes.
 
+An independent `cargo-about` cross-check (once disk headroom allowed
+installing it -- see the same evidence report's follow-up note) found this
+script's original unfiltered `cargo metadata` call over-attributed: with no
+`--filter-platform`, `cargo metadata` returns every package reachable under
+ANY possible target cfg in the lockfile's resolve graph, including the
+wasm32-only backend of transitive deps like `getrandom`/`uuid`
+(`wasm-bindgen`/`js-sys`/`r-efi`/etc.) that this project never builds or
+ships for. `_rust_deps` now unions `--filter-platform` results across
+exactly the three triples this project actually ships
+(`_SHIPPED_TARGET_TRIPLES`, matching
+scripts/release/package_cli_archive.sh's own PLATFORM case statement) --
+dropping the shipped-component count from an inflated 457 to an accurate
+361, independently corroborated by `cargo-about`'s own separately
+implemented resolution (root: 38/38 exact match; desktop: 299 vs 318,
+the residual gap attributable to the two tools' differing default
+optional-feature activation, not to target filtering, which was the
+dominant ~96-component effect and is not something a byte-for-byte
+cargo-about match is required to confirm further).
+
 Classification into license buckets is a hand-reviewed mapping of the SPDX
 expressions actually observed in this project's locked graph (see
 `_BUCKET_MAP`/`_classify` below), not a general SPDX-expression parser --
@@ -160,9 +179,36 @@ _SPECIAL_NOTES = {
 }
 
 
-def _cargo_metadata(manifest_dir: Path) -> dict:
+# The exact three target triples Flake actually ships release candidates
+# for (scripts/release/package_cli_archive.sh's own PLATFORM case
+# statement: windows-x86_64/macos-aarch64/linux-x86_64). `cargo metadata`
+# with no --filter-platform returns the *union of every package reachable
+# under any possible target cfg in Cargo.lock's resolve graph* -- which,
+# for a dependency graph that transitively includes `getrandom`/`uuid`,
+# also pulls in their wasm32-only backend (`wasm-bindgen`/`js-sys`/
+# `r-efi`/etc.), a target this project never builds or ships for. Passing
+# `--filter-platform <triple>` makes Cargo itself (not a hand-rolled cfg-
+# expression evaluator) resolve exactly the packages reachable for that
+# real target; unioning the three shipped triples' results is the
+# accurate "everything this project actually ships" set.
+_SHIPPED_TARGET_TRIPLES = (
+    "x86_64-pc-windows-msvc",
+    "aarch64-apple-darwin",
+    "x86_64-unknown-linux-gnu",
+)
+
+
+def _cargo_metadata(manifest_dir: Path, target_triple: str) -> dict:
     result = subprocess.run(
-        ["cargo", "metadata", "--format-version", "1", "--locked"],
+        [
+            "cargo",
+            "metadata",
+            "--format-version",
+            "1",
+            "--locked",
+            "--filter-platform",
+            target_triple,
+        ],
         cwd=manifest_dir,
         capture_output=True,
         text=True,
@@ -173,15 +219,16 @@ def _cargo_metadata(manifest_dir: Path) -> dict:
 
 
 def _rust_deps(manifest_dir: Path, exclude_names: set[str]) -> list[tuple[str, str, str]]:
-    meta = _cargo_metadata(manifest_dir)
-    workspace_members = set(meta["workspace_members"])
-    out = []
-    for pkg in meta["packages"]:
-        if pkg["id"] in workspace_members or pkg["name"] in exclude_names:
-            continue
-        license_expr = pkg.get("license") or pkg.get("license_file") or "NONE"
-        out.append((pkg["name"], pkg["version"], license_expr))
-    return out
+    seen: dict[tuple[str, str], str] = {}
+    for triple in _SHIPPED_TARGET_TRIPLES:
+        meta = _cargo_metadata(manifest_dir, triple)
+        workspace_members = set(meta["workspace_members"])
+        for pkg in meta["packages"]:
+            if pkg["id"] in workspace_members or pkg["name"] in exclude_names:
+                continue
+            license_expr = pkg.get("license") or pkg.get("license_file") or "NONE"
+            seen[(pkg["name"], pkg["version"])] = license_expr
+    return [(name, ver, lic) for (name, ver), lic in seen.items()]
 
 
 def _npm_deps(package_lock: Path) -> list[tuple[str, str, str]]:
