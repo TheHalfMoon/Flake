@@ -116,29 +116,42 @@ launch_and_check_no_network() {
 # separate root-cause theories (WebView2 runtime install/elevation;
 # Windows Defender's execution-time scan of the unsigned installer) were
 # each checked directly against this exact CI runner and ruled out.
-# Rather than leave a future hang exactly as opaque as those, this helper
-# bounds the wait and, if exceeded, dumps the live Windows process tree
-# via WMI before killing it, so the actual blocking child process (a UAC
-# consent prompt, a sub-installer, an unexpected dialog host, etc.) is
-# visible in the CI log instead of guessed at again.
+#
+# An earlier version of this helper hand-rolled backgrounding + polled
+# `kill -0` to detect a hang, but that is unreliable here: under MSYS,
+# `kill -0` on a backgrounded native Windows GUI process can keep
+# reporting "alive" (POSIX zombie-PID semantics -- the slot is not freed
+# until something actually `wait`s it) even after the real process has
+# already exited, producing a false "still running" positive; a
+# follow-up CI run's own `taskkill` on that same tracked pid immediately
+# afterward reported "process not found", confirming exactly this. Using
+# GNU `timeout` (present in this project's Windows CI image) avoids that
+# ambiguity entirely, since it performs a real blocking wait on the
+# actual child. A background snapshot fires unconditionally partway
+# through the bound (harmless if the command already finished) so a
+# genuine hang is diagnosed from a live process tree instead of a
+# post-mortem guess.
 run_windows_exe_with_diagnostics() {
   local timeout_s="$1"; shift
-  "$@" &
-  local pid=$!
-  local waited=0
-  while kill -0 "$pid" 2>/dev/null; do
-    if [[ "$waited" -ge "$timeout_s" ]]; then
-      echo "DIAGNOSTIC: '$*' still running after ${timeout_s}s -- full process tree:" >&2
-      powershell -NoProfile -NonInteractive -Command \
-        "Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,Name,CommandLine | Format-Table -AutoSize | Out-String -Width 300" >&2 || true
-      taskkill //F //T //PID "$pid" 2>&1 >&2 || true
-      echo "FAIL: '$*' did not complete within ${timeout_s}s (process tree dumped above)" >&2
-      exit 1
-    fi
-    sleep 5
-    waited=$((waited + 5))
-  done
-  wait "$pid"
+  local snapshot_at=$((timeout_s / 2))
+  (
+    sleep "$snapshot_at"
+    echo "DIAGNOSTIC: live process tree at t+${snapshot_at}s while waiting on: $*" >&2
+    powershell -NoProfile -NonInteractive -Command \
+      "Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,Name,CommandLine | Format-Table -AutoSize | Out-String -Width 300" >&2 || true
+  ) &
+  local watcher_pid=$!
+  local rc=0
+  timeout "${timeout_s}s" "$@" || rc=$?
+  kill "$watcher_pid" 2>/dev/null || true
+  wait "$watcher_pid" 2>/dev/null || true
+  if [[ "$rc" -eq 124 ]]; then
+    echo "FAIL: '$*' did not complete within ${timeout_s}s (timeout; see any process-tree diagnostic dumped above)" >&2
+    exit 1
+  elif [[ "$rc" -ne 0 ]]; then
+    echo "FAIL: '$*' exited with code $rc" >&2
+    exit "$rc"
+  fi
 }
 
 case "$(uname -s)" in
