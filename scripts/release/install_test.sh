@@ -156,13 +156,28 @@ run_windows_exe_with_diagnostics() {
 
 case "$(uname -s)" in
   MINGW*|MSYS*|CYGWIN*)
+    # Confirmed root cause of the hang the diagnostics above were built
+    # to chase: this shell is MSYS bash, which auto-converts a bare
+    # `/S`-shaped argument into a Windows drive-relative path (`S:/`)
+    # before the native child ever sees it -- verified directly by
+    # capturing the actual live argv NSIS received during a hang
+    # (`Flake_..._x64-setup.exe S:/ /D=...`, not `/S /D=...`). Silent
+    # mode was therefore never requested; the installer launched its
+    # normal interactive GUI wizard, which then waits forever for a
+    # click that a headless CI session can never provide -- consistent
+    # with every observed symptom (zero further script output; the
+    # installer's own child process still alive after being cancelled
+    # 48+ minutes later). `//S` (already used below for `taskkill`'s own
+    # `/F /T /PID` flags) is MSYS's standard escape for exactly this:
+    # confirmed locally that a native process still receives the plain
+    # single-slash `/S` it actually expects.
     INSTALLER="$(ls "$BUNDLE_DIR"/nsis/*.exe | head -1)"
     INSTALL_DIR="$REPO_ROOT/dist/install-test/windows-installed"
     rm -rf "$INSTALL_DIR"; mkdir -p "$INSTALL_DIR"
     WIN_INSTALL_DIR="$(cygpath -w "$INSTALL_DIR" 2>/dev/null || echo "$INSTALL_DIR")"
 
     echo "==> installing (silent NSIS): $INSTALLER -> $WIN_INSTALL_DIR"
-    run_windows_exe_with_diagnostics 90 "$INSTALLER" /S "/D=$WIN_INSTALL_DIR"
+    run_windows_exe_with_diagnostics 90 "$INSTALLER" //S "/D=$WIN_INSTALL_DIR"
     sleep 3
     APP_EXE="$(find "$INSTALL_DIR" -iname 'flake*.exe' ! -iname 'uninstall*' | head -1)"
     if [[ -z "$APP_EXE" ]]; then
@@ -174,7 +189,7 @@ case "$(uname -s)" in
     launch_and_check_no_network "$(basename "$APP_EXE")" "$APP_EXE"
 
     echo "==> reinstalling over existing install (stand-in for 'update')"
-    run_windows_exe_with_diagnostics 90 "$INSTALLER" /S "/D=$WIN_INSTALL_DIR"
+    run_windows_exe_with_diagnostics 90 "$INSTALLER" //S "/D=$WIN_INSTALL_DIR"
     sleep 3
     [[ -f "$APP_EXE" ]] || { echo "FAIL: app executable missing after reinstall" >&2; exit 1; }
     echo "    reinstall-over-existing OK, app still present"
@@ -185,7 +200,7 @@ case "$(uname -s)" in
       exit 1
     fi
     echo "==> uninstalling: $UNINSTALLER"
-    run_windows_exe_with_diagnostics 90 "$UNINSTALLER" /S
+    run_windows_exe_with_diagnostics 90 "$UNINSTALLER" //S
     sleep 3
     if [[ -f "$APP_EXE" ]]; then
       echo "FAIL: app executable still present after uninstall" >&2
