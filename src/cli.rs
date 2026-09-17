@@ -98,6 +98,7 @@ COMMANDS:
   manifest          Show the last package manifest
   events            Show the event log
   verify            Verify the event chain
+  license           Show version, license, source, privacy and reporting-route facts (no --vault needed)
 
 FORMAT-2 COMMANDS (T02-01; --vault names a separate format-2 store root):
   canonical-init    Create a format-2 store
@@ -454,6 +455,20 @@ pub fn run(argv: &[String]) -> Result<i32> {
                     Ok(3)
                 }
             }
+        }
+
+        "license" => {
+            let info = crate::about::about_info();
+            println!("flake {}", info.version);
+            println!("License: {} (see {})", info.license_spdx, info.license_file);
+            println!(
+                "Third-party notices: {} (also see {})",
+                info.notice_file, info.third_party_licenses_file
+            );
+            println!("Source: {}", info.source_url);
+            println!("Report a problem / get support: {}", info.support_url);
+            println!("Privacy: {}", info.privacy_statement);
+            Ok(0)
         }
 
         "canonical-init" => {
@@ -1598,6 +1613,14 @@ mod tests {
 
     fn s(v: &[&str]) -> Vec<String> {
         v.iter().map(|s| s.to_string()).collect()
+    }
+
+    /// T05-04: `license` needs no `--vault` at all -- it only prints the
+    /// compile-time facts in `crate::about`, never touching disk.
+    #[test]
+    fn license_command_requires_no_vault_and_exits_zero() {
+        let code = run(&s(&["license"])).unwrap();
+        assert_eq!(code, 0);
     }
 
     /// T01-01: `init` and `compile` used to append their event directly on a

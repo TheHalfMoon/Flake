@@ -110,6 +110,7 @@ fn main() {
             commands::vault_export,
             commands::import_preview,
             commands::vault_import_selected,
+            commands::about_info,
         ])
         .run(tauri::generate_context!())
         .expect("error while running the Flake desktop shell");

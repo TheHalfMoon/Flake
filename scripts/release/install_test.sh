@@ -154,6 +154,27 @@ run_windows_exe_with_diagnostics() {
   fi
 }
 
+# T05-04: "About/help/distribution include license, source, privacy and
+# support/reporting route" -- proves the installed bundle actually carries
+# LICENSE/NOTICE/THIRD-PARTY-LICENSES.md (via tauri.conf.json's `resources`),
+# not merely that the config declares them. Searches the real installed
+# tree rather than trusting the bundler's own reported success.
+verify_bundled_legal_files() {
+  local search_roots=("$@")
+  local found_license found_notice found_third_party
+  found_license="$(find "${search_roots[@]}" -type f -iname 'LICENSE' 2>/dev/null | head -1)"
+  found_notice="$(find "${search_roots[@]}" -type f -iname 'NOTICE' 2>/dev/null | head -1)"
+  found_third_party="$(find "${search_roots[@]}" -type f -iname 'THIRD-PARTY-LICENSES.md' 2>/dev/null | head -1)"
+  if [[ -z "$found_license" || -z "$found_notice" || -z "$found_third_party" ]]; then
+    echo "FAIL: installed bundle under $search_root is missing a required legal file" >&2
+    echo "  LICENSE: ${found_license:-MISSING}" >&2
+    echo "  NOTICE: ${found_notice:-MISSING}" >&2
+    echo "  THIRD-PARTY-LICENSES.md: ${found_third_party:-MISSING}" >&2
+    exit 1
+  fi
+  echo "    bundled legal files present: $found_license, $found_notice, $found_third_party"
+}
+
 case "$(uname -s)" in
   MINGW*|MSYS*|CYGWIN*)
     # Confirmed root cause of the hang the diagnostics above were built
@@ -187,6 +208,9 @@ case "$(uname -s)" in
     fi
     echo "==> launching installed app: $APP_EXE"
     launch_and_check_no_network "$(basename "$APP_EXE")" "$APP_EXE"
+
+    echo "==> verifying bundled legal files were actually installed"
+    verify_bundled_legal_files "$INSTALL_DIR"
 
     echo "==> reinstalling over existing install (stand-in for 'update')"
     run_windows_exe_with_diagnostics 90 "$INSTALLER" //S "/D=$WIN_INSTALL_DIR"
@@ -230,6 +254,9 @@ case "$(uname -s)" in
     echo "==> launching installed app: $APP_BIN"
     launch_and_check_no_network "$(basename "$APP_BIN")" "$APP_BIN"
 
+    echo "==> verifying bundled legal files were actually installed"
+    verify_bundled_legal_files "$INSTALLED_APP"
+
     echo "==> reinstalling over existing install (stand-in for 'update')"
     hdiutil attach "$DMG" -mountpoint "$MOUNT_POINT" -nobrowse -quiet
     rm -rf "${APP_INSTALL_DIR:?}"/*.app
@@ -258,6 +285,9 @@ case "$(uname -s)" in
 
     echo "==> launching installed app (headless via Xvfb -- this CI runner has no display server): $APP_BIN"
     launch_and_check_no_network "$(basename "$APP_BIN")" xvfb-run -a --server-args="-screen 0 1280x1024x24" "$APP_BIN"
+
+    echo "==> verifying bundled legal files were actually installed"
+    verify_bundled_legal_files "/usr/lib/$PKG_NAME" "/usr/share/$PKG_NAME"
 
     echo "==> reinstalling over existing install (stand-in for 'update')"
     sudo dpkg -i "$DEB"

@@ -14,6 +14,7 @@
 //! ([ARCHITECTURE_FREEZE §9](../docs/canonical/ARCHITECTURE_FREEZE.md), Phase T
 //! authorization boundary).
 
+pub mod about;
 pub mod backup;
 pub mod canonical;
 pub mod capture;

@@ -42,6 +42,11 @@
     "category": "Productivity",
     "shortDescription": "Flake -- a local-first, offline, account-free personal knowledge and decision vault.",
     "longDescription": "Flake stores notes, evidence, decisions and actions in a local, offline, account-free vault. No cloud sync, no telemetry, no sign-in. This is a T05-03 unsigned developer release candidate (UNSIGNED_DEVELOPER_RC), not a signed final release.",
+    "resources": {
+      "../../LICENSE": "LICENSE",
+      "../../NOTICE": "NOTICE",
+      "../../docs/legal/THIRD-PARTY-LICENSES.md": "docs/legal/THIRD-PARTY-LICENSES.md"
+    },
     "windows": {
       "webviewInstallMode": {
         "type": "offlineInstaller"
@@ -49,7 +54,8 @@
       "nsis": {
         "installMode": "currentUser",
         "languages": ["English"],
-        "displayLanguageSelector": false
+        "displayLanguageSelector": false,
+        "license": "../../LICENSE"
       }
     },
     "macOS": {

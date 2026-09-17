@@ -308,3 +308,14 @@ export interface ProposalEntry {
   submitted_at: string;
   revision_id: string;
 }
+
+export interface AboutInfo {
+  version: string;
+  license_spdx: string;
+  license_file: string;
+  notice_file: string;
+  third_party_licenses_file: string;
+  source_url: string;
+  support_url: string;
+  privacy_statement: string;
+}
