@@ -109,6 +109,38 @@ launch_and_check_no_network() {
   echo "    launch OK (pid $pid ran >=4s, no non-loopback connection opened by this process)"
 }
 
+# Windows only: NSIS installer/uninstaller invocations have hung on this
+# project's own CI with zero further script-visible output (one run 48+
+# minutes, later runs hit a 10-minute step-level timeout) -- something in
+# the child process tree blocks, not this script's own logic, and two
+# separate root-cause theories (WebView2 runtime install/elevation;
+# Windows Defender's execution-time scan of the unsigned installer) were
+# each checked directly against this exact CI runner and ruled out.
+# Rather than leave a future hang exactly as opaque as those, this helper
+# bounds the wait and, if exceeded, dumps the live Windows process tree
+# via WMI before killing it, so the actual blocking child process (a UAC
+# consent prompt, a sub-installer, an unexpected dialog host, etc.) is
+# visible in the CI log instead of guessed at again.
+run_windows_exe_with_diagnostics() {
+  local timeout_s="$1"; shift
+  "$@" &
+  local pid=$!
+  local waited=0
+  while kill -0 "$pid" 2>/dev/null; do
+    if [[ "$waited" -ge "$timeout_s" ]]; then
+      echo "DIAGNOSTIC: '$*' still running after ${timeout_s}s -- full process tree:" >&2
+      powershell -NoProfile -NonInteractive -Command \
+        "Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,Name,CommandLine | Format-Table -AutoSize | Out-String -Width 300" >&2 || true
+      taskkill //F //T //PID "$pid" 2>&1 >&2 || true
+      echo "FAIL: '$*' did not complete within ${timeout_s}s (process tree dumped above)" >&2
+      exit 1
+    fi
+    sleep 5
+    waited=$((waited + 5))
+  done
+  wait "$pid"
+}
+
 case "$(uname -s)" in
   MINGW*|MSYS*|CYGWIN*)
     INSTALLER="$(ls "$BUNDLE_DIR"/nsis/*.exe | head -1)"
@@ -117,7 +149,7 @@ case "$(uname -s)" in
     WIN_INSTALL_DIR="$(cygpath -w "$INSTALL_DIR" 2>/dev/null || echo "$INSTALL_DIR")"
 
     echo "==> installing (silent NSIS): $INSTALLER -> $WIN_INSTALL_DIR"
-    "$INSTALLER" /S "/D=$WIN_INSTALL_DIR"
+    run_windows_exe_with_diagnostics 90 "$INSTALLER" /S "/D=$WIN_INSTALL_DIR"
     sleep 3
     APP_EXE="$(find "$INSTALL_DIR" -iname 'flake*.exe' ! -iname 'uninstall*' | head -1)"
     if [[ -z "$APP_EXE" ]]; then
@@ -129,7 +161,7 @@ case "$(uname -s)" in
     launch_and_check_no_network "$(basename "$APP_EXE")" "$APP_EXE"
 
     echo "==> reinstalling over existing install (stand-in for 'update')"
-    "$INSTALLER" /S "/D=$WIN_INSTALL_DIR"
+    run_windows_exe_with_diagnostics 90 "$INSTALLER" /S "/D=$WIN_INSTALL_DIR"
     sleep 3
     [[ -f "$APP_EXE" ]] || { echo "FAIL: app executable missing after reinstall" >&2; exit 1; }
     echo "    reinstall-over-existing OK, app still present"
@@ -140,7 +172,7 @@ case "$(uname -s)" in
       exit 1
     fi
     echo "==> uninstalling: $UNINSTALLER"
-    "$UNINSTALLER" /S
+    run_windows_exe_with_diagnostics 90 "$UNINSTALLER" /S
     sleep 3
     if [[ -f "$APP_EXE" ]]; then
       echo "FAIL: app executable still present after uninstall" >&2
