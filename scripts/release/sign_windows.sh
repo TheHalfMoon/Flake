@@ -14,7 +14,7 @@
 #   TEST_SIGNING_MODE=1 scripts/release/sign_windows.sh <artifact.exe>
 # In test mode, this script generates a disposable self-signed
 # Authenticode test certificate (PowerShell `New-SelfSignedCertificate`),
-# imports it into this run's own CurrentUser\Root trust store (so
+# imports it into this run's own LocalMachine\Root trust store (so
 # `signtool verify /pa` can complete the chain-trust check it is actually
 # designed to perform), signs with it, verifies, then removes the
 # certificate from the store again. This never touches, requires or
@@ -60,9 +60,9 @@ CLEANUP_THUMBPRINT=""
 
 cleanup() {
   if [[ -n "$CLEANUP_THUMBPRINT" ]]; then
-    echo "==> removing disposable test certificate from CurrentUser\\Root (thumbprint $CLEANUP_THUMBPRINT)"
+    echo "==> removing disposable test certificate from LocalMachine\\Root and CurrentUser\\My (thumbprint $CLEANUP_THUMBPRINT)"
     powershell.exe -NoProfile -NonInteractive -Command \
-      "Get-ChildItem Cert:\\CurrentUser\\Root | Where-Object { \$_.Thumbprint -eq '$CLEANUP_THUMBPRINT' } | Remove-Item -Force -ErrorAction SilentlyContinue; Get-ChildItem Cert:\\CurrentUser\\My | Where-Object { \$_.Thumbprint -eq '$CLEANUP_THUMBPRINT' } | Remove-Item -Force -ErrorAction SilentlyContinue" \
+      "Get-ChildItem Cert:\\LocalMachine\\Root | Where-Object { \$_.Thumbprint -eq '$CLEANUP_THUMBPRINT' } | Remove-Item -Force -ErrorAction SilentlyContinue; Get-ChildItem Cert:\\CurrentUser\\My | Where-Object { \$_.Thumbprint -eq '$CLEANUP_THUMBPRINT' } | Remove-Item -Force -ErrorAction SilentlyContinue" \
       > /dev/null 2>&1 || true
   fi
 }
@@ -100,14 +100,18 @@ if [[ "$TEST_MODE" == "1" ]]; then
     exit 1
   fi
 
-  # Re-import from the exported PFX into CurrentUser\Root -- this is the
-  # step that actually matters (it is what makes chain trust resolvable
-  # for signtool verify below); importing straight from the CurrentUser\My
-  # cert object by path proved unreliable across hosts in earlier testing
-  # and is deliberately not used here.
+  # Re-import from the exported PFX into LocalMachine\Root, not
+  # CurrentUser\Root: confirmed live that signtool's own /pa chain-trust
+  # check ("A certificate chain processed, but terminated in a root
+  # which is not trusted") does not treat a CurrentUser\Root addition as
+  # sufficient on this runner -- Authenticode policy chain-building
+  # consults the machine-wide root store as its trust anchor, not the
+  # per-user one. GitHub-hosted Windows runners execute job steps with
+  # local administrator rights, so this write does not require an
+  # explicit elevation prompt.
   powershell.exe -NoProfile -NonInteractive -Command "
     \$pw = ConvertTo-SecureString -String 'test-only-disposable-password' -Force -AsPlainText
-    Import-PfxCertificate -FilePath '$PFX_PATH' -CertStoreLocation Cert:\\CurrentUser\\Root -Password \$pw -ErrorAction SilentlyContinue | Out-Null
+    Import-PfxCertificate -FilePath '$PFX_PATH' -CertStoreLocation Cert:\\LocalMachine\\Root -Password \$pw -ErrorAction SilentlyContinue | Out-Null
   " > /dev/null 2>&1 || true
 
   CLEANUP_THUMBPRINT="$THUMBPRINT"
@@ -115,7 +119,7 @@ if [[ "$TEST_MODE" == "1" ]]; then
   SIGNING_CERT_PASSWORD="test-only-disposable-password"
   TIMESTAMP_URL="${TIMESTAMP_URL:-http://timestamp.digicert.com}"
 
-  echo "==> disposable TEST certificate thumbprint: $THUMBPRINT (self-signed, added only to this ephemeral runner's own CurrentUser\\Root store -- not a publicly trusted CA, not a production identity)"
+  echo "==> disposable TEST certificate thumbprint: $THUMBPRINT (self-signed, added only to this ephemeral runner's own LocalMachine\\Root store -- not a publicly trusted CA, not a production identity)"
 else
   : "${SIGNING_CERT_PATH:?SIGNING_CERT_PATH must be set (production mode)}"
   : "${SIGNING_CERT_PASSWORD:?SIGNING_CERT_PASSWORD must be set (production mode)}"
