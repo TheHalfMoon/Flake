@@ -127,7 +127,7 @@ WIN_ARTIFACT="$(cygpath -w "$ARTIFACT" 2>/dev/null || echo "$ARTIFACT")"
 WIN_CERT="$(cygpath -w "$SIGNING_CERT_PATH" 2>/dev/null || echo "$SIGNING_CERT_PATH")"
 
 echo "==> signing $ARTIFACT (password redacted from this log)"
-"$SIGNTOOL" sign /f "$WIN_CERT" /p "$SIGNING_CERT_PASSWORD" /tr "$TIMESTAMP_URL" /td sha256 /fd sha256 "$WIN_ARTIFACT" \
+"$SIGNTOOL" sign /f "$WIN_CERT" /p "$SIGNING_CERT_PASSWORD" /fd sha256 /tr "$TIMESTAMP_URL" /td sha256 "$WIN_ARTIFACT" \
   > >(sed "s/$SIGNING_CERT_PASSWORD/[REDACTED]/g") 2> >(sed "s/$SIGNING_CERT_PASSWORD/[REDACTED]/g" >&2)
 
 echo "==> verifying signature (chain-trust check via signtool verify /pa)"
