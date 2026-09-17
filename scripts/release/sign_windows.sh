@@ -73,23 +73,38 @@ if [[ "$TEST_MODE" == "1" ]]; then
   echo "PRODUCTION_SIGNATURE_CLAIMED=NO"
   echo "==> generating disposable self-signed Authenticode TEST certificate (not a production identity)"
 
+  # Every path handed to powershell.exe is cygpath -w converted first:
+  # embedding a raw MSYS/POSIX path (e.g. from `mktemp -d`) inside a
+  # PowerShell -Command string is not reliably auto-translated by Git
+  # Bash's argv path-mangling (that mangling applies to whole argv
+  # elements, not to path-shaped substrings buried inside one larger
+  # -Command string), and silently produces a path PowerShell cannot
+  # resolve.
   WORKDIR="$(mktemp -d)"
-  PFX_PATH="$(cygpath -w "$WORKDIR/test-signing.pfx" 2>/dev/null || echo "$WORKDIR/test-signing.pfx")"
-  CERT_INFO="$WORKDIR/cert-thumbprint.txt"
+  PFX_PATH="$(cygpath -w "$WORKDIR/test-signing.pfx")"
 
-  powershell.exe -NoProfile -NonInteractive -Command "
+  # Thumbprint comes back over this call's own stdout rather than a
+  # round-tripped file -- one fewer path to get wrong, and the only
+  # PowerShell output on this path is the final Write-Output line (every
+  # earlier cmdlet result is assigned to a variable or piped to
+  # Out-Null).
+  THUMBPRINT="$(powershell.exe -NoProfile -NonInteractive -Command "
     \$pw = ConvertTo-SecureString -String 'test-only-disposable-password' -Force -AsPlainText
     \$cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject 'CN=Flake TEST Signing Identity - NOT PRODUCTION - disposable' -KeyUsage DigitalSignature -FriendlyName 'flake-ci-disposable-test-cert' -CertStoreLocation Cert:\\CurrentUser\\My -NotAfter (Get-Date).AddDays(1)
     Export-PfxCertificate -Cert \$cert -FilePath '$PFX_PATH' -Password \$pw | Out-Null
-    Import-Certificate -FilePath (\$cert.PSPath -replace 'Microsoft.PowerShell.Security\\\\Certificate::CurrentUser\\\\My\\\\','') -CertStoreLocation Cert:\\CurrentUser\\Root -ErrorAction SilentlyContinue | Out-Null
-    \$cert.Thumbprint | Out-File -FilePath '$CERT_INFO' -Encoding ascii
-  " > /dev/null
+    Write-Output \$cert.Thumbprint
+  " | tr -d '\r\n')"
 
-  # PowerShell's -CertStoreLocation import-by-path above is unreliable
-  # across hosts; re-import from the exported PFX directly instead, which
-  # is the operation that actually matters (it is what makes chain trust
-  # resolvable for signtool verify below).
-  THUMBPRINT="$(tr -d '\r\n' < "$CERT_INFO")"
+  if [[ -z "$THUMBPRINT" ]]; then
+    echo "failed to generate disposable test certificate (empty thumbprint)" >&2
+    exit 1
+  fi
+
+  # Re-import from the exported PFX into CurrentUser\Root -- this is the
+  # step that actually matters (it is what makes chain trust resolvable
+  # for signtool verify below); importing straight from the CurrentUser\My
+  # cert object by path proved unreliable across hosts in earlier testing
+  # and is deliberately not used here.
   powershell.exe -NoProfile -NonInteractive -Command "
     \$pw = ConvertTo-SecureString -String 'test-only-disposable-password' -Force -AsPlainText
     Import-PfxCertificate -FilePath '$PFX_PATH' -CertStoreLocation Cert:\\CurrentUser\\Root -Password \$pw -ErrorAction SilentlyContinue | Out-Null
