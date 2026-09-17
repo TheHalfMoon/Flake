@@ -39,6 +39,8 @@
     ],
     "publisher": "TheHalfMoon",
     "copyright": "Copyright 2026 TheHalfMoon. Licensed under the Apache License, Version 2.0.",
+    "license": "Apache-2.0",
+    "licenseFile": "../../LICENSE",
     "category": "Productivity",
     "shortDescription": "Flake -- a local-first, offline, account-free personal knowledge and decision vault.",
     "longDescription": "Flake stores notes, evidence, decisions and actions in a local, offline, account-free vault. No cloud sync, no telemetry, no sign-in. This is a T05-03 unsigned developer release candidate (UNSIGNED_DEVELOPER_RC), not a signed final release.",
@@ -54,8 +56,7 @@
       "nsis": {
         "installMode": "currentUser",
         "languages": ["English"],
-        "displayLanguageSelector": false,
-        "license": "../../LICENSE"
+        "displayLanguageSelector": false
       }
     },
     "macOS": {
