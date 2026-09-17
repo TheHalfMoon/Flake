@@ -10,6 +10,7 @@ import { SourcesPanel } from "./SourcesPanel";
 import { GrantsPanel } from "./GrantsPanel";
 import { ProposalsPanel } from "./ProposalsPanel";
 import { DataManagementPanel } from "./DataManagementPanel";
+import { AboutPanel } from "./AboutPanel";
 import { useConfirm } from "./Confirm";
 import type { ProjectSummary } from "./types";
 import "./App.css";
@@ -36,6 +37,7 @@ export default function App() {
   const [notes, setNotes] = useState<NoteInfo[]>([]);
   const [selectedNoteId, setSelectedNoteId] = useState<string | "new" | null>(null);
   const [tab, setTab] = useState<Tab>("notes");
+  const [showAbout, setShowAbout] = useState(false);
   const { requestConfirm, confirmDialog } = useConfirm();
   // `T05-03`: purely informational -- the OS's own per-user application-
   // data directory joined with `vaults` (plan section 25), shown so the
@@ -172,10 +174,15 @@ export default function App() {
     }
   }
 
+  if (showAbout) {
+    return <AboutPanel onClose={() => setShowAbout(false)} />;
+  }
+
   if (!vault) {
     return (
       <main className="shell">
         <h1>Flake</h1>
+        <button onClick={() => setShowAbout(true)}>About</button>
         <p className="notice">Phase T -- experimental, not a product. Everything stays local and offline.</p>
         <label>
           Vault name (for Create / Restore)
@@ -209,6 +216,7 @@ export default function App() {
         {confirmDialog}
         <h1>Flake</h1>
         <button onClick={() => setOpenProject(null)}>&larr; Back to projects</button>
+        <button onClick={() => setShowAbout(true)}>About</button>
         <p className="notice">
           Project: {openProject.name}
           {openProject.description ? ` -- ${openProject.description}` : ""}
@@ -295,6 +303,7 @@ export default function App() {
     <main className="shell">
       {confirmDialog}
       <h1>Flake</h1>
+      <button onClick={() => setShowAbout(true)}>About</button>
       <p className="notice">Vault: {vault.path}</p>
       <section>
         <h2>Projects</h2>

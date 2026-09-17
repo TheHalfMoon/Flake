@@ -25,6 +25,9 @@ does not mean.
   moving an older-format vault onto the current format. Only needed if you
   have a vault created by a pre-1.0 build.
 - This guide.
+- `LICENSE`, `NOTICE`, `docs/legal/THIRD-PARTY-LICENSES.md` — this
+  product's own license and every third-party component's license (see
+  section 11 below).
 
 ## 2. Quickstart
 
@@ -165,3 +168,20 @@ Run `flake` with no arguments (or `flake --help`) for the full command
 list; each command's own error message names its exact required flags if
 you omit one. That usage text is the authoritative reference, not this
 guide.
+
+## 11. License, source, privacy and reporting a problem
+
+Run `flake license` for these same facts on the command line at any time
+(no `--vault` needed); the desktop app has an equivalent "About" screen
+reachable from every top-level view.
+
+- **License:** Apache License, Version 2.0. The full text ships as
+  `LICENSE` in this archive; `NOTICE` and `docs/legal/THIRD-PARTY-LICENSES.md`
+  (also included) record every third-party component this build ships and
+  its exact license.
+- **Source:** <https://github.com/TheHalfMoon/Flake>
+- **Privacy:** Flake is local-first, offline and account-free. It does not
+  sign in, sync to a cloud service, or send telemetry. No data leaves this
+  device unless you explicitly export or disclose it (`export-run`,
+  `package-export`).
+- **Report a problem / get support:** <https://github.com/TheHalfMoon/Flake/issues>

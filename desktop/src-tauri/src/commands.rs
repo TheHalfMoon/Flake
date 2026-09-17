@@ -1376,3 +1376,13 @@ pub fn vault_import_selected(
     let mut store = CanonicalStore::open(&vault_path).map_err(|e| e.to_string())?;
     import::import_selected_merge(&mut store, Path::new(&source_path)).map_err(|e| e.to_string())
 }
+
+/// `T05-04`: the desktop half of "About/help/distribution include license,
+/// source, privacy and support/reporting route" -- reads the same
+/// compile-time `fehrest::about::AboutInfo` the CLI's own `license` command
+/// prints, so the two surfaces can never state diverging facts. No vault,
+/// no filesystem, no network access.
+#[tauri::command]
+pub fn about_info() -> fehrest::about::AboutInfo {
+    fehrest::about::about_info()
+}

@@ -44,6 +44,19 @@ done
 
 cp docs/release/USER_GUIDE.md "$STAGE_DIR/README.md"
 
+# T05-04: "About/help/distribution include license, source, privacy and
+# support/reporting route" -- the distributed archive itself must carry the
+# project license and third-party notices, not only the source repository.
+for legal in LICENSE NOTICE; do
+  if [[ ! -f "$legal" ]]; then
+    echo "expected $legal missing at repository root" >&2
+    exit 1
+  fi
+  cp "$legal" "$STAGE_DIR/"
+done
+mkdir -p "$STAGE_DIR/docs/legal"
+cp docs/legal/THIRD-PARTY-LICENSES.md "$STAGE_DIR/docs/legal/"
+
 # Every command below is a plain smoke check that the archive's own copies
 # of the binaries actually run on this platform -- not merely that they
 # compiled -- before anything is zipped up and reported as a candidate.
