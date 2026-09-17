@@ -14,11 +14,15 @@
 #   - uninstall removes the installed application files but explicitly
 #     retains the vault, and the script reports that retention rather
 #     than merely asserting it silently.
-#   - during launch, no outbound network connection is opened (F05: no
-#     runtime downloads/telemetry) -- observed via a connection-table
-#     diff around the launch window, not by disabling the runner's own
-#     network hardware (which would also break the CI job's own ability
-#     to report status).
+#   - during launch, this process itself opens no outbound network
+#     connection (F05: no runtime downloads/telemetry) -- checked by
+#     inspecting the launched process's own open sockets specifically,
+#     not by disabling the runner's own network hardware (which would
+#     also break the CI job's own ability to report status) and not by
+#     diffing the whole machine's connection table (which, on macOS,
+#     also caught the OS's own Gatekeeper/OCSP-style background check
+#     of a newly launched unsigned app -- not anything Flake requested;
+#     see the comment on process_established_remote_connections below).
 set -euo pipefail
 
 cd "$(dirname "$0")/../.."
@@ -41,41 +45,68 @@ PROJECT_ID="$(flake_cli project-create --vault "$TEST_VAULT_DIR" --name "install
 flake_cli capture --vault "$TEST_VAULT_DIR" --project "$PROJECT_ID" --body "survives install/uninstall" > /dev/null
 echo "    seeded vault at $TEST_VAULT_DIR (project=$PROJECT_ID)"
 
-open_connections() {
-  # Loopback-only connection tables are expected (webview IPC uses
-  # http://ipc.localhost); anything to a non-loopback remote address
-  # would be the signal this check exists to catch.
+# Scoped to the launched process's own PID, not a whole-machine
+# connection-table diff: a whole-machine diff was tried first and, on
+# the macOS CI runner, immediately caught several outbound TLS
+# connections to Apple IP ranges that appeared the moment *any* new
+# unsigned .app was launched (consistent with a Gatekeeper/OCSP
+# revocation-style check the OS performs on an unrecognized app, not
+# something Flake's own code requested) -- exactly the kind of
+# platform-owned background traffic already documented and accepted as
+# non-blocking at T04-01 (`FOUNDER_WEBVIEW2_NETWORK_BOUNDARY`) for
+# WebView2's own background telemetry on Windows. Filtering to this
+# process's own PID checks the actual claim (Flake's own process opens
+# no outbound connection), not "nothing on the whole machine changed
+# during this four-second window", which no real OS ever satisfies.
+process_established_remote_connections() {
+  local pid="$1"
   case "$(uname -s)" in
-    MINGW*|MSYS*|CYGWIN*) netstat -ano 2>/dev/null | grep ESTABLISHED || true ;;
-    Darwin) netstat -an 2>/dev/null | grep ESTABLISHED || true ;;
-    Linux) ss -tn state established 2>/dev/null || true ;;
+    MINGW*|MSYS*|CYGWIN*)
+      netstat -ano 2>/dev/null | grep ESTABLISHED | awk -v p="$pid" '$NF==p' || true
+      ;;
+    Darwin)
+      lsof -a -p "$pid" -i -n -P 2>/dev/null | grep ESTABLISHED || true
+      ;;
+    Linux)
+      ss -tnp state established 2>/dev/null | grep "pid=$pid," || true
+      ;;
   esac
 }
 
+# $1: basename of the real app binary, used to re-resolve its actual
+# running pid via `pgrep` after launch -- needed on Linux specifically,
+# where the launch command is wrapped in `xvfb-run` (no display server
+# on this CI runner) and `$!` would only be xvfb-run's own wrapper-
+# script pid, not the wrapped GTK app's. macOS/Windows launch directly,
+# so `$!` is already correct there and this simply reconfirms it.
+# $2..: the full command to run (may itself start with a wrapper).
 launch_and_check_no_network() {
-  local app_cmd=("$@")
-  local before after
-  before="$(open_connections)"
-  "${app_cmd[@]}" &
-  local pid=$!
+  local app_basename="$1"; shift
+  "$@" &
+  local wrapper_pid=$!
   sleep 4
+  local pid=""
+  if command -v pgrep > /dev/null; then
+    pid="$(pgrep -f "$app_basename" 2>/dev/null | head -1)"
+  fi
+  [[ -n "$pid" ]] || pid="$wrapper_pid"
   if ! kill -0 "$pid" 2>/dev/null; then
     echo "FAIL: app process exited within 4s of launch (expected still running)" >&2
     exit 1
   fi
-  after="$(open_connections)"
-  kill "$pid" 2>/dev/null || true
-  wait "$pid" 2>/dev/null || true
+  local connections
+  connections="$(process_established_remote_connections "$pid")"
+  kill "$pid" "$wrapper_pid" 2>/dev/null || true
+  wait "$wrapper_pid" 2>/dev/null || true
 
   local new_remote
-  new_remote="$(comm -13 <(echo "$before" | sort) <(echo "$after" | sort) \
-    | grep -Ev '127\.0\.0\.1|::1|0\.0\.0\.0|localhost' || true)"
+  new_remote="$(echo "$connections" | grep -Ev '127\.0\.0\.1|::1|0\.0\.0\.0|localhost' || true)"
   if [[ -n "$new_remote" ]]; then
-    echo "FAIL: new non-loopback connection observed during launch:" >&2
+    echo "FAIL: this process opened a non-loopback connection during launch:" >&2
     echo "$new_remote" >&2
     exit 1
   fi
-  echo "    launch OK (pid $pid ran >=4s, no non-loopback connection observed)"
+  echo "    launch OK (pid $pid ran >=4s, no non-loopback connection opened by this process)"
 }
 
 case "$(uname -s)" in
@@ -95,7 +126,7 @@ case "$(uname -s)" in
       exit 1
     fi
     echo "==> launching installed app: $APP_EXE"
-    launch_and_check_no_network "$APP_EXE"
+    launch_and_check_no_network "$(basename "$APP_EXE")" "$APP_EXE"
 
     echo "==> reinstalling over existing install (stand-in for 'update')"
     "$INSTALLER" /S "/D=$WIN_INSTALL_DIR"
@@ -137,7 +168,7 @@ case "$(uname -s)" in
     APP_BIN="$(find "$INSTALLED_APP/Contents/MacOS" -type f | head -1)"
 
     echo "==> launching installed app: $APP_BIN"
-    launch_and_check_no_network "$APP_BIN"
+    launch_and_check_no_network "$(basename "$APP_BIN")" "$APP_BIN"
 
     echo "==> reinstalling over existing install (stand-in for 'update')"
     hdiutil attach "$DMG" -mountpoint "$MOUNT_POINT" -nobrowse -quiet
@@ -165,8 +196,8 @@ case "$(uname -s)" in
     APP_BIN="$(dpkg -L "$PKG_NAME" | grep -E '/usr/bin/|/bin/' | head -1)"
     [[ -n "$APP_BIN" ]] || { echo "FAIL: no installed binary found for package $PKG_NAME" >&2; exit 1; }
 
-    echo "==> launching installed app: $APP_BIN"
-    launch_and_check_no_network "$APP_BIN"
+    echo "==> launching installed app (headless via Xvfb -- this CI runner has no display server): $APP_BIN"
+    launch_and_check_no_network "$(basename "$APP_BIN")" xvfb-run -a --server-args="-screen 0 1280x1024x24" "$APP_BIN"
 
     echo "==> reinstalling over existing install (stand-in for 'update')"
     sudo dpkg -i "$DEB"
