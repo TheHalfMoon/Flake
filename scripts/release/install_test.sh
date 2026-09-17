@@ -160,19 +160,45 @@ run_windows_exe_with_diagnostics() {
 # not merely that the config declares them. Searches the real installed
 # tree rather than trusting the bundler's own reported success.
 verify_bundled_legal_files() {
-  local search_roots=("$@")
-  local found_license found_notice found_third_party
-  found_license="$(find "${search_roots[@]}" -type f -iname 'LICENSE' 2>/dev/null | head -1)"
-  found_notice="$(find "${search_roots[@]}" -type f -iname 'NOTICE' 2>/dev/null | head -1)"
-  found_third_party="$(find "${search_roots[@]}" -type f -iname 'THIRD-PARTY-LICENSES.md' 2>/dev/null | head -1)"
+  local all_roots=("$@")
+  local existing_roots=()
+  local r
+  for r in "${all_roots[@]}"; do
+    [[ -e "$r" ]] && existing_roots+=("$r")
+  done
+  local found_license="" found_notice="" found_third_party=""
+  if [[ ${#existing_roots[@]} -gt 0 ]]; then
+    found_license="$(find "${existing_roots[@]}" -type f -iname 'LICENSE' 2>/dev/null | head -1)"
+    found_notice="$(find "${existing_roots[@]}" -type f -iname 'NOTICE' 2>/dev/null | head -1)"
+    found_third_party="$(find "${existing_roots[@]}" -type f -iname 'THIRD-PARTY-LICENSES.md' 2>/dev/null | head -1)"
+  fi
   if [[ -z "$found_license" || -z "$found_notice" || -z "$found_third_party" ]]; then
-    echo "FAIL: installed bundle under $search_root is missing a required legal file" >&2
+    echo "FAIL: installed bundle under ${all_roots[*]} is missing a required legal file" >&2
     echo "  LICENSE: ${found_license:-MISSING}" >&2
     echo "  NOTICE: ${found_notice:-MISSING}" >&2
     echo "  THIRD-PARTY-LICENSES.md: ${found_third_party:-MISSING}" >&2
     exit 1
   fi
   echo "    bundled legal files present: $found_license, $found_notice, $found_third_party"
+}
+
+# Linux-only: `dpkg -L` is the package's own authoritative installed-file
+# manifest -- more robust than guessing which directory convention
+# (`/usr/lib/<pkg>`, `/usr/share/<pkg>`, `/usr/lib/<binary-name>`, ...)
+# the deb bundler actually used for its `resources`.
+verify_bundled_legal_files_dpkg() {
+  local pkg_name="$1"
+  local manifest
+  manifest="$(dpkg -L "$pkg_name")"
+  local legal
+  for legal in LICENSE NOTICE THIRD-PARTY-LICENSES.md; do
+    if ! grep -q "/${legal}\$" <<<"$manifest"; then
+      echo "FAIL: installed package $pkg_name is missing $legal" >&2
+      echo "$manifest" >&2
+      exit 1
+    fi
+  done
+  echo "    bundled legal files present in package $pkg_name"
 }
 
 case "$(uname -s)" in
@@ -287,7 +313,7 @@ case "$(uname -s)" in
     launch_and_check_no_network "$(basename "$APP_BIN")" xvfb-run -a --server-args="-screen 0 1280x1024x24" "$APP_BIN"
 
     echo "==> verifying bundled legal files were actually installed"
-    verify_bundled_legal_files "/usr/lib/$PKG_NAME" "/usr/share/$PKG_NAME"
+    verify_bundled_legal_files_dpkg "$PKG_NAME"
 
     echo "==> reinstalling over existing install (stand-in for 'update')"
     sudo dpkg -i "$DEB"
