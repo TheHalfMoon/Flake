@@ -21,6 +21,19 @@ serde_json = { version = "1", default-features = false, features = ["std"] }
 name = "fehrest"
 path = "src/main.rs"
 
+# `T05-03` (plan section 25: "`flake` is the new product command... A
+# compatibility alias, if shipped, must call the same new implementation...
+# no hidden behavior fork"). This is deliberately the exact same
+# `src/main.rs` as `fehrest` above, not a wrapper or re-export -- the two
+# binaries are byte-for-byte the same compiled program under two shipped
+# names, so "no hidden behavior fork" holds trivially, not by convention.
+# `flake` is the name shipped in release archives/installers going
+# forward; `fehrest` remains built and shipped alongside it as the
+# preserved historical/compatibility name, per that same section.
+[[bin]]
+name = "flake"
+path = "src/main.rs"
+
 [[bin]]
 name = "fehrest-bench-v0"
 path = "bench/V0/harness.rs"

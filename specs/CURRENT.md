@@ -60,7 +60,14 @@ T05-02_D6_VM_CYCLES_REQUIRED=YES
 T05-02_STATUS=COMPLETE
 T05-02_EVIDENCE=docs/evidence/flake-v1/T05-02/REPORT.md
 T05-02_D6_LINUX_CYCLES=30 (local WSL2/KVM) + 8 (CI ubuntu-latest)
-T05-02_MERGE_COMMIT=PENDING_PR_MERGE
+T05-02_MERGE_COMMIT=9bc94895109a364370f131ea8359b0d42a03a55f
+T05-03_STATUS=IN_PROGRESS
+T05-03_EVIDENCE=docs/evidence/flake-v1/T05-03/REPORT.md
+T05-03_WINDOWS_SIGNING_CREDENTIALS=UNAVAILABLE
+T05-03_MACOS_DEVELOPER_ID=UNAVAILABLE
+T05-03_MACOS_NOTARIZATION_CREDENTIALS=UNAVAILABLE
+T05-03_LINUX_RELEASE_SIGNING_KEY=UNAVAILABLE
+T05-03_SIGNING_BLOCKED_TASK=T05-04
 P01_STATUS=CLOSED
 T00-01_STATUS=COMPLETE
 T00-01_EVIDENCE=docs/evidence/flake-v1/T00-01/REPORT.md
@@ -163,7 +170,7 @@ The historical local-only planning SHAs `4246f6d...` and `852e44b...` are proven
 
 ## Next action
 
-**`T05-03` is dependency-ready.** `T05-02` closed COMPLETE (see below); read `docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` section 26/T05-03's own task row before starting -- native offline install/update/rollback/uninstall packaging on all three platforms (archives/NSIS/deb/dmg + source bundle + SBOM), no developer-runtime assumption, default local data kept separate from install/sync folders.
+**`T05-03` is IN_PROGRESS** (PR not yet opened at this point in the record). Founder ruling: build and fully qualify every unsigned artifact possible without private signing credentials, label everything `UNSIGNED_DEVELOPER_RC`, never fabricate a signature; plan section 25's own T05-03 acceptance criteria is independently scoped to unsigned candidates ("Every unsigned candidate installs/runs/updates/uninstalls..."), so signing/notarization/LICENSE/NOTICE remain T05-04's scope, not a T05-03 blocker. Work so far: added the `flake` product-command binary (same `src/main.rs` as `fehrest`, proven functionally identical, not merely claimed, by `tests/flake_fehrest_alias_parity.rs`); closed a real deferred `T01-05` obligation by wiring `backup-run`/`backup-restore`/`vault-recover` CLI commands over the already-reviewed `crate::backup`/`crate::recovery` library functions (`tests/flake_cli_backup_recover.rs`); added a desktop default-vault-parent-directory suggestion; wrote a genuinely new user-facing `docs/release/USER_GUIDE.md` (the repository's own root `README.md` is developer-facing); and built the full packaging pipeline (`scripts/release/package_cli_archive.sh`, `generate_sbom.sh` via `cargo-cyclonedx`, `install_test.sh`, `reproducibility_check.sh`) plus `.github/workflows/t05-03-release-candidates.yml` tying it together across all three native platforms. See `docs/evidence/flake-v1/T05-03/REPORT.md` for full detail, including the exact `WINDOWS_SIGNING_CREDENTIALS=UNAVAILABLE`/`MACOS_DEVELOPER_ID=UNAVAILABLE`/`MACOS_NOTARIZATION_CREDENTIALS=UNAVAILABLE`/`LINUX_RELEASE_SIGNING_KEY=UNAVAILABLE` blocker fields recorded for `T05-04`, and honest limitations on "update"/"rollback" testing (no distinct second historical release exists yet to upgrade from) and the Linux offline-dependency-bundle clause (not yet built).
 
 `T05-02` closed: qualified durability, confinement and performance on every platform. D1-D5 process-fault-schedule matrices (already implemented) now run natively on all three CI platforms. D6 (genuine forced native-VM-unclean-shutdown fault injection, new: QEMU/KVM-backed harness) ran 30 forced-kill cycles locally (WSL2/KVM) plus 8 more on CI (`ubuntu-latest`) -- zero acknowledged canonical loss across all 38 cycles, `head_hash_chain_verified: true` on every one. Two harness-only bugs found and fixed along the way (never product defects): the verification step needed to also copy the SQLite `-journal` file alongside `canonical.sqlite` (Flake uses `journal_mode=DELETE`, a rollback journal), and needed to briefly open its own disposable copy read-write before the independent read-only verification pass, since SQLite cannot roll back a hot journal on a strictly read-only connection. `docs/canonical/FOUNDER_T05-02_PHYSICAL_POWER_LOSS_AMENDMENT_2026-09-16.md` removed the original 10-physical-device-trials/profile requirement (no such hardware/lab report available); Windows/macOS VM cycles recorded as `NOT_EXECUTED_INFRASTRUCTURE_UNAVAILABLE` (non-blocking under that same amendment) -- D1-D5 process-level coverage plus the Linux D6 VM-level proof stand as the qualifying evidence for those two platforms. Full section-27 CLI performance matrix measured at real M-scale (10,000 records): every row within its own maximum, both locally (Windows) and on CI (`ubuntu-latest`). One flagged-not-fixed finding for a future product decision: `crate::recovery::recover_to_new_root`'s own `RecoveryGuard::acquire` is blocked by the exact same stale `WriteLock` marker it exists to remediate after a crash. Full details: `docs/evidence/flake-v1/T05-02/REPORT.md`.
 

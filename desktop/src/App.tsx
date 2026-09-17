@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { NoteEditor, type NoteInfo } from "./NoteEditor";
 import { ActionsPanel } from "./ActionsPanel";
@@ -37,6 +37,18 @@ export default function App() {
   const [selectedNoteId, setSelectedNoteId] = useState<string | "new" | null>(null);
   const [tab, setTab] = useState<Tab>("notes");
   const { requestConfirm, confirmDialog } = useConfirm();
+  // `T05-03`: purely informational -- the OS's own per-user application-
+  // data directory joined with `vaults` (plan section 25), shown so the
+  // owner can see where "Create new vault" will open the native picker
+  // by default before they open it. Never fetched again after mount,
+  // never used to write or scan anything on its own; `null` (the OS
+  // reported nothing) renders no suggestion at all, not a fabricated one.
+  const [defaultVaultParentDir, setDefaultVaultParentDir] = useState<string | null>(null);
+  useEffect(() => {
+    invoke<string | null>("default_vault_parent_dir")
+      .then(setDefaultVaultParentDir)
+      .catch(() => setDefaultVaultParentDir(null));
+  }, []);
 
   async function refreshNotes(vaultPath: string, projectId: string) {
     try {
@@ -178,6 +190,12 @@ export default function App() {
           <button onClick={handleOpen}>Open existing vault</button>
           <button onClick={handleRestore}>Restore from backup</button>
         </div>
+        {defaultVaultParentDir && (
+          <p className="notice">
+            "Create new vault" opens the folder picker at {defaultVaultParentDir} by default -- pick any other
+            location instead if you prefer.
+          </p>
+        )}
         {error && <p className="error">{error}</p>}
       </main>
     );

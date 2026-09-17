@@ -1,6 +1,7 @@
 //! Minimal headless CLI. Hand dispatch — ten subcommands do not justify a
 //! command-line framework and its proc-macro tree (Ponytail DELETE: `clap`).
 
+use crate::backup;
 use crate::canonical::CanonicalStore;
 use crate::capture;
 use crate::checkpoint;
@@ -18,6 +19,7 @@ use crate::markdown;
 use crate::memory::Scope;
 use crate::project::{self, DecisionBasis, DecisionVerification};
 use crate::proposal;
+use crate::recovery;
 use crate::relation::{self, RelationType};
 use crate::resume;
 use crate::source_check;
@@ -77,10 +79,13 @@ fn parse_relation_type(s: &str) -> Result<RelationType> {
 const CLI_ACTOR: &str = "owner";
 
 pub const USAGE: &str = "\
-fehrest — Phase T headless thesis-proof (EXPERIMENTAL, not a product)
+flake — a local-first, offline, account-free personal knowledge and decision vault
+(this binary's own historical name is `fehrest`, from the Phase T thesis-proof this
+product grew out of; `fehrest` remains a compatibility alias for the exact same
+implementation shipped as `flake`)
 
 USAGE:
-  fehrest <command> --vault <path> [options]
+  flake <command> --vault <path> [options]
 
 COMMANDS:
   init              Create a vault
@@ -146,6 +151,14 @@ FORMAT-2 IMPORT COMMANDS (T02-06; --source names a published export root):
   import-preview       Validate a package, show scope/conflicts    --source <path>
   import-full-restore  Import into a brand-new empty vault          --source <path> --vault <path>
   import-merge          Import into this --vault, new identities    --source <path>
+
+FORMAT-2 BACKUP/RECOVER COMMANDS (T01-05/T05-03; --out names a fresh, not-yet-existing root):
+  backup-run    Create a consistent, independently verified full backup   --out <path>
+  backup-restore Restore a backup to a fresh root                        --backup <path> --out <path>
+  vault-recover  Recover the vault this --vault points at to a fresh,
+                 independently reverified root (preserves the original
+                 forensic bytes untouched; use after suspected corruption
+                 or a crash)                                             --out <path>
 
 FORMAT-2 SOURCE-CHECK COMMANDS (T03-01):
   source-check          Recheck a file-backed source's bytes        --id <uuid>
@@ -918,6 +931,55 @@ pub fn run(argv: &[String]) -> Result<i32> {
             for (old, new) in &report.id_map {
                 println!("  {old} -> {new}");
             }
+            Ok(0)
+        }
+
+        // T01-05/T05-03: CLI backup/recover wiring, deferred honestly at
+        // T01-05 ("CLI wiring, a recovery guide document... deferred,
+        // matching this task's own forbidden-scope boundary against
+        // successor work" -- docs/evidence/flake-v1/T01-05/REPORT.md) and
+        // closed here as T05-03's own "recovery guide" release-set
+        // deliverable finally has a CLI surface to document. Every
+        // decision/rule below is `crate::backup`/`crate::recovery`'s own,
+        // unchanged -- this is a thin CLI shell over already-reviewed
+        // Core functions, exactly like every other command in this match.
+        "backup-run" => {
+            let store = CanonicalStore::open(args.vault_root()?)?;
+            let report = backup::backup_to_new_root(store.root(), args.require("out")?, || false)?;
+            println!(
+                "backed up: source={} -> {} head_seq={} verified={} members={}",
+                report.source_root.display(),
+                report.backup_root.display(),
+                report.manifest.snapshot_head_seq,
+                report.manifest.verified,
+                report.manifest.members.len(),
+            );
+            Ok(0)
+        }
+
+        "backup-restore" => {
+            let report =
+                backup::restore_from_backup(args.require("backup")?, args.require("out")?)?;
+            println!(
+                "restored: backup={} -> {} vault_id={} head_seq={} object_count={}",
+                report.backup_root.display(),
+                report.restored_root.display(),
+                report.vault_id,
+                report.restored_transaction_head_seq,
+                report.restored_object_count,
+            );
+            Ok(0)
+        }
+
+        "vault-recover" => {
+            let report = recovery::recover_to_new_root(args.vault_root()?, args.require("out")?)?;
+            println!(
+                "recovered: original={} -> {} head_seq={} object_count={}",
+                report.original_root.display(),
+                report.recovered_root.display(),
+                report.verified_transaction_head_seq,
+                report.verified_object_count,
+            );
             Ok(0)
         }
 
