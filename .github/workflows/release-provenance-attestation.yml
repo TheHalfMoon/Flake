@@ -1,0 +1,75 @@
+name: release-provenance-attestation
+
+# GitHub-native artifact attestations (build provenance) for Flake's CLI
+# release-candidate archives and SBOMs, per the Founder's "maximize free
+# release qualification" decision (2026-09-18). This is ADDITIONAL
+# supply-chain evidence -- it does not replace, and is never claimed to
+# replace, Windows Authenticode signing, Apple Developer ID/notarization,
+# or the Linux GPG release signature (docs/release/CODE_SIGNING_POLICY.md,
+# docs/release/RELEASE_VERIFICATION.md).
+#
+# Deliberately workflow_dispatch-only, never `pull_request`: plan section
+# 25 reserves "uploading, publishing a release" as separately authorized
+# beyond building verified signed local release candidates, and GitHub
+# artifact attestations are public, permanent provenance records once
+# created on a public repository -- they should exist only for a build
+# the Founder/owner explicitly chose to attest, not every PR's throwaway
+# CI build.
+#
+# Least privilege: only this one job gets `id-token`/`attestations`
+# write access, scoped to exactly this workflow; every other workflow in
+# this repository keeps the repository's own default read-only token
+# permissions unchanged.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-attest:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build CLI release archive + SHA-256 manifest
+        shell: bash
+        run: scripts/release/package_cli_archive.sh
+
+      - name: Install cargo-cyclonedx
+        shell: bash
+        run: cargo install cargo-cyclonedx --locked
+
+      - name: Generate SBOMs
+        shell: bash
+        run: scripts/release/generate_sbom.sh
+
+      - name: Attest build provenance for the CLI archive and SBOM
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            dist/*.zip
+            dist/*.tar.gz
+            dist/sbom/*.cdx.json
+
+      - name: Upload attested artifacts (for reference; the attestation itself is recorded against this repository, independent of this upload)
+        uses: actions/upload-artifact@v4
+        with:
+          name: attested-cli-archive-${{ matrix.os }}
+          path: |
+            dist/*.zip
+            dist/*.tar.gz
+            dist/*.sha256
+            dist/sbom/*.cdx.json
+          if-no-files-found: error
