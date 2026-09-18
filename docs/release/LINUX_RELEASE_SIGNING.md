@@ -19,11 +19,10 @@ production identity, distinct in name and email from every disposable per-run te
 - NOT PRODUCTION - disposable <ci-disposable-test@invalid.example>`, expires in 1 day, deleted
 at the end of every run) — the two can never be confused by name, email, or lifetime.
 
-**Fingerprint:** recorded here once the key exists (§2). Until then this field reads
-`NOT_YET_GENERATED`.
+**Fingerprint:** production key generated locally by the Founder on 2026-09-18 and the public key is published at `docs/release/flake-release-signing-public.asc`.
 
 ```text
-FLAKE_RELEASE_SIGNING_FINGERPRINT=NOT_YET_GENERATED
+FLAKE_RELEASE_SIGNING_FINGERPRINT=F779807C73F29F4DB1E7DC9F78F7D4B92287FE22
 ```
 
 ## 2. One-time key generation (Founder-run, local, NOT in an agent session)
@@ -86,9 +85,7 @@ shred -u /tmp/flake-release-signing-private.asc   # or securely delete by your O
 #    without still holding the private key.
 ```
 
-After step 6, update this file's §1 fingerprint field and open a small follow-up PR publishing
-`docs/release/flake-release-signing-public.asc` and the real fingerprint — no other repository
-change is needed to go from `PENDING_ONE_TIME_KEY_CREATION` to `READY`.
+The one-time key-generation step was completed on 2026-09-18. The public key and production fingerprint are now published in this repository. Production signing still requires the key to be available to the authorized signing environment and a real release artifact to be signed and verified before the canonical T05-04 Linux signature gate can be marked PASS.
 
 ## 3. CI secret injection (already implemented)
 
