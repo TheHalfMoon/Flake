@@ -58,17 +58,20 @@ cleanup() {
 trap cleanup EXIT
 
 # Imports an armored key (passed as $1, never as a filename -- callers
-# pass the secret's own value, e.g. from $GPG_PRIVATE_KEY) into a fresh
-# ephemeral GNUPGHOME and prints only the derived key id on stdout.
-# Every diagnostic line goes to stderr so command substitution
-# (`GPG_KEY_ID="$(import_key_from_secret "$GPG_PRIVATE_KEY")"`) captures
-# exactly the id and nothing else. Optionally pins the imported key's
-# fingerprint against $GPG_KEY_FINGERPRINT if that variable is set.
+# pass the secret's own value, e.g. from $GPG_PRIVATE_KEY) into the
+# CALLER'S already-exported $GNUPGHOME and prints only the derived key id
+# on stdout. Deliberately does NOT create or export GNUPGHOME itself: this
+# function is invoked via command substitution
+# (`GPG_KEY_ID="$(import_key_from_secret "$GPG_PRIVATE_KEY")"`), which bash
+# always runs in a subshell -- an `export` made inside that subshell is
+# invisible to the calling script the instant the subshell exits, so
+# GNUPGHOME must be created and exported by the caller BEFORE calling this
+# function (both call sites below do exactly that). Every diagnostic line
+# here goes to stderr so the command substitution captures exactly the id
+# and nothing else. Optionally pins the imported key's fingerprint against
+# $GPG_KEY_FINGERPRINT if that variable is set.
 import_key_from_secret() {
   local armored_key="$1"
-  DISPOSABLE_GNUPGHOME="$(mktemp -d)"
-  chmod 700 "$DISPOSABLE_GNUPGHOME"
-  export GNUPGHOME="$DISPOSABLE_GNUPGHOME"
 
   if ! printf '%s\n' "$armored_key" | gpg --batch --import >/tmp/gpg-import.$$.log 2>&1; then
     echo "gpg import failed (key material never logged):" >&2
@@ -103,6 +106,9 @@ if [[ "$TEST_MODE" == "1" ]]; then
 
   if [[ -n "${GPG_PRIVATE_KEY:-}" ]]; then
     echo "==> importing a disposable TEST key via the same secret-injection mechanics production mode uses (GPG_PRIVATE_KEY), proving that code path -- not a production key"
+    DISPOSABLE_GNUPGHOME="$(mktemp -d)"
+    chmod 700 "$DISPOSABLE_GNUPGHOME"
+    export GNUPGHOME="$DISPOSABLE_GNUPGHOME"
     GPG_KEY_ID="$(import_key_from_secret "$GPG_PRIVATE_KEY")"
     echo "==> imported disposable TEST key id: $GPG_KEY_ID (ephemeral GNUPGHOME, destroyed at the end of this script)"
   else
@@ -129,6 +135,9 @@ EOF
 else
   if [[ -n "${GPG_PRIVATE_KEY:-}" ]]; then
     echo "==> importing the production release-signing key from GPG_PRIVATE_KEY into an ephemeral GNUPGHOME (never this environment's persistent keyring; key material never logged)"
+    DISPOSABLE_GNUPGHOME="$(mktemp -d)"
+    chmod 700 "$DISPOSABLE_GNUPGHOME"
+    export GNUPGHOME="$DISPOSABLE_GNUPGHOME"
     GPG_KEY_ID="$(import_key_from_secret "$GPG_PRIVATE_KEY")"
   else
     : "${GPG_KEY_ID:?GPG_KEY_ID or GPG_PRIVATE_KEY must be set (production mode)}"
