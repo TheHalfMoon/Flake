@@ -46,8 +46,7 @@ verifying a personally-identified certificate holder).
 
 ## Linux — GPG detached signature
 
-Not yet active — the production key does not exist yet (`docs/release/LINUX_RELEASE_SIGNING.md`
-§2). Once published:
+The production public key is now published. Verify its fingerprint before trusting any release signature:
 
 ```bash
 gpg --import docs/release/flake-release-signing-public.asc
@@ -60,8 +59,7 @@ gpg --verify flake-<version>-linux-x86_64.tar.gz.asc flake-<version>-linux-x86_6
 gpg --verify flake_<version>_amd64.deb.asc flake_<version>_amd64.deb
 ```
 
-**Production fingerprint:** `NOT_YET_GENERATED` (updated here the same PR that publishes the
-key per `docs/release/LINUX_RELEASE_SIGNING.md`'s one-time key generation runbook).
+**Production fingerprint:** `F779807C73F29F4DB1E7DC9F78F7D4B92287FE22`
 
 ## macOS — Developer ID and notarization (blocked, external, paid)
 
