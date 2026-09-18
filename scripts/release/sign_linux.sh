@@ -4,20 +4,35 @@
 # `gpg --detach-sign` / `gpg --verify` around one artifact (a .deb
 # package or a .sha256 checksum manifest).
 #
-# Production use (owner-controlled release-signing GPG key present,
-# already imported into the signing environment's keyring):
-#   GPG_KEY_ID=<fingerprint or key id> scripts/release/sign_linux.sh <artifact>
+# Production use has two supported input shapes (see
+# docs/release/LINUX_RELEASE_SIGNING.md for the full architecture):
+#   (a) GPG_KEY_ID=<id> -- a key already present in this environment's own
+#       keyring.
+#   (b) GPG_PRIVATE_KEY=<armored key> [GPG_KEY_PASSPHRASE=<secret>]
+#       [GPG_KEY_FINGERPRINT=<expected fingerprint>] -- the key is
+#       imported into a fresh, ephemeral GNUPGHOME created for this one
+#       invocation (never this environment's persistent keyring) and
+#       destroyed on exit. If GPG_KEY_FINGERPRINT is set, the script
+#       refuses to sign unless the imported key's own fingerprint matches
+#       exactly, so a corrupted or substituted secret can never silently
+#       sign under the wrong identity. Key material and passphrase are
+#       never echoed, never passed as a bare argv value, and never left
+#       on disk outside that ephemeral, deleted directory.
+#   scripts/release/sign_linux.sh <artifact>
 #
 # Test-mechanics mode (no production release-signing key -- proves gpg
 # invocation, detached-signature production and verification wiring
 # only; NEVER a production signature -- see
 # docs/evidence/flake-v1/T05-04/SIGNING_PIPELINE_TEST_MECHANICS.md):
 #   TEST_SIGNING_MODE=1 scripts/release/sign_linux.sh <artifact>
-# In test mode, this script generates a disposable ephemeral GPG key in
-# a throwaway GNUPGHOME (never the real user/CI keyring), signs with it,
-# verifies against that same throwaway keyring, then deletes the whole
-# throwaway directory. This never touches, requires or substitutes for
-# a real release-signing key.
+# In test mode, this script either generates a disposable ephemeral GPG
+# key in a throwaway GNUPGHOME (default), or -- if GPG_PRIVATE_KEY is
+# also set -- imports that (still disposable/throwaway) key through the
+# exact same import_key_from_secret path production mode uses, to prove
+# that specific mechanics without ever touching a real production
+# secret. Either way, test mode signs and verifies against that same
+# throwaway keyring, then deletes the whole throwaway directory, and
+# never claims a production signature.
 set -euo pipefail
 
 if [[ $# -ne 1 ]]; then
@@ -36,22 +51,73 @@ DISPOSABLE_GNUPGHOME=""
 
 cleanup() {
   if [[ -n "$DISPOSABLE_GNUPGHOME" && -d "$DISPOSABLE_GNUPGHOME" ]]; then
-    echo "==> destroying disposable GNUPGHOME"
+    echo "==> destroying ephemeral GNUPGHOME"
     rm -rf "$DISPOSABLE_GNUPGHOME"
   fi
 }
 trap cleanup EXIT
 
+# Imports an armored key (passed as $1, never as a filename -- callers
+# pass the secret's own value, e.g. from $GPG_PRIVATE_KEY) into the
+# CALLER'S already-exported $GNUPGHOME and prints only the derived key id
+# on stdout. Deliberately does NOT create or export GNUPGHOME itself: this
+# function is invoked via command substitution
+# (`GPG_KEY_ID="$(import_key_from_secret "$GPG_PRIVATE_KEY")"`), which bash
+# always runs in a subshell -- an `export` made inside that subshell is
+# invisible to the calling script the instant the subshell exits, so
+# GNUPGHOME must be created and exported by the caller BEFORE calling this
+# function (both call sites below do exactly that). Every diagnostic line
+# here goes to stderr so the command substitution captures exactly the id
+# and nothing else. Optionally pins the imported key's fingerprint against
+# $GPG_KEY_FINGERPRINT if that variable is set.
+import_key_from_secret() {
+  local armored_key="$1"
+
+  if ! printf '%s\n' "$armored_key" | gpg --batch --import >/tmp/gpg-import.$$.log 2>&1; then
+    echo "gpg import failed (key material never logged):" >&2
+    cat /tmp/gpg-import.$$.log >&2
+    rm -f /tmp/gpg-import.$$.log
+    exit 1
+  fi
+  rm -f /tmp/gpg-import.$$.log
+
+  local imported_id imported_fpr
+  imported_id="$(gpg --batch --list-secret-keys --with-colons | awk -F: '/^sec:/ {print $5; exit}')"
+  if [[ -z "$imported_id" ]]; then
+    echo "no secret key found after import" >&2
+    exit 1
+  fi
+
+  if [[ -n "${GPG_KEY_FINGERPRINT:-}" ]]; then
+    imported_fpr="$(gpg --batch --list-secret-keys --with-colons | awk -F: '/^fpr:/ {print $10; exit}')"
+    if [[ "$imported_fpr" != "$GPG_KEY_FINGERPRINT" ]]; then
+      echo "imported key fingerprint ($imported_fpr) does not match expected GPG_KEY_FINGERPRINT ($GPG_KEY_FINGERPRINT) -- refusing to sign with an unexpected key" >&2
+      exit 1
+    fi
+    echo "==> fingerprint pinned and confirmed: $imported_fpr" >&2
+  fi
+
+  echo "$imported_id"
+}
+
 if [[ "$TEST_MODE" == "1" ]]; then
   echo "TEST_SIGNING_IDENTITY_ONLY=YES"
   echo "PRODUCTION_SIGNATURE_CLAIMED=NO"
 
-  DISPOSABLE_GNUPGHOME="$(mktemp -d)"
-  chmod 700 "$DISPOSABLE_GNUPGHOME"
-  export GNUPGHOME="$DISPOSABLE_GNUPGHOME"
+  if [[ -n "${GPG_PRIVATE_KEY:-}" ]]; then
+    echo "==> importing a disposable TEST key via the same secret-injection mechanics production mode uses (GPG_PRIVATE_KEY), proving that code path -- not a production key"
+    DISPOSABLE_GNUPGHOME="$(mktemp -d)"
+    chmod 700 "$DISPOSABLE_GNUPGHOME"
+    export GNUPGHOME="$DISPOSABLE_GNUPGHOME"
+    GPG_KEY_ID="$(import_key_from_secret "$GPG_PRIVATE_KEY")"
+    echo "==> imported disposable TEST key id: $GPG_KEY_ID (ephemeral GNUPGHOME, destroyed at the end of this script)"
+  else
+    echo "==> generating disposable ephemeral GPG TEST key in a throwaway keyring (not the production release-signing key)"
+    DISPOSABLE_GNUPGHOME="$(mktemp -d)"
+    chmod 700 "$DISPOSABLE_GNUPGHOME"
+    export GNUPGHOME="$DISPOSABLE_GNUPGHOME"
 
-  echo "==> generating disposable ephemeral GPG TEST key in a throwaway keyring (not the production release-signing key)"
-  gpg --batch --gen-key <<EOF
+    gpg --batch --gen-key <<EOF
 %no-protection
 Key-Type: EDDSA
 Key-Curve: ed25519
@@ -63,10 +129,19 @@ Expire-Date: 1d
 %commit
 EOF
 
-  GPG_KEY_ID="$(gpg --batch --list-secret-keys --with-colons | awk -F: '/^sec:/ {print $5; exit}')"
-  echo "==> disposable TEST key id: $GPG_KEY_ID (ephemeral, throwaway keyring only, destroyed at the end of this script)"
+    GPG_KEY_ID="$(gpg --batch --list-secret-keys --with-colons | awk -F: '/^sec:/ {print $5; exit}')"
+    echo "==> disposable TEST key id: $GPG_KEY_ID (ephemeral, throwaway keyring only, destroyed at the end of this script)"
+  fi
 else
-  : "${GPG_KEY_ID:?GPG_KEY_ID must be set (production mode)}"
+  if [[ -n "${GPG_PRIVATE_KEY:-}" ]]; then
+    echo "==> importing the production release-signing key from GPG_PRIVATE_KEY into an ephemeral GNUPGHOME (never this environment's persistent keyring; key material never logged)"
+    DISPOSABLE_GNUPGHOME="$(mktemp -d)"
+    chmod 700 "$DISPOSABLE_GNUPGHOME"
+    export GNUPGHOME="$DISPOSABLE_GNUPGHOME"
+    GPG_KEY_ID="$(import_key_from_secret "$GPG_PRIVATE_KEY")"
+  else
+    : "${GPG_KEY_ID:?GPG_KEY_ID or GPG_PRIVATE_KEY must be set (production mode)}"
+  fi
   echo "TEST_SIGNING_IDENTITY_ONLY=NO"
 fi
 
@@ -74,7 +149,19 @@ SIG_PATH="${ARTIFACT}.asc"
 rm -f "$SIG_PATH"
 
 echo "==> gpg --local-user $GPG_KEY_ID --detach-sign --armor $ARTIFACT"
-gpg --batch --yes --local-user "$GPG_KEY_ID" --detach-sign --armor --output "$SIG_PATH" "$ARTIFACT"
+set +e
+if [[ -n "${GPG_KEY_PASSPHRASE:-}" ]]; then
+  printf '%s' "$GPG_KEY_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 \
+    --local-user "$GPG_KEY_ID" --detach-sign --armor --output "$SIG_PATH" "$ARTIFACT"
+else
+  gpg --batch --yes --local-user "$GPG_KEY_ID" --detach-sign --armor --output "$SIG_PATH" "$ARTIFACT"
+fi
+SIGN_STATUS=$?
+set -e
+if [[ $SIGN_STATUS -ne 0 ]]; then
+  echo "gpg detached-sign failed" >&2
+  exit $SIGN_STATUS
+fi
 
 echo "==> gpg --verify $SIG_PATH $ARTIFACT"
 set +e

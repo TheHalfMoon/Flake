@@ -48,3 +48,8 @@ Read [`AGENTS.md`](AGENTS.md) first. Reverify live GitHub truth before each unit
 ## License
 
 The recovered Astro plan records Apache-2.0 intent, but final rights/notice/package clearance remains an execution gate until the repository license surface is explicitly qualified by the canonical task graph.
+
+## Code signing policy
+
+Release artifact signing status, the free/open-source signing mechanisms Flake uses, and how
+to verify a release: [`docs/release/CODE_SIGNING_POLICY.md`](docs/release/CODE_SIGNING_POLICY.md).
