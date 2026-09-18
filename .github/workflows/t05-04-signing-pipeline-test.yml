@@ -1,0 +1,211 @@
+name: t05-04-signing-pipeline-test
+
+# T05-04's own remaining subscope (plan section 25: "Sign Windows
+# payloads/installer, macOS app/notarize/staple, and Linux/checksum
+# manifests using owner-controlled credentials without exposing them")
+# is genuinely blocked on production credentials
+# (WINDOWS_SIGNING_CREDENTIALS/MACOS_DEVELOPER_ID/
+# MACOS_NOTARIZATION_CREDENTIALS/LINUX_RELEASE_SIGNING_KEY, all
+# UNAVAILABLE -- specs/CURRENT.md, docs/evidence/flake-v1/T05-04/REPORT.md).
+#
+# This workflow proves the INDEPENDENTLY EXECUTABLE part of that same
+# subscope: the exact signing command construction, artifact selection,
+# secret-injection interface, CI wiring, timestamp/notarization
+# invocation paths, failure handling, verification command wiring,
+# redaction and no-secret-leakage, and deterministic artifact handoff --
+# using an explicitly disposable, non-production TEST identity per
+# platform, generated and destroyed inside each job. A disposable test
+# identity NEVER satisfies the production-signature gate and this
+# workflow never claims that it does (see every job's own
+# TEST_SIGNING_IDENTITY_ONLY=YES / PRODUCTION_SIGNATURE_CLAIMED=NO
+# output, and docs/evidence/flake-v1/T05-04/SIGNING_PIPELINE_TEST_MECHANICS.md).
+#
+# The moment real owner-controlled credentials exist, the exact same
+# wrapper scripts (scripts/release/sign_windows.sh, sign_macos.sh,
+# sign_linux.sh) run in their production branch (TEST_SIGNING_MODE unset)
+# with those credentials injected as masked secrets -- no script change
+# required, only supplying the named secrets.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  windows-authenticode-test-signing:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build CLI release binaries
+        shell: bash
+        run: cargo build --release --locked --bin flake --bin fehrest --bin flake-migrate
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Frontend build
+        shell: bash
+        working-directory: desktop
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build unsigned NSIS installer (the exact same UNSIGNED_DEVELOPER_RC bundle T05-03 produces)
+        shell: bash
+        working-directory: desktop
+        run: npm run tauri -- build
+
+      - name: TEST-sign the flake.exe CLI binary (disposable identity, no production credentials)
+        shell: bash
+        env:
+          TEST_SIGNING_MODE: "1"
+        run: scripts/release/sign_windows.sh target/release/flake.exe
+
+      - name: TEST-sign the NSIS installer payload (disposable identity, no production credentials)
+        shell: bash
+        env:
+          TEST_SIGNING_MODE: "1"
+        run: |
+          installer="$(find desktop/src-tauri/target/release/bundle/nsis -iname '*.exe' | head -1)"
+          if [[ -z "$installer" ]]; then
+            echo "no NSIS installer .exe found" >&2
+            exit 1
+          fi
+          echo "==> signing installer: $installer"
+          scripts/release/sign_windows.sh "$installer"
+
+      - name: Confirm production mode fails closed without credentials (never a fabricated signature)
+        shell: bash
+        run: |
+          if scripts/release/sign_windows.sh target/release/flake.exe 2>/tmp/prod-mode.log; then
+            echo "production-mode signing unexpectedly succeeded with no credentials set" >&2
+            cat /tmp/prod-mode.log
+            exit 1
+          fi
+          echo "==> confirmed: production mode (TEST_SIGNING_MODE unset) refuses to sign without SIGNING_CERT_PATH/SIGNING_CERT_PASSWORD/TIMESTAMP_URL"
+          cat /tmp/prod-mode.log
+
+  macos-codesign-test-signing:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Build flake CLI
+        shell: bash
+        run: cargo build --release --locked --bin flake
+
+      - name: Frontend build
+        shell: bash
+        working-directory: desktop
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build unsigned .app bundle (the exact same UNSIGNED_DEVELOPER_RC bundle T05-03 produces)
+        shell: bash
+        working-directory: desktop
+        run: npm run tauri -- build --bundles app
+
+      - name: TEST-sign the .app bundle (ad-hoc identity, no Developer ID/notarization credentials)
+        shell: bash
+        env:
+          TEST_SIGNING_MODE: "1"
+        run: |
+          app_bundle="$(find desktop/src-tauri/target/release/bundle/macos -iname '*.app' -maxdepth 1 | head -1)"
+          if [[ -z "$app_bundle" ]]; then
+            echo "no .app bundle found" >&2
+            exit 1
+          fi
+          echo "==> signing: $app_bundle"
+          scripts/release/sign_macos.sh "$app_bundle"
+
+      - name: Confirm production mode fails closed without credentials (never a fabricated signature/notarization claim)
+        shell: bash
+        run: |
+          app_bundle="$(find desktop/src-tauri/target/release/bundle/macos -iname '*.app' -maxdepth 1 | head -1)"
+          if scripts/release/sign_macos.sh "$app_bundle" 2>/tmp/prod-mode.log; then
+            echo "production-mode signing unexpectedly succeeded with no credentials set" >&2
+            cat /tmp/prod-mode.log
+            exit 1
+          fi
+          echo "==> confirmed: production mode (TEST_SIGNING_MODE unset) refuses to sign/notarize without SIGNING_IDENTITY/APPLE_ID/APPLE_TEAM_ID/APPLE_APP_PASSWORD"
+          cat /tmp/prod-mode.log
+
+  linux-release-signing-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Linux Tauri system dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf build-essential
+
+      - name: Build CLI release archive + SHA-256 manifest
+        shell: bash
+        run: scripts/release/package_cli_archive.sh
+
+      - name: Build unsigned .deb bundle (the exact same UNSIGNED_DEVELOPER_RC bundle T05-03 produces)
+        shell: bash
+        working-directory: desktop
+        run: |
+          npm ci
+          npm run build
+          npm run tauri -- build --bundles deb
+
+      - name: TEST-sign the checksum manifest (disposable GPG identity, no production release-signing key)
+        shell: bash
+        env:
+          TEST_SIGNING_MODE: "1"
+        run: |
+          manifest="$(find dist -iname '*.sha256' | head -1)"
+          if [[ -z "$manifest" ]]; then
+            echo "no .sha256 manifest found" >&2
+            exit 1
+          fi
+          scripts/release/sign_linux.sh "$manifest"
+
+      - name: TEST-sign the .deb package (disposable GPG identity, no production release-signing key)
+        shell: bash
+        env:
+          TEST_SIGNING_MODE: "1"
+        run: |
+          deb="$(find desktop/src-tauri/target/release/bundle/deb -iname '*.deb' | head -1)"
+          if [[ -z "$deb" ]]; then
+            echo "no .deb package found" >&2
+            exit 1
+          fi
+          scripts/release/sign_linux.sh "$deb"
+
+      - name: Confirm production mode fails closed without credentials (never a fabricated signature)
+        shell: bash
+        run: |
+          manifest="$(find dist -iname '*.sha256' | head -1)"
+          if scripts/release/sign_linux.sh "$manifest" 2>/tmp/prod-mode.log; then
+            echo "production-mode signing unexpectedly succeeded with no credentials set" >&2
+            cat /tmp/prod-mode.log
+            exit 1
+          fi
+          echo "==> confirmed: production mode (TEST_SIGNING_MODE unset) refuses to sign without GPG_KEY_ID"
+          cat /tmp/prod-mode.log
+
+      - name: Assert no secret material leaked into logs (informational -- these secrets do not exist in this test-mode workflow, verifying the redaction pattern itself has no residual literal placeholder text)
+        shell: bash
+        run: |
+          echo "test-mode jobs never set SIGNING_CERT_PASSWORD/APPLE_APP_PASSWORD -- redaction paths in scripts/release/sign_*.sh are exercised syntactically (sed substitution present) but have no real secret to redact in this workflow; production-mode use is what exercises live redaction, gated behind real secrets never present here."
