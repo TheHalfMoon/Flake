@@ -4,12 +4,12 @@
 # bit-for-bit or each irreducible toolchain difference is isolated,
 # documented and independently shown not to affect code/content.").
 #
-# Builds the three shipped CLI binaries twice from a genuinely clean
+# Builds the five shipped CLI binaries twice from a genuinely clean
 # `target/` (not an incremental rebuild), then compares checksums.
-# `flake` and `fehrest` are expected to differ from each other (separate
-# `[[bin]]` targets embed their own target-name/build-path debug
-# metadata -- see tests/flake_fehrest_alias_parity.rs for the functional
-# parity proof instead), but each binary must match *itself* byte-for-byte
+# `pluma`, `flake` and `fehrest` are expected to differ from each other
+# (separate `[[bin]]` targets embed their own target-name/build-path debug
+# metadata -- see tests/cli_alias_parity.rs for the functional parity
+# proof instead), but each binary must match *itself* byte-for-byte
 # across the two clean builds, or this script reports exactly which
 # bytes differ and fails rather than asserting reproducibility it did not
 # verify.
@@ -20,7 +20,7 @@ REPO_ROOT="$(pwd)"
 OUT_DIR="${DIST_DIR:-$REPO_ROOT/dist}/reproducibility"
 mkdir -p "$OUT_DIR"
 
-BINS=(flake fehrest flake-migrate)
+BINS=(pluma flake fehrest pluma-migrate flake-migrate)
 EXE=""
 case "$(uname -s)" in
   MINGW*|MSYS*|CYGWIN*) EXE=".exe" ;;
@@ -30,7 +30,7 @@ build_once() {
   local label="$1"
   echo "==> clean build #$label"
   rm -rf target
-  cargo build --release --locked --bin flake --bin fehrest --bin flake-migrate
+  cargo build --release --locked --bin pluma --bin flake --bin fehrest --bin pluma-migrate --bin flake-migrate
   mkdir -p "$OUT_DIR/build-$label"
   for bin in "${BINS[@]}"; do
     cp "target/release/${bin}${EXE}" "$OUT_DIR/build-$label/${bin}${EXE}"

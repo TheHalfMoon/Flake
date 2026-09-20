@@ -3,7 +3,7 @@
 **Status:** `T03-04` (outbound half) / `T03-05` (inbound half). Produced by
 `crate::disclosure::compile_disclosure_package`, consumed by
 `crate::proposal::admit_proposal`. **A generic JSON/byte reader and writer
-can produce and consume both halves of this protocol with no Flake
+can produce and consume both halves of this protocol with no Pluma
 dependency at all** — this document is that independent implementer's
 specification. `T03-06` exercises this document directly: two client
 fixtures, each written from this document alone, without sharing Core's own
@@ -11,14 +11,14 @@ encoder/decoder (`src/disclosure.rs`/`src/proposal.rs`) or each other's code.
 
 ## What this is not
 
-This is not a live Flake vault, and not the portable export format
+This is not a live Pluma vault, and not the portable export format
 (`docs/formats/portable-export-v1.md`) — a disclosure package is a bounded,
 budget-capped, grant-scoped *subset* of one project's disclosable content,
 never a full or project-scoped backup. A proposal is not a canonical
 mutation — it is inert, reviewed evidence until an owner explicitly accepts
-some or all of it through Flake's own CLI (`propose-accept`).
+some or all of it through Pluma's own CLI (`propose-accept`).
 
-## Part 1 — the disclosure package (outbound: Flake → external agent)
+## Part 1 — the disclosure package (outbound: Pluma → external agent)
 
 ### Wire shape: one header line, then one JSON object per line
 
@@ -74,13 +74,13 @@ below).
 
 ### Budget
 
-The whole package (header line plus every item line, each including its own trailing `\n`) never exceeds the issuing grant's own `byte_budget`, which itself never exceeds 256 KiB (`limits::MAX_PACKAGE_BYTES`). An item that does not fit within the remaining budget is either truncated (`content` shortened at a UTF-8 boundary, `truncation: "truncated"`) or omitted from the wire entirely — omitted items are recorded only in the separately-persisted `DisclosureReceipt` (a Flake-internal canonical object, not part of this wire protocol), never as a bare unlabelled gap in the package itself.
+The whole package (header line plus every item line, each including its own trailing `\n`) never exceeds the issuing grant's own `byte_budget`, which itself never exceeds 256 KiB (`limits::MAX_PACKAGE_BYTES`). An item that does not fit within the remaining budget is either truncated (`content` shortened at a UTF-8 boundary, `truncation: "truncated"`) or omitted from the wire entirely — omitted items are recorded only in the separately-persisted `DisclosureReceipt` (a Pluma-internal canonical object, not part of this wire protocol), never as a bare unlabelled gap in the package itself.
 
 ### Design note: why line-oriented, not one JSON document
 
 An earlier draft nested every item inside one `{..., "items": [...]}` document. It was rejected during `T03-04`'s own development: the shared envelope's byte cost is not attributable to any single item, which broke exact budget accounting (an item could be individually measured as "fits," yet the whole assembled document still exceed the cap). A flat, line-oriented wire makes each line's own length exactly what it contributes to the total — see `docs/evidence/flake-v1/T03-04/REPORT.md`'s "Failed attempts" for the full account.
 
-## Part 2 — the agent proposal (inbound: external agent → Flake)
+## Part 2 — the agent proposal (inbound: external agent → Pluma)
 
 A proposal is a single JSON **document** (not line-oriented — it is read whole, parsed once, and stored as one immutable blob), UTF-8, at most 1 MiB (`proposal::MAX_PROPOSAL_BYTES`).
 
@@ -128,7 +128,7 @@ Structurally, by the closed four-variant operation set above — there is no fie
 
 ### Owner review, not automatic application
 
-Admitting a proposal (Flake's `propose-import` CLI command, or `proposal::admit_proposal`) only ever parses and validates it into a `Pending` record — no canonical content changes. Only an explicit, separate owner command (`propose-accept`, naming which operation indices to apply) ever mutates canonical state, and only for operations whose `expected_revision_id` (where present) still matches current state at the moment of acceptance — a stale reference is refused, never silently rebased.
+Admitting a proposal (Pluma's `propose-import` CLI command, or `proposal::admit_proposal`) only ever parses and validates it into a `Pending` record — no canonical content changes. Only an explicit, separate owner command (`propose-accept`, naming which operation indices to apply) ever mutates canonical state, and only for operations whose `expected_revision_id` (where present) still matches current state at the moment of acceptance — a stale reference is refused, never silently rebased.
 
 ### Unsupported/malformed proposals
 

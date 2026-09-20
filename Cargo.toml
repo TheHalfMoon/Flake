@@ -27,12 +27,31 @@ path = "src/main.rs"
 # `src/main.rs` as `fehrest` above, not a wrapper or re-export -- the two
 # binaries are byte-for-byte the same compiled program under two shipped
 # names, so "no hidden behavior fork" holds trivially, not by convention.
-# `flake` is the name shipped in release archives/installers going
-# forward; `fehrest` remains built and shipped alongside it as the
-# preserved historical/compatibility name, per that same section.
+# `flake` remains built and shipped as a deprecated compatibility alias
+# after the 2026-09-20 product rename to Pluma; it will not be removed
+# without a separate, explicitly governed breaking release.
 [[bin]]
 name = "flake"
 path = "src/main.rs"
+
+# `pluma` (added 2026-09-20, product rename) is the new canonical product
+# command going forward. Byte-for-byte the same compiled program as
+# `fehrest`/`flake` above -- same rationale, no hidden behavior fork.
+[[bin]]
+name = "pluma"
+path = "src/main.rs"
+
+# `flake-migrate` (deprecated compatibility alias, kept per the 2026-09-20
+# rename) and `pluma-migrate` (new canonical name) are byte-for-byte the
+# same compiled program, both pointing at the same neutral source path --
+# same no-hidden-behavior-fork rationale as the `flake`/`pluma` pair above.
+[[bin]]
+name = "flake-migrate"
+path = "src/bin/migrate.rs"
+
+[[bin]]
+name = "pluma-migrate"
+path = "src/bin/migrate.rs"
 
 [[bin]]
 name = "fehrest-bench-v0"

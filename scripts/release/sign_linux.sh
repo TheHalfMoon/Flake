@@ -123,7 +123,7 @@ Key-Type: EDDSA
 Key-Curve: ed25519
 Subkey-Type: ECDH
 Subkey-Curve: cv25519
-Name-Real: Flake TEST Signing Key - NOT PRODUCTION - disposable
+Name-Real: Pluma TEST Signing Key - NOT PRODUCTION - disposable
 Name-Email: ci-disposable-test@invalid.example
 Expire-Date: 1d
 %commit

@@ -1,6 +1,6 @@
 //! `T01-05`/`T05-03`: proves the CLI `backup-run`/`backup-restore`/
 //! `vault-recover` commands added by this task as real subprocess
-//! invocations of the standalone `flake` binary -- not library-level
+//! invocations of the standalone `pluma` binary -- not library-level
 //! unit tests of `crate::backup`/`crate::recovery` (those already exist
 //! and are unchanged; this task adds no new backup/recovery policy of
 //! its own, only a CLI dispatch shell over them, per its own commit
@@ -12,19 +12,19 @@
 use std::path::PathBuf;
 use std::process::Command;
 
-fn flake_bin() -> &'static str {
-    env!("CARGO_BIN_EXE_flake")
+fn pluma_bin() -> &'static str {
+    env!("CARGO_BIN_EXE_pluma")
 }
 
 fn tmp(name: &str) -> PathBuf {
     std::env::temp_dir().join(format!(
-        "flake-cli-backup-recover-{name}-{}",
+        "pluma-cli-backup-recover-{name}-{}",
         uuid::Uuid::now_v7()
     ))
 }
 
 fn run(args: &[&str]) -> std::process::Output {
-    let bin = flake_bin();
+    let bin = pluma_bin();
     Command::new(bin).args(args).output().expect(bin)
 }
 
@@ -37,7 +37,7 @@ fn err(o: &std::process::Output) -> String {
 }
 
 /// A real format-2 vault with one committed note, built entirely through
-/// real `flake` subprocess invocations -- not hand-forged. Returns the
+/// real `pluma` subprocess invocations -- not hand-forged. Returns the
 /// vault root and the created project's own ID, so callers can
 /// independently confirm that exact project survived a backup/restore
 /// or recovery round trip, not merely that the CLI printed success.

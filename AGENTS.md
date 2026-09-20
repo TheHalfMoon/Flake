@@ -1,4 +1,4 @@
-# AGENTS.md — Flake Execution Rules
+# AGENTS.md — Pluma Execution Rules
 
 This file is the mandatory entry point for any human or agent doing repository work.
 
@@ -21,7 +21,7 @@ Live GitHub truth wins over stale handoffs, local-only commits, cached state, ol
 
 ## 2. One active frontier
 
-Flake uses exactly one active execution frontier. `specs/CURRENT.md` is the operational pointer; the canonical build plan defines the dependency graph.
+Pluma uses exactly one active execution frontier. `specs/CURRENT.md` is the operational pointer; the canonical build plan defines the dependency graph.
 
 ```text
 PLANNED != AUTHORIZED
@@ -33,7 +33,7 @@ Do not start a later task because it is easy or already documented.
 
 ## 3. Historical evidence boundary
 
-Historical Fehrest, Phase T, R1, and Spec 002 evidence remains immutable. Do not rewrite historical identifiers, results, failed experiments, or provenance to make them look as if they were produced under the later Flake plan.
+Historical Fehrest, Phase T, R1, and Spec 002 evidence remains immutable. Do not rewrite historical identifiers, results, failed experiments, or provenance to make them look as if they were produced under the later Pluma plan.
 
 The historical local-only planning SHAs referenced by the recovered plan are provenance only. No current work may require those local Git objects or a founder workstation path.
 
@@ -57,7 +57,7 @@ A task cannot silently upgrade its own authority.
 
 ## 6. Repository rules
 
-- Rust owns Flake Core correctness, security, and canonical data semantics.
+- Rust owns Pluma Core correctness, security, and canonical data semantics.
 - No force push.
 - No rebase used to rewrite accepted/shared history.
 - No destructive evidence repair.

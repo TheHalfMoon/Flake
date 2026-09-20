@@ -113,5 +113,5 @@ fn main() {
             commands::about_info,
         ])
         .run(tauri::generate_context!())
-        .expect("error while running the Flake desktop shell");
+        .expect("error while running the Pluma desktop shell");
 }

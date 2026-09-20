@@ -15,7 +15,7 @@ Flake Release Signing <285091250+TheHalfMoon@users.noreply.github.com>
 
 Fixed by `docs/canonical/FOUNDER_RELEASE_SIGNING_IDENTITY_DECISION_2026-09-18.md`. This is a
 production identity, distinct in name and email from every disposable per-run test identity
-`scripts/release/sign_linux.sh`'s `TEST_SIGNING_MODE=1` path generates (`Flake TEST Signing Key
+`scripts/release/sign_linux.sh`'s `TEST_SIGNING_MODE=1` path generates (`Pluma TEST Signing Key
 - NOT PRODUCTION - disposable <ci-disposable-test@invalid.example>`, expires in 1 day, deleted
 at the end of every run) — the two can never be confused by name, email, or lifetime.
 
@@ -85,7 +85,7 @@ shred -u /tmp/flake-release-signing-private.asc   # or securely delete by your O
 #    without still holding the private key.
 ```
 
-The one-time key-generation step was completed on 2026-09-18. The public key and production fingerprint are now published in this repository. The Founder injected the key into the `GPG_PRIVATE_KEY`/`GPG_KEY_PASSPHRASE`/`GPG_KEY_FINGERPRINT` repository secrets on 2026-09-20, and `.github/workflows/t05-04-linux-production-signing.yml` (CI run [35498327004](https://github.com/TheHalfMoon/Flake/actions/runs/35498327004)) signed a real release candidate (CLI archive, its SHA-256 manifest, and the `.deb` bundle) and independently re-verified every signature in a clean `GNUPGHOME` seeded only with the published public key. The canonical T05-04 Linux signature gate is `PASS` — see `docs/evidence/flake-v1/T05-04/REPORT.md` for the full evidence.
+The one-time key-generation step was completed on 2026-09-18. The public key and production fingerprint are now published in this repository. The Founder injected the key into the `GPG_PRIVATE_KEY`/`GPG_KEY_PASSPHRASE`/`GPG_KEY_FINGERPRINT` repository secrets on 2026-09-20, and `.github/workflows/t05-04-linux-production-signing.yml` (CI run [35498327004](https://github.com/TheHalfMoon/Pluma/actions/runs/35498327004)) signed a real release candidate (CLI archive, its SHA-256 manifest, and the `.deb` bundle) and independently re-verified every signature in a clean `GNUPGHOME` seeded only with the published public key. The canonical T05-04 Linux signature gate is `PASS` — see `docs/evidence/flake-v1/T05-04/REPORT.md` for the full evidence.
 
 ## 3. CI secret injection (already implemented)
 
@@ -111,7 +111,7 @@ A production release job supplies these as encrypted GitHub Actions secrets:
     GPG_KEY_PASSPHRASE: ${{ secrets.GPG_KEY_PASSPHRASE }}
     GPG_KEY_FINGERPRINT: ${{ secrets.GPG_KEY_FINGERPRINT }}
   run: |
-    scripts/release/sign_linux.sh dist/flake-*.sha256
+    scripts/release/sign_linux.sh dist/pluma-*.sha256
     scripts/release/sign_linux.sh desktop/src-tauri/target/release/bundle/deb/*.deb
 ```
 
@@ -135,8 +135,9 @@ gpg --list-keys --with-colons "285091250+TheHalfMoon@users.noreply.github.com" \
   | awk -F: '/^fpr:/ {print $10; exit}'
 
 # Verify a downloaded artifact against its detached signature:
-gpg --verify flake-<version>-linux-x86_64.tar.gz.asc flake-<version>-linux-x86_64.tar.gz
-gpg --verify flake_<version>_amd64.deb.asc flake_<version>_amd64.deb
+# (releases before the 2026-09-20 Flake->Pluma rename use the `flake-`/`flake_` prefix instead)
+gpg --verify pluma-<version>-linux-x86_64.tar.gz.asc pluma-<version>-linux-x86_64.tar.gz
+gpg --verify pluma_<version>_amd64.deb.asc pluma_<version>_amd64.deb
 ```
 
 A verification failure (bad signature, unknown key, or a fingerprint mismatch against the one

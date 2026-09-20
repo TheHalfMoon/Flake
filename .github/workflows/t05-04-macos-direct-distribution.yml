@@ -3,10 +3,10 @@ name: t05-04-macos-direct-distribution
 # Real macOS zero-cost direct-distribution qualification for T05-04, under
 # docs/canonical/FOUNDER_ZERO_COST_MACOS_DIRECT_DISTRIBUTION_AMENDMENT_2026-09-20.md.
 # No Apple Developer ID, no notarization, no stapling -- this workflow proves
-# and never claims otherwise. It ad-hoc-signs the actual .dmg Flake would
+# and never claims otherwise. It ad-hoc-signs the actual .dmg Pluma would
 # distribute (scripts/release/sign_macos.sh DIRECT_DISTRIBUTION_MODE=1, not
 # TEST_SIGNING_MODE's disposable pipeline-mechanics-only artifact), publishes
-# a SHA-256 manifest, signs the .dmg and manifest with Flake's existing
+# a SHA-256 manifest, signs the .dmg and manifest with Pluma's existing
 # project-controlled GPG release-signing identity (the same key already
 # qualified for Linux in t05-04-linux-production-signing.yml -- a
 # project-provenance signature, never an Apple platform-trust claim), attests
@@ -41,8 +41,8 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Build flake CLI (needed by install_test.sh to seed/verify the retained vault)
-        run: cargo build --release --locked --bin flake
+      - name: Build pluma CLI (needed by install_test.sh to seed/verify the retained vault)
+        run: cargo build --release --locked --bin pluma
 
       - name: Frontend build
         working-directory: desktop
@@ -127,7 +127,7 @@ jobs:
           fi
           cat /tmp/nogpg.log
 
-      - name: Sign the .dmg with Flake's project-controlled GPG release-signing identity (project provenance, NOT an Apple signature)
+      - name: Sign the .dmg with Pluma's project-controlled GPG release-signing identity (project provenance, NOT an Apple signature)
         env:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           GPG_KEY_PASSPHRASE: ${{ secrets.GPG_KEY_PASSPHRASE }}

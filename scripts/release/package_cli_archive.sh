@@ -2,8 +2,13 @@
 # T05-03: builds the section-25 CLI release archive for whichever platform
 # this script runs on (Windows/macOS/Linux, driven per-OS by the CI
 # matrix in .github/workflows/t05-03-release-candidates.yml). Produces
-# one archive containing the `flake`/`fehrest`/`flake-migrate` binaries
-# plus docs/release/USER_GUIDE.md, and a SHA-256 manifest alongside it.
+# one archive containing the `pluma`/`flake`/`fehrest`/`pluma-migrate`/
+# `flake-migrate` binaries plus docs/release/USER_GUIDE.md, and a SHA-256
+# manifest alongside it. `pluma`/`pluma-migrate` are the canonical names
+# after the 2026-09-20 Flake->Pluma product rename; `flake`/`flake-migrate`
+# and `fehrest` are deprecated compatibility aliases for the exact same
+# binaries (see `Cargo.toml`'s `[[bin]]` comments), kept and shipped
+# alongside, not replaced.
 #
 # Labeled UNSIGNED_DEVELOPER_RC throughout: signing is T05-04, not this
 # task (plan section 25's own acceptance criteria for T05-03 is scoped to
@@ -26,14 +31,14 @@ case "$(uname -s)" in
 esac
 
 echo "==> building release binaries (version=$VERSION platform=$PLATFORM)"
-cargo build --release --locked --bin flake --bin fehrest --bin flake-migrate
+cargo build --release --locked --bin pluma --bin flake --bin fehrest --bin pluma-migrate --bin flake-migrate
 
-STAGE_NAME="flake-${VERSION}-${PLATFORM}"
+STAGE_NAME="pluma-${VERSION}-${PLATFORM}"
 STAGE_DIR="$DIST_DIR/$STAGE_NAME"
 rm -rf "$STAGE_DIR"
 mkdir -p "$STAGE_DIR"
 
-for bin in flake fehrest flake-migrate; do
+for bin in pluma flake fehrest pluma-migrate flake-migrate; do
   src="target/release/${bin}${EXE}"
   if [[ ! -f "$src" ]]; then
     echo "expected built binary missing: $src" >&2
@@ -61,8 +66,10 @@ cp docs/legal/THIRD-PARTY-LICENSES.md "$STAGE_DIR/docs/legal/"
 # of the binaries actually run on this platform -- not merely that they
 # compiled -- before anything is zipped up and reported as a candidate.
 echo "==> smoke-checking staged binaries"
+"$STAGE_DIR/pluma${EXE}" --help > /dev/null
 "$STAGE_DIR/flake${EXE}" --help > /dev/null
 "$STAGE_DIR/fehrest${EXE}" --help > /dev/null
+"$STAGE_DIR/pluma-migrate${EXE}" --help > /dev/null
 "$STAGE_DIR/flake-migrate${EXE}" --help > /dev/null
 
 ARCHIVE_BASENAME="$STAGE_NAME"

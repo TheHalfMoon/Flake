@@ -21,7 +21,7 @@ export function AboutPanel({ onClose }: { onClose: () => void }) {
 
   return (
     <main className="shell">
-      <h1>About Flake</h1>
+      <h1>About Pluma</h1>
       <button onClick={onClose}>&larr; Back</button>
       {error && <p className="error">{error}</p>}
       {info && (

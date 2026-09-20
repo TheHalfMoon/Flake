@@ -55,8 +55,8 @@ jobs:
         id: locate
         run: |
           set -euo pipefail
-          archive="$(find dist -maxdepth 1 -iname 'flake-*.tar.gz' | head -1)"
-          manifest="$(find dist -maxdepth 1 -iname 'flake-*.sha256' | head -1)"
+          archive="$(find dist -maxdepth 1 -iname 'pluma-*.tar.gz' | head -1)"
+          manifest="$(find dist -maxdepth 1 -iname 'pluma-*.sha256' | head -1)"
           deb="$(find desktop/src-tauri/target/release/bundle/deb -iname '*.deb' | head -1)"
           for f in "$archive" "$manifest" "$deb"; do
             if [[ -z "$f" || ! -f "$f" ]]; then

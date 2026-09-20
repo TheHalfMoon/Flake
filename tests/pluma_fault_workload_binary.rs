@@ -1,4 +1,4 @@
-//! `T05-02`: proves the **standalone** `flake-fault-workload` binary
+//! `T05-02`: proves the **standalone** `pluma-fault-workload` binary
 //! itself — the workload a real subprocess kill (VM/host-level, not an
 //! in-process signal handler) is aimed at during D6 native-unclean-
 //! shutdown qualification. Proves exactly the two properties the D6
@@ -13,12 +13,12 @@ use std::path::PathBuf;
 use std::process::Command;
 
 fn workload_bin() -> &'static str {
-    env!("CARGO_BIN_EXE_flake-fault-workload")
+    env!("CARGO_BIN_EXE_pluma-fault-workload")
 }
 
 fn tmp(name: &str) -> PathBuf {
     std::env::temp_dir().join(format!(
-        "flake-fault-workload-binary-test-{name}-{}",
+        "pluma-fault-workload-binary-test-{name}-{}",
         uuid::Uuid::now_v7()
     ))
 }
@@ -28,7 +28,7 @@ fn run(root: &PathBuf, target: i64) -> std::process::Output {
         .arg(root)
         .arg(target.to_string())
         .output()
-        .expect("flake-fault-workload must run")
+        .expect("pluma-fault-workload must run")
 }
 
 #[test]
@@ -94,7 +94,7 @@ fn standalone_binary_commits_nothing_new_when_target_is_already_reached() {
 fn standalone_binary_rejects_missing_arguments() {
     let out = Command::new(workload_bin())
         .output()
-        .expect("flake-fault-workload must run");
+        .expect("pluma-fault-workload must run");
     assert!(!out.status.success());
 }
 
@@ -105,7 +105,7 @@ fn standalone_binary_rejects_a_non_numeric_target() {
         .arg(&root)
         .arg("not-a-number")
         .output()
-        .expect("flake-fault-workload must run");
+        .expect("pluma-fault-workload must run");
     assert!(!out.status.success());
     assert!(
         !root.exists(),

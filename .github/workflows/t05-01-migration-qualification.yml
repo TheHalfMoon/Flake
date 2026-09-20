@@ -46,15 +46,15 @@ jobs:
           cargo install cargo-audit --locked
           cargo audit
 
-      - name: Build standalone flake-migrate + fehrest CLI
+      - name: Build standalone pluma-migrate/flake-migrate + fehrest CLI
         shell: bash
-        run: cargo build --locked --bin flake-migrate --bin fehrest
+        run: cargo build --locked --bin pluma-migrate --bin flake-migrate --bin fehrest
 
       - name: Standalone binary + golden-fixture qualification (native subprocess, this OS)
         shell: bash
-        run: cargo test --locked --test flake_migrate_binary
+        run: cargo test --locked --test pluma_migrate_binary
 
-      - name: Independent-reader smoke check (Python, no Flake code executed)
+      - name: Independent-reader smoke check (Python, no Pluma code executed)
         shell: bash
         run: python3 -c "import sys; sys.path.insert(0, 'tools/independent-verify'); import sqlite_reader; print('sqlite_reader imports cleanly')"
 
@@ -68,7 +68,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Build release binaries
-        run: cargo build --release --locked --bin flake-migrate --bin fehrest
+        run: cargo build --release --locked --bin pluma-migrate --bin flake-migrate --bin fehrest
 
       - name: Report runner disk/CPU/RAM (plan section 27 environment record)
         run: |
@@ -81,10 +81,10 @@ jobs:
           python3 docs/evidence/flake-v1/T05-01/checks/m_scale_migration_timing.py \
             --n 10000 --avg-bytes 100000 \
             --fehrest-bin ./target/release/fehrest \
-            --migrate-bin ./target/release/flake-migrate \
+            --migrate-bin ./target/release/pluma-migrate \
             --label M \
             --out docs/evidence/flake-v1/T05-01/results/m-scale-timing-${{ github.run_id }}.json \
-            --work-dir /tmp/flake-t05-01-m-scale
+            --work-dir /tmp/pluma-t05-01-m-scale
 
       - name: L-scale migration timing + independent verification (best-effort, disk permitting)
         if: always()
@@ -98,10 +98,10 @@ jobs:
             python3 docs/evidence/flake-v1/T05-01/checks/m_scale_migration_timing.py \
               --n 100000 --avg-bytes 100000 \
               --fehrest-bin ./target/release/fehrest \
-              --migrate-bin ./target/release/flake-migrate \
+              --migrate-bin ./target/release/pluma-migrate \
               --label L \
               --out docs/evidence/flake-v1/T05-01/results/l-scale-timing-${{ github.run_id }}.json \
-              --work-dir /tmp/flake-t05-01-l-scale
+              --work-dir /tmp/pluma-t05-01-l-scale
           else
             echo "{\"label\": \"L\", \"skipped\": true, \"reason\": \"insufficient runner disk: ${avail_kib} KiB available, ${required_kib} KiB required\"}" \
               > docs/evidence/flake-v1/T05-01/results/l-scale-timing-${{ github.run_id }}.json

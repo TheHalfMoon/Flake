@@ -11,7 +11,7 @@ name: t05-02-durability-qualification
 # `qualify`: full root Rust gates (fmt/clippy/`cargo test --locked
 # --all-targets`, covering the D1-D5 deterministic fault-schedule
 # matrices already built at T01-01..T01-06 plus this task's own
-# `flake-fault-workload` binary tests) natively on all three platforms,
+# `pluma-fault-workload` binary tests) natively on all three platforms,
 # mirroring the precedent already established by
 # t04-06-cross-platform.yml / t05-01-migration-qualification.yml.
 #
@@ -91,7 +91,7 @@ jobs:
 
       - name: Build release binaries
         shell: bash
-        run: cargo build --release --locked --bin fehrest --bin flake-migrate --bin flake-fault-workload
+        run: cargo build --release --locked --bin fehrest --bin pluma-migrate --bin flake-migrate --bin pluma-fault-workload
 
   d6-vm-unclean-shutdown-linux:
     needs: qualify
@@ -102,8 +102,8 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
-      - name: Build flake-fault-workload (release)
-        run: cargo build --release --locked --bin flake-fault-workload
+      - name: Build pluma-fault-workload (release)
+        run: cargo build --release --locked --bin pluma-fault-workload
 
       - name: Install QEMU/VM tooling
         run: |
@@ -129,7 +129,7 @@ jobs:
           chmod +x docs/evidence/flake-v1/T05-02/checks/d6_vm_unclean_shutdown.sh
           sudo bash docs/evidence/flake-v1/T05-02/checks/d6_vm_unclean_shutdown.sh \
             /tmp/d6/base.img \
-            "$(pwd)/target/release/flake-fault-workload" \
+            "$(pwd)/target/release/pluma-fault-workload" \
             /tmp/d6/run \
             "${{ inputs.d6_linux_cycles || '8' }}" \
             "${{ github.run_id }}" \
@@ -164,7 +164,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Build release binaries
-        run: cargo build --release --locked --bin fehrest --bin flake-bench-recover
+        run: cargo build --release --locked --bin fehrest --bin pluma-bench-recover
 
       - name: Install psutil (RSS measurement; CI tooling only, not a product dependency)
         run: pip install --quiet psutil
@@ -173,7 +173,7 @@ jobs:
         run: |
           python3 docs/evidence/flake-v1/T05-02/checks/section27_performance.py \
             --fehrest-bin ./target/release/fehrest \
-            --recover-bin ./target/release/flake-bench-recover \
+            --recover-bin ./target/release/pluma-bench-recover \
             --n 10000 \
             --work-dir /tmp/perf-m-scale \
             --out docs/evidence/flake-v1/T05-02/results/section27-m-scale-ci-${{ github.run_id }}.json

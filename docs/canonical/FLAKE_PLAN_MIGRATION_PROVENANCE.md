@@ -1,4 +1,4 @@
-# Flake canonical plan migration provenance
+# Flake canonical plan migration provenance (project renamed to Pluma, 2026-09-20)
 
 Date: 2026-09-14
 

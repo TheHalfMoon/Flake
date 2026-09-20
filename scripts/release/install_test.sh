@@ -21,7 +21,7 @@
 #     also break the CI job's own ability to report status) and not by
 #     diffing the whole machine's connection table (which, on macOS,
 #     also caught the OS's own Gatekeeper/OCSP-style background check
-#     of a newly launched unsigned app -- not anything Flake requested;
+#     of a newly launched unsigned app -- not anything Pluma requested;
 #     see the comment on process_established_remote_connections below).
 set -euo pipefail
 
@@ -32,17 +32,17 @@ TEST_VAULT_DIR="${TEST_VAULT_DIR:-$REPO_ROOT/dist/install-test-vault}"
 LOG_DIR="${DIST_DIR:-$REPO_ROOT/dist}/install-test"
 mkdir -p "$LOG_DIR"
 
-flake_cli() {
-  local exe="target/release/flake"
+pluma_cli() {
+  local exe="target/release/pluma"
   [[ -f "${exe}.exe" ]] && exe="${exe}.exe"
   "$exe" "$@"
 }
 
 echo "==> seeding a pre-install vault so retention can be proven, not assumed"
 rm -rf "$TEST_VAULT_DIR"
-flake_cli canonical-init --vault "$TEST_VAULT_DIR"
-PROJECT_ID="$(flake_cli project-create --vault "$TEST_VAULT_DIR" --name "install-test project" | awk '{print $1}')"
-flake_cli capture --vault "$TEST_VAULT_DIR" --project "$PROJECT_ID" --body "survives install/uninstall" > /dev/null
+pluma_cli canonical-init --vault "$TEST_VAULT_DIR"
+PROJECT_ID="$(pluma_cli project-create --vault "$TEST_VAULT_DIR" --name "install-test project" | awk '{print $1}')"
+pluma_cli capture --vault "$TEST_VAULT_DIR" --project "$PROJECT_ID" --body "survives install/uninstall" > /dev/null
 echo "    seeded vault at $TEST_VAULT_DIR (project=$PROJECT_ID)"
 
 # Scoped to the launched process's own PID, not a whole-machine
@@ -51,11 +51,11 @@ echo "    seeded vault at $TEST_VAULT_DIR (project=$PROJECT_ID)"
 # connections to Apple IP ranges that appeared the moment *any* new
 # unsigned .app was launched (consistent with a Gatekeeper/OCSP
 # revocation-style check the OS performs on an unrecognized app, not
-# something Flake's own code requested) -- exactly the kind of
+# something Pluma's own code requested) -- exactly the kind of
 # platform-owned background traffic already documented and accepted as
 # non-blocking at T04-01 (`FOUNDER_WEBVIEW2_NETWORK_BOUNDARY`) for
 # WebView2's own background telemetry on Windows. Filtering to this
-# process's own PID checks the actual claim (Flake's own process opens
+# process's own PID checks the actual claim (Pluma's own process opens
 # no outbound connection), not "nothing on the whole machine changed
 # during this four-second window", which no real OS ever satisfies.
 process_established_remote_connections() {
@@ -208,7 +208,7 @@ case "$(uname -s)" in
     # `/S`-shaped argument into a Windows drive-relative path (`S:/`)
     # before the native child ever sees it -- verified directly by
     # capturing the actual live argv NSIS received during a hang
-    # (`Flake_..._x64-setup.exe S:/ /D=...`, not `/S /D=...`). Silent
+    # (`Pluma_..._x64-setup.exe S:/ /D=...`, not `/S /D=...`). Silent
     # mode was therefore never requested; the installer launched its
     # normal interactive GUI wizard, which then waits forever for a
     # click that a headless CI session can never provide -- consistent
@@ -226,7 +226,7 @@ case "$(uname -s)" in
     echo "==> installing (silent NSIS): $INSTALLER -> $WIN_INSTALL_DIR"
     run_windows_exe_with_diagnostics 90 "$INSTALLER" //S "/D=$WIN_INSTALL_DIR"
     sleep 3
-    APP_EXE="$(find "$INSTALL_DIR" -iname 'flake*.exe' ! -iname 'uninstall*' | head -1)"
+    APP_EXE="$(find "$INSTALL_DIR" -iname 'pluma*.exe' ! -iname 'uninstall*' | head -1)"
     if [[ -z "$APP_EXE" ]]; then
       echo "FAIL: no installed app executable found under $INSTALL_DIR" >&2
       find "$INSTALL_DIR" -maxdepth 3 >&2
@@ -337,7 +337,7 @@ case "$(uname -s)" in
 esac
 
 echo "==> verifying the pre-install vault survived install/reinstall/uninstall untouched"
-SHOW_OUTPUT="$(flake_cli project-show --vault "$TEST_VAULT_DIR" --id "$PROJECT_ID")"
+SHOW_OUTPUT="$(pluma_cli project-show --vault "$TEST_VAULT_DIR" --id "$PROJECT_ID")"
 if [[ "$SHOW_OUTPUT" != *"install-test project"* ]]; then
   echo "FAIL: pre-install vault content missing or changed after install/uninstall cycle" >&2
   echo "$SHOW_OUTPUT" >&2

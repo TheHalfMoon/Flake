@@ -1,8 +1,8 @@
 {
-  "name": "flake-desktop",
+  "name": "pluma-desktop",
   "private": true,
   "version": "0.0.1-phase-t",
-  "description": "Flake T04-01 thin desktop shell frontend -- presentation only, no new authority model.",
+  "description": "Pluma T04-01 thin desktop shell frontend -- presentation only, no new authority model.",
   "type": "module",
   "scripts": {
     "dev": "vite",

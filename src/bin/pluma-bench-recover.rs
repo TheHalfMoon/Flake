@@ -1,4 +1,4 @@
-//! `flake-bench-recover` — `T05-02`'s own section-27 performance-gate
+//! `pluma-bench-recover` — `T05-02`'s own section-27 performance-gate
 //! support binary ("Full verify / recovery working copy M/L").
 //!
 //! `crate::recovery::recover_to_new_root` has no CLI surface (recovery is
@@ -22,7 +22,7 @@ use std::time::Instant;
 fn main() -> ExitCode {
     let args: Vec<String> = env::args().collect();
     if args.len() != 3 {
-        eprintln!("usage: flake-bench-recover <original-root> <new-root>");
+        eprintln!("usage: pluma-bench-recover <original-root> <new-root>");
         return ExitCode::FAILURE;
     }
     let original_root = PathBuf::from(&args[1]);

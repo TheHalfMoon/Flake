@@ -1,4 +1,11 @@
-# SignPath Foundation eligibility packet — Flake
+# SignPath Foundation eligibility packet — Pluma
+
+**Note (2026-09-20):** this project was renamed from Flake to Pluma. The canonical values in
+this packet (project name, repository URL, artifact names below) are updated to Pluma. The
+already-published prerelease evidence referenced under "Reconciling the 'already released'
+requirement" was built and published before the rename and its artifact filenames/checksums
+are preserved exactly as published — see that section for the honest accounting of what still
+says "Flake" and why.
 
 Research performed against SignPath Foundation's own current, authoritative published
 material: `https://signpath.org/terms.html` (conditions for open-source projects),
@@ -10,7 +17,7 @@ and SignPath's GitHub Actions integration documentation
 
 ## Eligibility check against SignPath Foundation's own published conditions
 
-| SignPath Foundation requirement (quoted/paraphrased from `signpath.org/terms.html`) | Flake's status |
+| SignPath Foundation requirement (quoted/paraphrased from `signpath.org/terms.html`) | Pluma's status |
 |---|---|
 | "The project must use an OSI-approved Open Source license without commercial dual-licensing for all components" | **Met.** Apache-2.0 (OSI-approved), no dual-licensing; `LICENSE` root file, `Cargo.toml` `license = "Apache-2.0"` |
 | "The project may not contain any proprietary, non open-source component" | **Met.** `docs/legal/THIRD-PARTY-LICENSES.md` attributes all 361 shipped third-party components, every one open-source; `T05-04_ADVISORY_REFRESH` found 0 vulnerabilities |
@@ -18,13 +25,13 @@ and SignPath's GitHub Actions integration documentation
 | "The project must be actively maintained" | **Met.** Continuous commit history through 2026-09-18 (`git log`) |
 | "The project must already be released in the form that should be signed" | **Not yet met.** T05-03 produced `UNSIGNED_DEVELOPER_RC` candidates; no signed public release has shipped. SignPath's own review process is expected to accept an unsigned release candidate as the "already released" artifact for initial application — this is the one criterion that cannot be self-certified from published text alone and must be confirmed during the real application |
 | "The project's functionality must be described on its download page or in the app store entry" | **Met.** `docs/release/USER_GUIDE.md`, `README.md` |
-| "The team responsible for code signing must also be the team responsible for development and maintenance, including ownership of the source code repository" | **Met.** Sole maintainer TheHalfMoon owns `github.com/TheHalfMoon/Flake` (confirmed live: `gh repo view` — public, Apache-2.0, owner `TheHalfMoon`) |
+| "The team responsible for code signing must also be the team responsible for development and maintenance, including ownership of the source code repository" | **Met.** Sole maintainer TheHalfMoon owns `github.com/TheHalfMoon/Pluma` (confirmed live: `gh repo view` — public, Apache-2.0, owner `TheHalfMoon`; repository renamed from `Flake` to `Pluma` 2026-09-20, same repository, GitHub redirects the old URL) |
 | "The team must only sign software artifacts built from their own source code" | **Met by design.** `.github/workflows/t05-04-signing-pipeline-test.yml` and the release-candidate pipeline only ever sign artifacts this repository's own CI just built |
 | Author/Reviewer/Approver roles, MFA on SignPath and repository access | **Prerequisite documentation complete** (`docs/release/CODE_SIGNING_POLICY.md` role table); actual MFA enrollment on the Founder's own GitHub account and future SignPath account is a Founder action, not repository-owned |
 | Public "Code signing policy" page on the project home page | **Met.** `docs/release/CODE_SIGNING_POLICY.md`, linked from `README.md` |
-| No vulnerability-scanning/hacking-tool features | **Met.** Flake is a local project-continuity tool; no such feature exists |
+| No vulnerability-scanning/hacking-tool features | **Met.** Pluma is a local project-continuity tool; no such feature exists |
 | Binary artifacts built from source in a verifiable way; consistent metadata (product name/version) | **Met.** `scripts/release/package_cli_archive.sh`/`generate_sbom.sh`/`reproducibility_check.sh` plus the new GitHub artifact attestations (`docs/release/RELEASE_VERIFICATION.md`) make the build verifiable; `Cargo.toml`/`tauri.conf.json` set consistent product name/version |
-| Uninstallation instructions/facility; system-modification warnings; installation-time data-collection disclosure | **Met.** `docs/release/USER_GUIDE.md`; Flake collects no data (`src/about.rs`'s `PRIVACY_STATEMENT`) |
+| Uninstallation instructions/facility; system-modification warnings; installation-time data-collection disclosure | **Met.** `docs/release/USER_GUIDE.md`; Pluma collects no data (`src/about.rs`'s `PRIVACY_STATEMENT`) |
 
 ## Exact packet
 
@@ -38,16 +45,19 @@ SIGNPATH_REQUIRED_ACTION=Founder submits the real application at
   SignPath's own "already released" criterion is confirmed only through
   their actual review, not by self-certification against published text
 SIGNPATH_APPLICATION_URL=https://signpath.org/apply
-SIGNPATH_REQUIRED_PROJECT_DATA=project name (Flake); repository URL
-  (https://github.com/TheHalfMoon/Flake); license (Apache-2.0); code
+SIGNPATH_REQUIRED_PROJECT_DATA=project name (Pluma); repository URL
+  (https://github.com/TheHalfMoon/Pluma); license (Apache-2.0); code
   signing policy page URL
-  (https://github.com/TheHalfMoon/Flake/blob/main/docs/release/CODE_SIGNING_POLICY.md);
+  (https://github.com/TheHalfMoon/Pluma/blob/main/docs/release/CODE_SIGNING_POLICY.md);
   Author/Reviewer/Approver contact (TheHalfMoon, all three roles
   pending delegation); a description of what is signed (Windows NSIS
-  installer + flake.exe/fehrest.exe/flake-migrate.exe CLI binaries,
-  produced by scripts/release/package_cli_archive.sh and the Tauri
-  Windows bundle); build system (GitHub Actions, public repository,
-  windows-latest runner)
+  installer + pluma.exe/flake.exe/fehrest.exe/pluma-migrate.exe/
+  flake-migrate.exe CLI binaries -- pluma/pluma-migrate are the
+  canonical names after the 2026-09-20 Flake->Pluma rename, flake/
+  flake-migrate/fehrest are deprecated compatibility aliases for the
+  exact same binaries -- produced by scripts/release/package_cli_archive.sh
+  and the Tauri Windows bundle); build system (GitHub Actions, public
+  repository, windows-latest runner)
 SIGNPATH_REPOSITORY_WORK_COMPLETE=YES
 WINDOWS_REMAINING_EXTERNAL_ACTION=Founder submits the SignPath Foundation
   application at https://signpath.org/apply and completes SignPath's own
@@ -82,7 +92,7 @@ an approved project can start signing is already in place or scaffolded:
     uses: actions/upload-artifact@v4
     with:
       name: windows-unsigned-for-signpath
-      path: path/to/flake-windows-installer.exe
+      path: path/to/pluma-windows-installer.exe
 
   - name: Submit SignPath signing request
     uses: signpath/github-action-submit-signing-request@v3
@@ -152,7 +162,7 @@ material change from the 2026-09-18 research above:
 - **Resolved 2026-09-20:** "The project must already be released in the form that should be
   signed." Per explicit Founder authorization (scoped to exactly one prerelease, for this
   purpose only — not a final production release), this session published
-  [`v0.0.1-phase-t-rc.1`](https://github.com/TheHalfMoon/Flake/releases/tag/v0.0.1-phase-t-rc.1),
+  [`v0.0.1-phase-t-rc.1`](https://github.com/TheHalfMoon/Pluma/releases/tag/v0.0.1-phase-t-rc.1),
   a GitHub **prerelease** labeled `UNSIGNED_DEVELOPER_RC`, built from the already-qualified
   `T05-03`/`T05-04` Windows release-candidate artifacts (CI run `35518382422`, tree-identical to
   `main` commit `27824604e09fc3ef9ba682f54e99139bdb9d8ab3`). See "Reconciling the 'already
@@ -161,7 +171,7 @@ material change from the 2026-09-18 research above:
   consider an `UNSIGNED_DEVELOPER_RC` prerelease sufficient to satisfy this criterion is still
   for them to determine, not asserted here.
 
-## Reconciling the "already released" requirement against Flake's canonical governance
+## Reconciling the "already released" requirement against Pluma's canonical governance
 
 `FLAKE_CANONICAL_BUILD_PLAN.md` section 25 reserves "uploading, publishing a release" as an
 action separately authorized beyond building verified release candidates — repository
@@ -183,7 +193,7 @@ path 2 on 2026-09-20:
    the application before submitting it.
 
 **What was published:** GitHub prerelease
-[`v0.0.1-phase-t-rc.1`](https://github.com/TheHalfMoon/Flake/releases/tag/v0.0.1-phase-t-rc.1)
+[`v0.0.1-phase-t-rc.1`](https://github.com/TheHalfMoon/Pluma/releases/tag/v0.0.1-phase-t-rc.1)
 (`prerelease: true`, `draft: false`), tagged at `main` commit
 `27824604e09fc3ef9ba682f54e99139bdb9d8ab3` (tree-identical to the exact commit CI built these
 artifacts from, `8bde2ae266a02faff52c810d8a442b79fb3ea814`, PR #116's head — independently
@@ -216,20 +226,21 @@ cannot be filled in before that point by anyone, including the Founder.
 
 | Field | Value |
 |---|---|
-| Project name | `Flake` |
-| Repository URL | `https://github.com/TheHalfMoon/Flake` |
+| Project name | `Pluma` |
+| Repository URL | `https://github.com/TheHalfMoon/Pluma` |
+| Homepage URL | `https://github.com/TheHalfMoon/Pluma` |
 | License | `Apache License, Version 2.0` (OSI-approved; SPDX `Apache-2.0`) |
-| Project description | `Flake is a local-first application for capturing project work, preserving the evidence behind decisions, and resuming after interruption with visible changes and next actions. External agents may receive bounded evidence packages and return reviewable proposals; the project remains understandable when an agent disappears.` (verbatim from `README.md`) |
-| Functionality/download page URL | `https://github.com/TheHalfMoon/Flake` (README) and `https://github.com/TheHalfMoon/Flake/blob/main/docs/release/USER_GUIDE.md` |
-| Release/download URL | `https://github.com/TheHalfMoon/Flake/releases/tag/v0.0.1-phase-t-rc.1` (GitHub prerelease, `UNSIGNED_DEVELOPER_RC`, published 2026-09-20 — see "Reconciling the 'already released' requirement" above) |
-| Code signing policy URL | `https://github.com/TheHalfMoon/Flake/blob/main/docs/release/CODE_SIGNING_POLICY.md` (linked from `README.md`) |
+| Project description | `Pluma is a local-first application for capturing project work, preserving the evidence behind decisions, and resuming after interruption with visible changes and next actions. External agents may receive bounded evidence packages and return reviewable proposals; the project remains understandable when an agent disappears.` (verbatim from `README.md`, product name updated from Flake to Pluma per the 2026-09-20 rename) |
+| Functionality/download page URL | `https://github.com/TheHalfMoon/Pluma` (README) and `https://github.com/TheHalfMoon/Pluma/blob/main/docs/release/USER_GUIDE.md` |
+| Release/download URL | `https://github.com/TheHalfMoon/Pluma/releases/tag/v0.0.1-phase-t-rc.1` (GitHub prerelease, `UNSIGNED_DEVELOPER_RC`, published 2026-09-20 — see "Reconciling the 'already released' requirement" above; artifact filenames inside still say `Flake_...`/`flake-...`, predating this rename, per the honest accounting there) |
+| Code signing policy URL | `https://github.com/TheHalfMoon/Pluma/blob/main/docs/release/CODE_SIGNING_POLICY.md` (linked from `README.md`) |
 | Maintainer / applicant identity | GitHub account `TheHalfMoon` (repository owner) — the Founder applies using their own real identity; this cannot be a repository-automation identity |
 | Author role | `TheHalfMoon` |
 | Reviewer role | `TheHalfMoon` (single-maintainer project; table in `docs/release/CODE_SIGNING_POLICY.md` will be updated the moment any role is delegated) |
 | Approver role | `TheHalfMoon` |
 | MFA on SignPath account and on GitHub (`TheHalfMoon`) | **Founder must confirm/enable directly** — this session's read-only GitHub API check (`gh api user`) cannot observe 2FA status (GitHub no longer exposes it via that field for privacy); enable in GitHub under Settings → Password and authentication, and on the SignPath account at signup |
 | Build system | GitHub Actions, public repository, `windows-latest`-hosted runner |
-| Artifact types to be signed | Windows NSIS installer (`.exe`, Tauri desktop bundle) and CLI binaries `flake.exe` / `fehrest.exe` / `flake-migrate.exe`, produced by `scripts/release/package_cli_archive.sh` and the Tauri Windows bundle step already qualified in `.github/workflows/t05-03-release-candidates.yml` |
+| Artifact types to be signed | Windows NSIS installer (`.exe`, Tauri desktop bundle) and CLI binaries `pluma.exe` / `flake.exe` / `fehrest.exe` / `pluma-migrate.exe` / `flake-migrate.exe` (`pluma`/`pluma-migrate` canonical since the 2026-09-20 rename; `flake`/`flake-migrate`/`fehrest` deprecated compatibility aliases for the exact same binaries), produced by `scripts/release/package_cli_archive.sh` and the Tauri Windows bundle step already qualified in `.github/workflows/t05-03-release-candidates.yml` |
 | Organization id | **Issued by SignPath only after approval** — cannot be filled in now |
 | Project slug | **Issued by SignPath only after approval** — cannot be filled in now |
 | Signing policy slug | **Issued by SignPath only after approval** — cannot be filled in now |

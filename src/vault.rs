@@ -795,7 +795,7 @@ impl Drop for WriteLock {
 /// `try_lock`/`unlock`, stable since Rust 1.89 — this crate's
 /// `rust-version` is `1.97`) rather than a third-party crate: no new
 /// dependency is admitted for this task. Like `WriteLock`, this coordinates
-/// cooperating Flake processes, not adversarial same-user filesystem access
+/// cooperating Pluma processes, not adversarial same-user filesystem access
 /// (§14, §20).
 #[derive(Debug)]
 pub(crate) struct AccessGuard {

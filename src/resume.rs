@@ -336,7 +336,7 @@ mod tests {
             "Match is not stale"
         );
 
-        std::fs::write(&file_path, b"edited behind Flake's back").unwrap();
+        std::fs::write(&file_path, b"edited behind Pluma's back").unwrap();
         source_check::check_source(&mut store, "owner", &source_id).unwrap();
         let view = resume(&store, &project_id).unwrap();
         assert_eq!(view.stale_or_missing_evidence.len(), 1);

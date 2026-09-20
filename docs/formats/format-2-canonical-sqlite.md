@@ -1,4 +1,4 @@
-# Flake canonical format 2 — `canonical.sqlite`
+# Pluma canonical format 2 — `canonical.sqlite`
 
 **Status:** schema version 2, built by `T01-02` (create-only) and `T01-03`
 (transaction/command admission). This document describes exactly what those
@@ -256,7 +256,7 @@ a time, both across processes (the OS lease) and within one process
 
 ## Generic-reader example
 
-No Flake binary, library, or network access is required to inspect a
+No Pluma binary, library, or network access is required to inspect a
 published format-2 store — any SQLite 3 tool works directly against
 `canonical.sqlite`:
 
@@ -305,7 +305,7 @@ staged publication (never lazily by a read — `CanonicalStore::open` requires
 it to already exist, exactly like it requires the guard to exist). This
 uses `std::fs::File`'s stable advisory-lock API (`lock_shared`/`try_lock`/
 `unlock`, stable since Rust 1.89; this crate's `rust-version` is `1.97`) —
-no new dependency. This coordinates cooperating Flake processes, not
+no new dependency. This coordinates cooperating Pluma processes, not
 adversarial same-user filesystem access (§14, §20), matching every other
 lock in this crate.
 

@@ -1,6 +1,6 @@
 name: release-provenance-attestation
 
-# GitHub-native artifact attestations (build provenance) for Flake's CLI
+# GitHub-native artifact attestations (build provenance) for Pluma's CLI
 # release-candidate archives and SBOMs, per the Founder's "maximize free
 # release qualification" decision (2026-09-18). This is ADDITIONAL
 # supply-chain evidence -- it does not replace, and is never claimed to

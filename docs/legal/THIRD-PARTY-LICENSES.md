@@ -1,8 +1,8 @@
 # Third-party licenses and notices
 
-Generated 2026-09-17 by `scripts/release/generate_third_party_licenses.py` from Flake's exact locked dependency graph (root `Cargo.lock` + `desktop/src-tauri/Cargo.lock` + `desktop/package-lock.json`, shipped/runtime dependencies only -- build-only tooling such as `cargo-audit`/`cargo-cyclonedx` and frontend `devDependencies` that are not bundled into any shipped artifact are excluded). Re-run this script whenever those lockfiles change.
+Generated 2026-09-17 by `scripts/release/generate_third_party_licenses.py` from Pluma's exact locked dependency graph (root `Cargo.lock` + `desktop/src-tauri/Cargo.lock` + `desktop/package-lock.json`, shipped/runtime dependencies only -- build-only tooling such as `cargo-audit`/`cargo-cyclonedx` and frontend `devDependencies` that are not bundled into any shipped artifact are excluded). Re-run this script whenever those lockfiles change.
 
-**361 shipped third-party components** across Flake's CLI (`flake`/`fehrest`/`flake-migrate`) and desktop (`flake-desktop`, Tauri) binaries. None require Flake's own source to be relicensed, disclosed beyond what is already public, or dual-licensed under anything other than Apache-2.0 (Flake's own chosen license, `LICENSE`).
+**361 shipped third-party components** across Pluma's CLI (`pluma`/`flake`/`fehrest`/`pluma-migrate`/`flake-migrate`) and desktop (`pluma-desktop`, Tauri) binaries. None require Pluma's own source to be relicensed, disclosed beyond what is already public, or dual-licensed under anything other than Apache-2.0 (Pluma's own chosen license, `LICENSE`).
 
 ## Special-attention obligations
 
@@ -10,7 +10,7 @@ These four categories carry a textual obligation beyond "MIT/Apache-2.0 is fine"
 
 1. **Unicode License v3** (19 components, all part of the ICU4X Unicode-data stack pulled in transitively by the desktop bundle, plus `unicode-ident`) -- full text below, attribution required for the specific Unicode data files/tables these components embed.
 2. **zlib License** (3 components) -- full text below.
-3. **Mozilla Public License 2.0** (5 components, all from the Servo `cssparser`/`selectors` CSS-parsing stack pulled in transitively by the desktop bundle) -- MPL-2.0 is a file-level copyleft, not a whole-project copyleft: it only requires that the exact MPL-covered source files themselves remain available under MPL-2.0 if distributed. Flake does not modify any of these files; their unmodified upstream source is publicly available at their respective crates.io/GitHub locations (see the version-pinned list below). Full text: <https://www.mozilla.org/en-US/MPL/2.0/>.
+3. **Mozilla Public License 2.0** (5 components, all from the Servo `cssparser`/`selectors` CSS-parsing stack pulled in transitively by the desktop bundle) -- MPL-2.0 is a file-level copyleft, not a whole-project copyleft: it only requires that the exact MPL-covered source files themselves remain available under MPL-2.0 if distributed. Pluma does not modify any of these files; their unmodified upstream source is publicly available at their respective crates.io/GitHub locations (see the version-pinned list below). Full text: <https://www.mozilla.org/en-US/MPL/2.0/>.
 4. **`libsqlite3-sys`/`rusqlite`'s `bundled` feature** compiles the amalgamated SQLite C source (<https://www.sqlite.org/>) as part of this build. SQLite's authors dedicate it to the public domain; no license text or attribution is legally required, and none is claimed here beyond this factual note. This is the same canonical-SQLite choice already reviewed and adopted at T00-02/T01-02.
 
 Individual components also needing a specific note rather than a bucket:
@@ -289,7 +289,7 @@ SOFTWARE.
 
 ## Apache License 2.0 (elected choice)
 
-The following 238 components are each dual/triple-licensed with Apache-2.0 as one of the offered choices (occasionally alongside other permissive choices such as BSD-3-Clause, 0BSD, CC0-1.0/MIT-0, or -- for `target-lexicon` only -- Apache-2.0 with the LLVM Exception, which adds permissions rather than obligations). Flake elects Apache-2.0 uniformly here, matching Flake's own project license (`LICENSE`, reproduced at the repository root and not duplicated in this file):
+The following 238 components are each dual/triple-licensed with Apache-2.0 as one of the offered choices (occasionally alongside other permissive choices such as BSD-3-Clause, 0BSD, CC0-1.0/MIT-0, or -- for `target-lexicon` only -- Apache-2.0 with the LLVM Exception, which adds permissions rather than obligations). Pluma elects Apache-2.0 uniformly here, matching Pluma's own project license (`LICENSE`, reproduced at the repository root and not duplicated in this file):
 
 - `@tauri-apps/api` 2.11.1 (desktop-npm)
 - `adler2` 2.0.1 (desktop)

@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Flake",
+  "productName": "Pluma",
   "version": "0.0.1-phase-t",
   "identifier": "app.flake.desktop.phase-t",
   "build": {
@@ -13,7 +13,7 @@
     "withGlobalTauri": false,
     "windows": [
       {
-        "title": "Flake (Phase T -- experimental, not a product)",
+        "title": "Pluma (Phase T -- experimental, not a product)",
         "width": 1000,
         "height": 700,
         "minWidth": 640,
@@ -41,8 +41,8 @@
     "copyright": "Copyright 2026 TheHalfMoon. Licensed under the Apache License, Version 2.0.",
     "license": "Apache-2.0",
     "category": "Productivity",
-    "shortDescription": "Flake -- a local-first, offline, account-free personal knowledge and decision vault.",
-    "longDescription": "Flake stores notes, evidence, decisions and actions in a local, offline, account-free vault. No cloud sync, no telemetry, no sign-in. This is a T05-03 unsigned developer release candidate (UNSIGNED_DEVELOPER_RC), not a signed final release.",
+    "shortDescription": "Pluma -- a local-first, offline, account-free personal knowledge and decision vault.",
+    "longDescription": "Pluma stores notes, evidence, decisions and actions in a local, offline, account-free vault. No cloud sync, no telemetry, no sign-in. This is a T05-03 unsigned developer release candidate (UNSIGNED_DEVELOPER_RC), not a signed final release.",
     "resources": {
       "../../LICENSE": "LICENSE",
       "../../NOTICE": "NOTICE",

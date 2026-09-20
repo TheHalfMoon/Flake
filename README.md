@@ -1,8 +1,8 @@
-# Flake
+# Pluma
 
 **Local work continuity for people and replaceable agents.**
 
-Flake is a local-first application for capturing project work, preserving the evidence behind decisions, and resuming after interruption with visible changes and next actions. External agents may receive bounded evidence packages and return reviewable proposals; the project remains understandable when an agent disappears.
+Pluma (named Flake before its 2026-09-20 rename) is a local-first application for capturing project work, preserving the evidence behind decisions, and resuming after interruption with visible changes and next actions. External agents may receive bounded evidence packages and return reviewable proposals; the project remains understandable when an agent disappears.
 
 ## Canonical status
 
@@ -26,7 +26,7 @@ Migration/provenance record:
 
 ## Historical evidence
 
-This repository contains substantial Fehrest, Phase T, R1, benchmark, and Spec 002 history. Those artifacts remain preserved evidence and architecture lineage. They are not alternate active roadmaps unless the Flake canonical build plan explicitly incorporates them.
+This repository contains substantial Fehrest, Phase T, R1, benchmark, and Spec 002 history. Those artifacts remain preserved evidence and architecture lineage. They are not alternate active roadmaps unless the Pluma canonical build plan explicitly incorporates them.
 
 Historical identifiers are not rewritten to fit later GitHub history. The final Astro plan was migrated to GitHub with an exact recovered source SHA-256 recorded in the migration provenance file.
 
@@ -51,15 +51,15 @@ The recovered Astro plan records Apache-2.0 intent, but final rights/notice/pack
 
 ## Code signing policy
 
-Release artifact signing status, the free/open-source signing mechanisms Flake uses, and how
+Release artifact signing status, the free/open-source signing mechanisms Pluma uses, and how
 to verify a release: [`docs/release/CODE_SIGNING_POLICY.md`](docs/release/CODE_SIGNING_POLICY.md).
 
-## Download Flake
+## Download Pluma
 
-Flake has not yet published a numbered release (see the canonical status above — release
+Pluma has not yet published a numbered release (see the canonical status above — release
 qualification is still in progress under `T05-04`). This repository's own README/docs and,
-once a version is published, its [GitHub Releases](https://github.com/TheHalfMoon/Flake/releases)
-page are the canonical distribution surface — Flake does not operate separate website
+once a version is published, its [GitHub Releases](https://github.com/TheHalfMoon/Pluma/releases)
+page are the canonical distribution surface — Pluma does not operate separate website
 infrastructure.
 
 | Platform | Signing/trust model | Notes |

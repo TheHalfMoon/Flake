@@ -25,16 +25,16 @@ pub const NOTICE_FILE: &str = "NOTICE";
 pub const THIRD_PARTY_LICENSES_FILE: &str = "docs/legal/THIRD-PARTY-LICENSES.md";
 
 /// Public source repository (also the release/download/reporting home).
-pub const SOURCE_URL: &str = "https://github.com/TheHalfMoon/Flake";
+pub const SOURCE_URL: &str = "https://github.com/TheHalfMoon/Pluma";
 
 /// Where to report a bug or ask for support.
-pub const SUPPORT_URL: &str = "https://github.com/TheHalfMoon/Flake/issues";
+pub const SUPPORT_URL: &str = "https://github.com/TheHalfMoon/Pluma/issues";
 
 /// The privacy statement this product actually implements, not aspirational
 /// copy: local-first, offline, account-free, no telemetry, no cloud sync.
 /// Data leaves this device only when the owner explicitly exports or
 /// discloses it (`export-run`/`package-export`).
-pub const PRIVACY_STATEMENT: &str = "Flake is local-first, offline and account-free. \
+pub const PRIVACY_STATEMENT: &str = "Pluma is local-first, offline and account-free. \
 It does not sign in, sync to a cloud service, or send telemetry. No data leaves this \
 device unless the owner explicitly exports or discloses it.";
 

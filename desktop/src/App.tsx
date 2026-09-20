@@ -181,7 +181,7 @@ export default function App() {
   if (!vault) {
     return (
       <main className="shell">
-        <h1>Flake</h1>
+        <h1>Pluma</h1>
         <button onClick={() => setShowAbout(true)}>About</button>
         <p className="notice">Phase T -- experimental, not a product. Everything stays local and offline.</p>
         <label>
@@ -214,7 +214,7 @@ export default function App() {
     return (
       <main className="shell">
         {confirmDialog}
-        <h1>Flake</h1>
+        <h1>Pluma</h1>
         <button onClick={() => setOpenProject(null)}>&larr; Back to projects</button>
         <button onClick={() => setShowAbout(true)}>About</button>
         <p className="notice">
@@ -302,7 +302,7 @@ export default function App() {
   return (
     <main className="shell">
       {confirmDialog}
-      <h1>Flake</h1>
+      <h1>Pluma</h1>
       <button onClick={() => setShowAbout(true)}>About</button>
       <p className="notice">Vault: {vault.path}</p>
       <section>

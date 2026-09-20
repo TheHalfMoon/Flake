@@ -79,13 +79,15 @@ fn parse_relation_type(s: &str) -> Result<RelationType> {
 const CLI_ACTOR: &str = "owner";
 
 pub const USAGE: &str = "\
-flake — a local-first, offline, account-free personal knowledge and decision vault
-(this binary's own historical name is `fehrest`, from the Phase T thesis-proof this
-product grew out of; `fehrest` remains a compatibility alias for the exact same
-implementation shipped as `flake`)
+pluma — a local-first, offline, account-free personal knowledge and decision vault
+(this binary's own historical names are `fehrest`, from the Phase T thesis-proof
+this product grew out of, and `flake`, the product's name before its 2026-09-20
+rename to Pluma; both `fehrest` and `flake` remain deprecated compatibility
+aliases for the exact same implementation shipped as `pluma`, and neither is
+removed without a separate, explicitly governed breaking release)
 
 USAGE:
-  flake <command> --vault <path> [options]
+  pluma <command> --vault <path> [options]
 
 COMMANDS:
   init              Create a vault
@@ -459,7 +461,7 @@ pub fn run(argv: &[String]) -> Result<i32> {
 
         "license" => {
             let info = crate::about::about_info();
-            println!("flake {}", info.version);
+            println!("pluma {}", info.version);
             println!("License: {} (see {})", info.license_spdx, info.license_file);
             println!(
                 "Third-party notices: {} (also see {})",
@@ -2673,7 +2675,7 @@ mod tests {
     /// `T03-01` acceptance criterion: "All four freshness states and
     /// moved/deleted-source scenarios show correct immutable history" —
     /// exercised end to end through the actual CLI dispatcher: import,
-    /// recheck (Match), edit the file behind Flake's back and recheck
+    /// recheck (Match), edit the file behind Pluma's back and recheck
     /// again (Changed, unmutated until explicit admission), explicit
     /// admission, then a verified relocation.
     #[test]
@@ -2748,7 +2750,7 @@ mod tests {
         let current_revision = store.read_current(&source_id).unwrap().unwrap().0;
         drop(store);
 
-        std::fs::write(&file_path, b"edited behind Flake's back").unwrap();
+        std::fs::write(&file_path, b"edited behind Pluma's back").unwrap();
         assert_eq!(
             run(&s(&[
                 "source-check",
@@ -2794,7 +2796,7 @@ mod tests {
             .clone();
         assert_eq!(
             source.capture.unwrap().sha256,
-            crate::events::hash_bytes(b"edited behind Flake's back")
+            crate::events::hash_bytes(b"edited behind Pluma's back")
         );
         drop(store);
 

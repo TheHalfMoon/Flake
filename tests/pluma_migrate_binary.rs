@@ -1,4 +1,4 @@
-//! `T05-01`: proves the **standalone** `flake-migrate` binary itself — not
+//! `T05-01`: proves the **standalone** `pluma-migrate` binary itself — not
 //! just the `fehrest::migration` library it wraps — against the checked-in
 //! golden format-1 fixtures (`tests/fixtures/migration/`, `T01-06`). This
 //! is the one property no `src/migration.rs` unit test can prove: that the
@@ -11,7 +11,7 @@ use std::path::Path;
 use std::process::Command;
 
 fn migrate_bin() -> &'static str {
-    env!("CARGO_BIN_EXE_flake-migrate")
+    env!("CARGO_BIN_EXE_pluma-migrate")
 }
 
 fn fehrest_bin() -> &'static str {
@@ -20,14 +20,14 @@ fn fehrest_bin() -> &'static str {
 
 fn tmp(name: &str) -> std::path::PathBuf {
     let dir = std::env::temp_dir().join(format!(
-        "flake-migrate-binary-test-{name}-{}",
+        "pluma-migrate-binary-test-{name}-{}",
         uuid::Uuid::now_v7()
     ));
     dir
 }
 
 /// A format-1 vault the standalone binary can be pointed at: same
-/// mechanism `flake-migrate`'s own module docs assume (a real `.fehrest/`
+/// mechanism `pluma-migrate`'s own module docs assume (a real `.fehrest/`
 /// guard, materialized here through the main `fehrest` CLI's own `init`
 /// -- not hand-forged -- then populated with the exact checked-in gold
 /// fixture bytes).
@@ -61,7 +61,7 @@ fn standalone_binary_preview_reports_both_gold_fixtures_admitted() {
         .arg("preview")
         .arg(&root)
         .output()
-        .expect("flake-migrate preview must run");
+        .expect("pluma-migrate preview must run");
     assert!(
         output.status.success(),
         "stderr: {}",
@@ -85,7 +85,7 @@ fn standalone_binary_import_produces_a_real_openable_format_2_vault() {
         .arg(&root)
         .arg(&new_root)
         .output()
-        .expect("flake-migrate import must run");
+        .expect("pluma-migrate import must run");
     assert!(
         output.status.success(),
         "stderr: {}",
@@ -125,7 +125,7 @@ fn standalone_binary_import_refuses_to_clobber_an_existing_format_2_root() {
         .arg(&root)
         .arg(&new_root)
         .output()
-        .expect("flake-migrate import must run");
+        .expect("pluma-migrate import must run");
     assert!(!output.status.success());
     assert!(
         String::from_utf8_lossy(&output.stderr).contains("no-clobber"),
@@ -144,9 +144,39 @@ fn standalone_binary_version_and_help_do_not_touch_any_filesystem_path() {
         .output()
         .unwrap();
     assert!(version.status.success());
-    assert!(String::from_utf8_lossy(&version.stdout).contains("flake-migrate"));
+    assert!(String::from_utf8_lossy(&version.stdout).contains("pluma-migrate"));
 
     let help = Command::new(migrate_bin()).arg("--help").output().unwrap();
     assert!(help.status.success());
     assert!(String::from_utf8_lossy(&help.stdout).contains("USAGE"));
+}
+
+/// `flake-migrate` is the deprecated compatibility alias kept alongside the
+/// new canonical `pluma-migrate` name (2026-09-20 product rename) -- same
+/// binary, `Cargo.toml`'s `[[bin]]` entries both point at
+/// `src/bin/migrate.rs`. Prove that byte-for-byte identity holds for the
+/// subprocess, the same way `pluma_fehrest_alias_parity.rs` proves it for
+/// the main CLI.
+#[test]
+fn deprecated_flake_migrate_alias_matches_pluma_migrate() {
+    let flake_migrate_bin = env!("CARGO_BIN_EXE_flake-migrate");
+
+    let pluma_version = Command::new(migrate_bin())
+        .arg("--version")
+        .output()
+        .unwrap();
+    let flake_version = Command::new(flake_migrate_bin)
+        .arg("--version")
+        .output()
+        .unwrap();
+    assert!(flake_version.status.success());
+    assert_eq!(pluma_version.status.code(), flake_version.status.code());
+
+    let pluma_help = Command::new(migrate_bin()).arg("--help").output().unwrap();
+    let flake_help = Command::new(flake_migrate_bin)
+        .arg("--help")
+        .output()
+        .unwrap();
+    assert!(flake_help.status.success());
+    assert_eq!(pluma_help.stdout, flake_help.stdout);
 }
