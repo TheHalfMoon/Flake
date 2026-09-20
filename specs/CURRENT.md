@@ -18,15 +18,20 @@ NEXT_DEPENDENCY_READY_UNIT=T05-04
 FOUNDER_DECISION_NO_HUMAN_GATES=docs/canonical/FOUNDER_NO_HUMAN_QUALIFICATION_GATES_2026-09-16.md
 FOUNDER_DECISION_WEBVIEW2_NETWORK_BOUNDARY=docs/canonical/FOUNDER_WEBVIEW2_NETWORK_BOUNDARY_2026-09-16.md
 FOUNDER_DECISION_T04-06_ACCESSIBILITY_WITNESS=docs/canonical/FOUNDER_T04-06_ACCESSIBILITY_WITNESS_AMENDMENT_2026-09-16.md
+FOUNDER_DECISION_ZERO_COST_MACOS_DISTRIBUTION=docs/canonical/FOUNDER_ZERO_COST_MACOS_DIRECT_DISTRIBUTION_AMENDMENT_2026-09-20.md
 T03-08_EXECUTION_CONTRACT=AUTOMATED_CONTINUITY_QUALIFICATION
 T05-06_EXECUTION_CONTRACT=AUTOMATED_LONG_HORIZON_CONTINUITY_SOAK
 R11_CONTRACT=AUTOMATED_CONTINUITY_AND_SOAK
 T04-06_EXECUTION_CONTRACT=AUTOMATED_TECHNICAL_ACCESSIBILITY_QUALIFICATION
 T04-06_HUMAN_ACCESSIBILITY_REVIEW_REQUIRED=NO
 T04-06_NATIVE_PLATFORM_PROFILES_REQUIRED=WINDOWS,MACOS,LINUX
-EXECUTABLE_REPOSITORY_WORK=ZERO
-EXECUTABLE_REPOSITORY_WORK_BLOCKER_1=WINDOWS_SIGNPATH_APPROVAL
-EXECUTABLE_REPOSITORY_WORK_BLOCKER_2=MACOS_APPLE_DEVELOPER_ID_NOTARIZATION
+MACOS_DEVELOPER_ID_REQUIRED=NO
+MACOS_NOTARIZATION_REQUIRED=NO
+MACOS_DISTRIBUTION_MODE=DIRECT_WEBSITE
+MACOS_GATEKEEPER_TRUST=NOT_CLAIMED
+EXECUTABLE_REPOSITORY_WORK=AVAILABLE
+EXECUTABLE_REPOSITORY_WORK_ITEM_1=MACOS_ZERO_COST_DIRECT_DISTRIBUTION_QUALIFICATION (this PR)
+EXECUTABLE_REPOSITORY_WORK_BLOCKER_1=WINDOWS_SIGNPATH_APPROVAL (Founder/external action only, unchanged by this amendment)
 P03_STATUS=CLOSED
 T04-01_STATUS=COMPLETE
 T04-01_EVIDENCE=docs/evidence/flake-v1/T04-01/REPORT.md
@@ -82,10 +87,10 @@ T05-04_ABOUT_HELP_DISTRIBUTION=COMPLETE
 T05-04_ABOUT_HELP_DISTRIBUTION_CI_RUN=35211292367
 T05-04_ABOUT_HELP_DISTRIBUTION_MERGE_COMMIT=87b3b73a4cd2fec0e0580fcfa8e375af0417e891
 T05-04_WINDOWS_SIGNING_CREDENTIALS=UNAVAILABLE
-T05-04_MACOS_DEVELOPER_ID=UNAVAILABLE
-T05-04_MACOS_NOTARIZATION_CREDENTIALS=UNAVAILABLE
+T05-04_MACOS_DEVELOPER_ID=NOT_REQUIRED (Founder decision, FOUNDER_DECISION_ZERO_COST_MACOS_DISTRIBUTION above)
+T05-04_MACOS_NOTARIZATION_CREDENTIALS=NOT_REQUIRED (Founder decision, FOUNDER_DECISION_ZERO_COST_MACOS_DISTRIBUTION above)
 T05-04_LINUX_RELEASE_SIGNING_KEY=GENERATED_FOUNDER_HELD_NOT_YET_INJECTED_TO_CI
-T05-04_BLOCKED_SUBSCOPE=Windows Authenticode signing (pending SignPath Foundation external application/approval -- no longer a paid-certificate blocker), macOS codesign/notarize/staple (genuinely blocked, paid Apple Developer Program membership). Linux release-signing is no longer blocked -- see T05-04_LINUX_SIGNING_STATUS=PASS below.
+T05-04_BLOCKED_SUBSCOPE=Windows Authenticode signing (pending SignPath Foundation external application/approval -- the one remaining external/Founder-only action). Linux release-signing and macOS zero-cost direct distribution are no longer blocked -- see T05-04_LINUX_SIGNING_STATUS and T05-04_MACOS_SIGNING_STATUS below.
 T05-04_SIGNING_MECHANICS_TEST=COMPLETE (TEST_SIGNING_IDENTITY_ONLY=YES, disposable identity per platform -- production signature clause remains blocked, see T05-04_BLOCKED_SUBSCOPE above)
 T05-04_SIGNING_MECHANICS_CI_RUN=35294005232
 T05-04_SIGNING_MECHANICS_MERGE_COMMIT=c21db04823e3b67764f806f61b21ae95826a711b
@@ -95,7 +100,10 @@ T05-04_LINUX_PRODUCTION_SIGNING_WORKFLOW=.github/workflows/t05-04-linux-producti
 T05-04_LINUX_PRODUCTION_SIGNING_WORKFLOW_MERGE_COMMIT=bcea246f7cc84ca19477800622da46a71a92ff9e
 T05-04_LINUX_PRODUCTION_SIGNING_CI_RUN=35498327004
 T05-04_LINUX_PRODUCTION_SIGNING_EVIDENCE=docs/evidence/flake-v1/T05-04/REPORT.md (addendum: "Real Linux production signing qualification (PASS)")
-T05-04_MACOS_SIGNING_STATUS=BLOCKED_EXTERNAL_APPLE_CREDENTIALS
+T05-04_MACOS_SIGNING_STATUS=PENDING_ZERO_COST_QUALIFICATION_CI_RUN
+T05-04_MACOS_ZERO_COST_TECHNICAL_QUALIFICATION=PENDING_CI_RUN
+T05-04_MACOS_DIRECT_DISTRIBUTION_DESIGN=docs/release/MACOS_DIRECT_DISTRIBUTION.md
+T05-04_MACOS_DIRECT_DISTRIBUTION_WORKFLOW=.github/workflows/t05-04-macos-direct-distribution.yml
 T05-04_SIGNPATH_ELIGIBILITY_PACKET=docs/release/SIGNPATH_ELIGIBILITY_PACKET.md
 T05-04_LINUX_SIGNING_DESIGN=docs/release/LINUX_RELEASE_SIGNING.md
 T05-04_LINUX_SIGNING_IDENTITY_DECISION=docs/canonical/FOUNDER_RELEASE_SIGNING_IDENTITY_DECISION_2026-09-18.md
@@ -210,7 +218,36 @@ The historical local-only planning SHAs `4246f6d...` and `852e44b...` are proven
 
 ## Next action
 
-**Frontier reverified: zero repository-executable work remains, three genuine external blockers stand between `T05-04` and close.** After merging PR #109 (Linux signing-identity publication) and PR #110 (its pointer follow-up), this session re-read `docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` section 31's dependency DAG ("The graph is an intentionally serial topological chain ... No task is independent of the preceding phase exit") and confirmed `T05-05`'s own contract lists `T05-04` as its sole dependency. `T05-04`'s three signing subscopes are each now blocked on one external, non-repository action, not on any further design, CI, code, or documentation work this session (or any agent session) can perform:
+**Founder governance amendment: zero-Apple-fee macOS direct distribution (2026-09-20).** The
+Founder ruled, in `docs/canonical/FOUNDER_ZERO_COST_MACOS_DIRECT_DISTRIBUTION_AMENDMENT_2026-09-20.md`,
+that Flake will not purchase Apple Developer Program membership and will not distribute
+through the Mac App Store; `T05-04`'s macOS signing/notarization/stapling acceptance clause is
+amended, prospectively and for macOS only, to a zero-cost technical qualification (ad-hoc
+codesign of the actual distributed artifact, SHA-256 checksum, the same project GPG
+release-signing identity already qualified for Linux, and a GitHub build-provenance
+attestation — never a claim of Apple Developer ID, notarization, or Gatekeeper trust). This
+session implemented `scripts/release/sign_macos.sh`'s new `DIRECT_DISTRIBUTION_MODE=1`
+(distinct from the existing pipeline-mechanics-only `TEST_SIGNING_MODE=1`),
+`.github/workflows/t05-04-macos-direct-distribution.yml` (`workflow_dispatch`-only, mirroring
+`t05-04-linux-production-signing.yml`'s structure), `docs/release/MACOS_DIRECT_DISTRIBUTION.md`
+(full design and the exact per-app Gatekeeper override instructions — never a system-wide
+Gatekeeper-disable recommendation), and updated `docs/release/CODE_SIGNING_POLICY.md`,
+`docs/release/RELEASE_VERIFICATION.md`, `docs/release/USER_GUIDE.md`, and `README.md`'s new
+"Download Flake" section accordingly. `T05-04_MACOS_SIGNING_STATUS=PENDING_ZERO_COST_QUALIFICATION_CI_RUN`
+above reflects that this is implemented but not yet independently proven in CI with real
+evidence — per `AGENTS.md` §6 ("Never claim PASS ... without exact evidence"), this field will
+not read `PASS` until the workflow has actually run green and been independently checked, not
+on the strength of this design alone. "Website-first distribution" is implemented as this
+repository's own README/docs/GitHub-Releases surface, not new hosted infrastructure (no
+canonical task authorizes building one); an optional web/PWA path was investigated and
+explicitly deferred (would require its own Class E founder-authorized ADR and full
+re-qualification against sections 10/38's local-first/offline/no-required-network invariants —
+not a byproduct of closing this signing subscope), and does not block this native
+direct-download release. Windows remains `PENDING_SIGNPATH_EXTERNAL_APPROVAL` (Founder/external
+action, unaffected by this amendment) as the one remaining blocker once macOS's CI run is
+recorded.
+
+**Frontier reverified (superseded by the amendment above, preserved for history): zero repository-executable work remains, three genuine external blockers stand between `T05-04` and close.** After merging PR #109 (Linux signing-identity publication) and PR #110 (its pointer follow-up), this session re-read `docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md` section 31's dependency DAG ("The graph is an intentionally serial topological chain ... No task is independent of the preceding phase exit") and confirmed `T05-05`'s own contract lists `T05-04` as its sole dependency. `T05-04`'s three signing subscopes are each now blocked on one external, non-repository action, not on any further design, CI, code, or documentation work this session (or any agent session) can perform:
 
 1. **`WINDOWS_SIGNPATH_APPROVAL`** -- `docs/release/SIGNPATH_ELIGIBILITY_PACKET.md` and `docs/release/CODE_SIGNING_POLICY.md` are published and every self-certifiable SignPath Foundation criterion is met; the remaining action is the Founder submitting the real SignPath Foundation application (real applicant identity, MFA-enrolled account) and SignPath's own review/approval, which cannot be fabricated or completed by repository automation.
 2. **`MACOS_APPLE_DEVELOPER_ID_NOTARIZATION`** -- reconfirmed against Apple's current enrollment terms (`developer.apple.com/programs/`): Developer ID and notarization require an active, paid Apple Developer Program membership (US $99/year) with no free/OSS exception. No ad-hoc signing, GPG, SignPath, or GitHub attestation substitutes for it.

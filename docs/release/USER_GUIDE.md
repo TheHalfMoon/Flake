@@ -148,18 +148,38 @@ with `backup-run`. The uninstaller reports this retention explicitly.
 ## 9. Verifying what you downloaded
 
 This release candidate is unsigned (`UNSIGNED_DEVELOPER_RC`): the binaries
-and installers are not code-signed and, on macOS, not notarized. Your OS
-will likely warn you about running or installing an unrecognized/unsigned
-program — that warning is accurate for this build. Signed, notarized final
-release artifacts are a separate, later release step; this archive is a
-development milestone, not that release.
+and installers are not code-signed. Your OS will likely warn you about
+running or installing an unrecognized/unsigned program — that warning is
+accurate for this build.
 
 Every archive published alongside this guide ships with a SHA-256 checksum
 manifest. Confirm the archive you downloaded matches the published checksum
 before running anything from it. A checksum match tells you the file was
 not corrupted or altered in transit; it does not by itself prove who built
-it — that assurance comes from a signature, which this candidate does not
-yet have.
+it — that assurance comes from a signature. See
+`docs/release/RELEASE_VERIFICATION.md` for the exact verification commands
+per platform (checksum, project GPG signature, GitHub build attestation,
+and, on Windows once active, Authenticode).
+
+### macOS: opening an unnotarized build (Gatekeeper)
+
+Flake's macOS release is distributed directly from Flake's own README/docs and GitHub
+Releases page, not through the Mac App Store, and is not Apple-notarized — see
+`docs/canonical/FOUNDER_ZERO_COST_MACOS_DIRECT_DISTRIBUTION_AMENDMENT_2026-09-20.md` for why.
+The first time you try to open it, macOS Gatekeeper will refuse with a message like *"Flake"
+cannot be opened because it is from an unidentified developer* — this is Gatekeeper correctly
+doing its job against an unnotarized build, not a bug.
+
+To open it anyway (Apple's own supported per-app override — this does not disable Gatekeeper
+or any other macOS security feature):
+
+1. Try to open Flake normally; macOS will refuse and show the warning above.
+2. Open **System Settings → Privacy & Security**, scroll to **Security**, and click
+   **Open Anyway** next to the message naming Flake. (Older macOS: right-click — or
+   Control-click — the app and choose **Open**, then confirm in the dialog that appears.)
+3. macOS remembers this choice for this app going forward.
+
+Full design and verification details: `docs/release/MACOS_DIRECT_DISTRIBUTION.md`.
 
 ## 10. Getting help
 

@@ -17,6 +17,17 @@
 # notarization claim -- see
 # docs/evidence/flake-v1/T05-04/SIGNING_PIPELINE_TEST_MECHANICS.md):
 #   TEST_SIGNING_MODE=1 scripts/release/sign_macos.sh <App.app>
+#
+# Direct-distribution mode (Founder decision, docs/canonical/
+# FOUNDER_ZERO_COST_MACOS_DIRECT_DISTRIBUTION_AMENDMENT_2026-09-20.md --
+# no paid Apple Developer Program membership, no Developer ID, no
+# notarization/stapling required or claimed). Ad-hoc-signs the ACTUAL
+# artifact Flake distributes from its own README/docs/Releases surface,
+# not merely a disposable test build -- distinct from TEST_SIGNING_MODE
+# above, which exists only to prove pipeline mechanics and always deletes
+# its own output. Still never claims Apple platform trust, a Developer ID
+# signature, or notarization -- see docs/release/MACOS_DIRECT_DISTRIBUTION.md:
+#   DIRECT_DISTRIBUTION_MODE=1 scripts/release/sign_macos.sh <App.app>
 set -euo pipefail
 
 if [[ $# -ne 1 ]]; then
@@ -31,6 +42,12 @@ if [[ ! -d "$APP_BUNDLE" ]]; then
 fi
 
 TEST_MODE="${TEST_SIGNING_MODE:-0}"
+DIRECT_DISTRIBUTION_MODE="${DIRECT_DISTRIBUTION_MODE:-0}"
+
+if [[ "$TEST_MODE" == "1" && "$DIRECT_DISTRIBUTION_MODE" == "1" ]]; then
+  echo "TEST_SIGNING_MODE and DIRECT_DISTRIBUTION_MODE are mutually exclusive" >&2
+  exit 2
+fi
 
 if [[ "$TEST_MODE" == "1" ]]; then
   echo "TEST_SIGNING_IDENTITY_ONLY=YES"
@@ -39,6 +56,16 @@ if [[ "$TEST_MODE" == "1" ]]; then
 
   SIGNING_IDENTITY="-"
   echo "==> using ad-hoc signing identity '-' (no keychain identity required; NOT a Developer ID, cannot pass Gatekeeper)"
+elif [[ "$DIRECT_DISTRIBUTION_MODE" == "1" ]]; then
+  echo "TEST_SIGNING_IDENTITY_ONLY=NO"
+  echo "DIRECT_DISTRIBUTION_MODE=YES"
+  echo "MACOS_APPLE_PLATFORM_TRUST=NOT_CLAIMED"
+  echo "MACOS_GATEKEEPER_TRUST=NOT_CLAIMED"
+  echo "MACOS_NOTARIZATION=NOT_CLAIMED"
+  echo "MACOS_DEVELOPER_ID_SIGNATURE=NOT_CLAIMED"
+
+  SIGNING_IDENTITY="-"
+  echo "==> using ad-hoc signing identity '-' for the actual distributed artifact (no keychain identity required; NOT a Developer ID; does not and cannot pass Gatekeeper -- see docs/release/MACOS_DIRECT_DISTRIBUTION.md for the user-facing override path)"
 else
   : "${SIGNING_IDENTITY:?SIGNING_IDENTITY must be set (production mode, e.g. 'Developer ID Application: Name (TEAMID)')}"
   : "${APPLE_ID:?APPLE_ID must be set (production mode)}"
@@ -47,7 +74,7 @@ else
   echo "TEST_SIGNING_IDENTITY_ONLY=NO"
 fi
 
-if [[ "$TEST_MODE" == "1" ]]; then
+if [[ "$TEST_MODE" == "1" || "$DIRECT_DISTRIBUTION_MODE" == "1" ]]; then
   # An ad-hoc identity ("-") cannot request a trusted timestamp -- Apple's
   # timestamp authority only timestamps a real Developer ID signature.
   TIMESTAMP_FLAG="--timestamp=none"
@@ -96,6 +123,17 @@ if [[ "$TEST_MODE" == "1" ]]; then
   echo "TEST_SIGNING_IDENTITY_ONLY=YES"
   echo "PRODUCTION_SIGNATURE_CLAIMED=NO"
   echo "NOTARIZATION_CLAIMED=NO"
+  exit $CODESIGN_VERIFY_STATUS
+elif [[ "$DIRECT_DISTRIBUTION_MODE" == "1" ]]; then
+  echo "==> spctl exit status for this ad-hoc-signed, unnotarized direct-distribution artifact: $SPCTL_STATUS (a non-zero/rejected result here is CORRECT and expected under the Founder's zero-cost distribution decision -- Gatekeeper is supposed to reject an artifact that is not notarized with a real Developer ID; users open it via macOS's own supported per-app override, see docs/release/USER_GUIDE.md and docs/release/MACOS_DIRECT_DISTRIBUTION.md; a zero/accepted result would indicate this artifact was wrongly treated as Apple-trusted and must be investigated)"
+
+  echo "SIGNATURE_MECHANICS_VERIFIED=$([[ $CODESIGN_VERIFY_STATUS -eq 0 ]] && echo YES || echo NO) (ad-hoc-signed direct-distribution identity; codesign's own local signature-validity check, not a trust-chain or notarization claim)"
+  echo "TEST_SIGNING_IDENTITY_ONLY=NO"
+  echo "DIRECT_DISTRIBUTION_MODE=YES"
+  echo "MACOS_APPLE_PLATFORM_TRUST=NOT_CLAIMED"
+  echo "MACOS_GATEKEEPER_TRUST=NOT_CLAIMED"
+  echo "MACOS_NOTARIZATION=NOT_CLAIMED"
+  echo "MACOS_DEVELOPER_ID_SIGNATURE=NOT_CLAIMED"
   exit $CODESIGN_VERIFY_STATUS
 else
   echo "==> xcrun notarytool submit (production)"
