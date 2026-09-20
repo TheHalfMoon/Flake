@@ -149,10 +149,17 @@ material change from the 2026-09-18 research above:
   actually presents; if the live form asks for anything not listed here, it will be a small,
   self-evident addition (e.g. an email address to receive review correspondence), not a
   contradiction of anything above.
-- **Confirmed unchanged, and still the one real gap:** "The project must already be released in
-  the form that should be signed." `gh release list` on this repository returns empty — Flake
-  has not published a GitHub Release. See "Reconciling the 'already released' requirement"
-  below.
+- **Resolved 2026-09-20:** "The project must already be released in the form that should be
+  signed." Per explicit Founder authorization (scoped to exactly one prerelease, for this
+  purpose only — not a final production release), this session published
+  [`v0.0.1-phase-t-rc.1`](https://github.com/TheHalfMoon/Flake/releases/tag/v0.0.1-phase-t-rc.1),
+  a GitHub **prerelease** labeled `UNSIGNED_DEVELOPER_RC`, built from the already-qualified
+  `T05-03`/`T05-04` Windows release-candidate artifacts (CI run `35518382422`, tree-identical to
+  `main` commit `27824604e09fc3ef9ba682f54e99139bdb9d8ab3`). See "Reconciling the 'already
+  released' requirement" below for the exact artifacts, checksums, and independent
+  re-verification performed before and after publication. Whether SignPath's own reviewers
+  consider an `UNSIGNED_DEVELOPER_RC` prerelease sufficient to satisfy this criterion is still
+  for them to determine, not asserted here.
 
 ## Reconciling the "already released" requirement against Flake's canonical governance
 
@@ -163,24 +170,43 @@ not publish them as a public GitHub Release without explicit Founder authorizati
 (`AGENTS.md` §8, "no unauthorized remote actions"). No release has been published under this
 reservation, and none is published by this packet.
 
-This creates a real, unresolved question for the SignPath application, not a repository-side
-blocker: SignPath's own reviewers, not published text alone, will determine whether an
+This was a real, unresolved question for the SignPath application, not a repository-side
+blocker: SignPath's own reviewers, not published text alone, determine whether an
 `UNSIGNED_DEVELOPER_RC` GitHub Release (clearly labeled as an unsigned developer build, exactly
-as `docs/release/USER_GUIDE.md` §9 already labels every artifact) satisfies "already released,"
-or whether they require a release the Founder considers more final. Two Founder-only paths
-forward, neither performable by this session without further authorization:
+as `docs/release/USER_GUIDE.md` §9 already labels every artifact) satisfies "already released."
+Two Founder-only paths existed; the Founder explicitly authorized and this session executed
+path 2 on 2026-09-20:
 
-1. **Apply now, without a published release**, and let SignPath's own review correspondence
-   clarify what they need — applying costs nothing and starts the review clock; if they ask for
-   a published artifact, the Founder can authorize publishing one at that point.
-2. **Authorize publishing an `UNSIGNED_DEVELOPER_RC` pre-release first** (a GitHub Release
-   tagged from the already-qualified `T05-03`/`T05-04` release-candidate artifacts, explicitly
-   labeled as an unsigned developer build, not a final release), strengthening the application
-   before submitting it.
+1. Apply now, without a published release, and let SignPath's own review correspondence
+   clarify what they need.
+2. **[Chosen]** Authorize publishing an `UNSIGNED_DEVELOPER_RC` pre-release first, strengthening
+   the application before submitting it.
 
-This session recommends path 1 (apply first; it is reversible and non-committal) but takes no
-action on either without the Founder's explicit choice — see the Founder-action request that
-accompanies this packet.
+**What was published:** GitHub prerelease
+[`v0.0.1-phase-t-rc.1`](https://github.com/TheHalfMoon/Flake/releases/tag/v0.0.1-phase-t-rc.1)
+(`prerelease: true`, `draft: false`), tagged at `main` commit
+`27824604e09fc3ef9ba682f54e99139bdb9d8ab3` (tree-identical to the exact commit CI built these
+artifacts from, `8bde2ae266a02faff52c810d8a442b79fb3ea814`, PR #116's head — independently
+confirmed by comparing both commits' git tree SHAs before publishing). No arbitrary artifacts
+were rebuilt; every published file is exactly what `t05-03-release-candidates` CI run
+`35518382422` already produced and qualified (all 24 checks green on that commit), re-downloaded
+from the release page and independently re-verified against SHA-256 after upload:
+
+| File | SHA-256 |
+|---|---|
+| `Flake_0.0.1-phase-t_x64-setup.exe` (unsigned NSIS installer) | `83c077a3b4c39bf0751a193c0c56e554597339cc6f868918f29a61238d8a0b44` |
+| `flake-0.0.1-phase-t-windows-x86_64.zip` (CLI archive) | `1b8a66d789bb461a6d35333859d9c0b3a3def1c57f0b0ffd79441f5b978c8f3e` |
+
+Also published alongside: the build-generated `.sha256` manifest for the CLI archive, and the
+four CycloneDX SBOMs (`flake-cli`, `fehrest-cli`, `flake-migrate`, `flake-desktop`) from that
+same CI run. No GitHub artifact attestation currently covers these files — the
+`release-provenance-attestation.yml` workflow was deliberately not triggered, since it would
+rebuild the CLI archive independently and produce a non-matching artifact rather than attest the
+exact files published here; this is recorded honestly in the release notes rather than
+represented as covered. The release notes explicitly disclaim SignPath approval/endorsement,
+Authenticode signing, and final/production status. macOS and Linux artifacts (both already
+qualified — see `T05-04` evidence) were deliberately excluded — this publication is scoped only
+to what the Windows SignPath application needs.
 
 ## Complete SignPath application packet (copy-paste values)
 
@@ -195,7 +221,7 @@ cannot be filled in before that point by anyone, including the Founder.
 | License | `Apache License, Version 2.0` (OSI-approved; SPDX `Apache-2.0`) |
 | Project description | `Flake is a local-first application for capturing project work, preserving the evidence behind decisions, and resuming after interruption with visible changes and next actions. External agents may receive bounded evidence packages and return reviewable proposals; the project remains understandable when an agent disappears.` (verbatim from `README.md`) |
 | Functionality/download page URL | `https://github.com/TheHalfMoon/Flake` (README) and `https://github.com/TheHalfMoon/Flake/blob/main/docs/release/USER_GUIDE.md` |
-| Release/download URL | **Not yet published** — see "Reconciling the 'already released' requirement" above; once published, `https://github.com/TheHalfMoon/Flake/releases` |
+| Release/download URL | `https://github.com/TheHalfMoon/Flake/releases/tag/v0.0.1-phase-t-rc.1` (GitHub prerelease, `UNSIGNED_DEVELOPER_RC`, published 2026-09-20 — see "Reconciling the 'already released' requirement" above) |
 | Code signing policy URL | `https://github.com/TheHalfMoon/Flake/blob/main/docs/release/CODE_SIGNING_POLICY.md` (linked from `README.md`) |
 | Maintainer / applicant identity | GitHub account `TheHalfMoon` (repository owner) — the Founder applies using their own real identity; this cannot be a repository-automation identity |
 | Author role | `TheHalfMoon` |

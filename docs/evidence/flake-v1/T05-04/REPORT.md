@@ -359,3 +359,57 @@ remaining action is the Founder submitting the real SignPath Foundation applicat
 `signpath.org/apply` (real applicant identity, MFA-enrolled account) and SignPath's own
 review/approval, which cannot be fabricated or completed by repository automation. `T05-05`
 remains not dependency-ready until that closes.
+
+## Addendum: `UNSIGNED_DEVELOPER_RC` Windows prerelease published to satisfy SignPath's "already released" criterion (2026-09-20)
+
+**Founder authorization, explicit and scoped:** "I explicitly authorize publishing ONE public
+GitHub prerelease for Flake solely to satisfy SignPath Foundation's current 'already released in
+the form that should be signed' eligibility requirement... This is NOT authorization to publish
+a final production release." Plan section 25's own reservation ("uploading, publishing a
+release" requires separate Founder authorization beyond building verified candidates,
+`AGENTS.md` §8) is satisfied by this instruction; no broader publication was performed.
+
+**Artifact selection — no rebuild.** Re-read this report's own T05-03 evidence above rather than
+building anything new. The `t05-03-release-candidates` CI run from PR #116 (`35518382422`) was
+identified as the correct source: it re-ran the full qualification battery (24 checks, all
+green) on a commit whose git tree is byte-identical to `main`'s current HEAD
+(`27824604e09fc3ef9ba682f54e99139bdb9d8ab3` and `8bde2ae266a02faff52c810d8a442b79fb3ea814` share
+tree SHA `66bedc4f60492adacf6320cb67d3247edf06af5a`, confirmed via `gh api .../git/commits` before
+selecting this run). Its `cli-archive-and-sbom-windows-latest` and `desktop-bundle-windows-latest`
+artifacts (not yet expired) were downloaded, not rebuilt.
+
+**Published:** GitHub prerelease
+[`v0.0.1-phase-t-rc.1`](https://github.com/TheHalfMoon/Flake/releases/tag/v0.0.1-phase-t-rc.1),
+tagged at `27824604e09fc3ef9ba682f54e99139bdb9d8ab3`, confirmed via the GitHub API to carry
+`prerelease: true`, `draft: false`. Tag collision checked (empty) immediately before publishing.
+Artifacts uploaded: `Flake_0.0.1-phase-t_x64-setup.exe` (unsigned NSIS installer),
+`flake-0.0.1-phase-t-windows-x86_64.zip` (CLI archive: `flake.exe`/`fehrest.exe`/
+`flake-migrate.exe`/`README.md`/`LICENSE`/`NOTICE`/`THIRD-PARTY-LICENSES.md`), the build's own
+`.sha256` manifest for the CLI archive, and four CycloneDX SBOMs
+(`flake-cli`/`fehrest-cli`/`flake-migrate`/`flake-desktop`).
+
+**Independent verification, before and after publishing:**
+- CLI archive SHA-256 (`1b8a66d789bb461a6d35333859d9c0b3a3def1c57f0b0ffd79441f5b978c8f3e`) matched
+  the build's own `.sha256` manifest before upload.
+- The NSIS installer has no build-generated manifest; this session computed its SHA-256
+  independently (`83c077a3b4c39bf0751a193c0c56e554597339cc6f868918f29a61238d8a0b44`) and published
+  it in a companion `.sha256` file, recorded as independently computed rather than
+  build-generated.
+- After publishing, both files were freshly re-downloaded from their public
+  `browser_download_url`s (not reused from the local staging copy) and re-hashed — both matched
+  exactly, confirming upload integrity.
+
+**What this does not claim:** the release notes explicitly state Windows binaries are unsigned,
+SmartScreen warnings are expected, no SignPath endorsement or approval exists, and this is not a
+final production release. GitHub artifact attestation was deliberately not generated for these
+files — `release-provenance-attestation.yml` would rebuild the CLI archive independently and
+produce artifacts that would not byte-match what was actually published, so triggering it would
+have misrepresented provenance rather than proven it; this gap is stated plainly in the release
+notes instead. macOS and Linux artifacts (already independently qualified above) were excluded —
+this publication is scoped to exactly what the Windows SignPath application needs, matching the
+Founder's authorization.
+
+`T05-04_WINDOWS_SIGNING_STATUS` remains `PENDING_SIGNPATH_EXTERNAL_APPROVAL` — this addendum
+resolves the "already released" prerequisite the packet had flagged as an open question; it does
+not and cannot substitute for SignPath's own review and approval. `T05-05` remains not
+dependency-ready.
