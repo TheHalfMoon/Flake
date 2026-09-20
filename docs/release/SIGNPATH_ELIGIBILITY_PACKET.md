@@ -5,7 +5,8 @@ material: `https://signpath.org/terms.html` (conditions for open-source projects
 `https://signpath.org/` and `https://signpath.org/apply` (application), `https://signpath.org/about.html`,
 and SignPath's GitHub Actions integration documentation
 (`https://docs.signpath.io/trusted-build-systems/github`, the
-`signpath/github-action-submit-signing-request` action). Retrieved 2026-09-18.
+`signpath/github-action-submit-signing-request` action). Retrieved 2026-09-18, rechecked
+2026-09-20 (see "Release-eligibility recheck" below).
 
 ## Eligibility check against SignPath Foundation's own published conditions
 
@@ -110,3 +111,105 @@ repository-owned preparation can fabricate those values or substitute for SignPa
 review — doing so would be exactly the fabricated-approval outcome the Founder's instructions
 prohibit. `WINDOWS_SIGNING_STATUS` therefore remains `PENDING_SIGNPATH_EXTERNAL_APPROVAL` until
 the Founder actually applies and SignPath actually approves.
+
+## Release-eligibility recheck (2026-09-20)
+
+Rechecked live against SignPath Foundation's current published material — `signpath.org/terms.html`
+(fetched fresh, 2026-09-20), `signpath.org/apply`, `signpath.org/about.html`, and
+`docs.signpath.io` (the "Trusted Build Systems → GitHub" and "Origin Verification" pages). No
+material change from the 2026-09-18 research above:
+
+- Every core eligibility condition on `signpath.org/terms.html` — OSI-approved license without
+  dual-licensing, no proprietary component, no malware/PUP, active maintenance, functionality
+  documented on the download page, team-owns-repository, sign-only-own-builds, no
+  security-circumvention features, no undisclosed system-configuration changes, uninstallation
+  facility, Author/Reviewer/Approver roles with MFA, a published code signing policy, consistent
+  signed-artifact metadata — reads identically to the 2026-09-18 text quoted in the table above.
+  One nuance not previously noted: the page's linked Code of Conduct is itself marked "Draft"
+  status by SignPath, with no revision date shown; this affects nothing in the eligibility table,
+  which is drawn from `terms.html` itself, not the draft Code of Conduct.
+- `docs.signpath.io/trusted-build-systems/github`'s documented `signpath/github-action-submit-signing-request@v3`
+  action and its required inputs (`api-token`, `organization-id`, `project-slug`,
+  `signing-policy-slug`, `github-artifact-id`, plus optional `wait-for-completion` and
+  `output-artifact-directory`) are unchanged from what `docs/release/LINUX_RELEASE_SIGNING.md`'s
+  Windows-sibling template above already assumes.
+- **New, not previously recorded:** SignPath also offers an optional **Origin Verification**
+  feature (`docs.signpath.io/origin-verification`), configured on a signing policy *after*
+  project approval, which lets SignPath cryptographically bind a signing request to trusted
+  build metadata (source repository URL, branch, commit, CI build-job URL, and a
+  reproducible-build assertion) and restrict signing to an allowed branch list (e.g. `main`,
+  `release/*`). This is not an eligibility requirement and does not block or change the
+  application — it is recorded here as a recommended post-approval hardening step, consistent
+  with this project's existing provenance/attestation posture, to be configured once the project
+  exists in the SignPath dashboard.
+- **Independently unverifiable via this recheck:** `signpath.org/apply`'s actual application
+  form fields render only after page/script load that this session's fetch tooling could not
+  execute — the exact field set on the live form was not observed. The packet below lists every
+  value this repository can supply so the Founder can fill in whatever fields the live form
+  actually presents; if the live form asks for anything not listed here, it will be a small,
+  self-evident addition (e.g. an email address to receive review correspondence), not a
+  contradiction of anything above.
+- **Confirmed unchanged, and still the one real gap:** "The project must already be released in
+  the form that should be signed." `gh release list` on this repository returns empty — Flake
+  has not published a GitHub Release. See "Reconciling the 'already released' requirement"
+  below.
+
+## Reconciling the "already released" requirement against Flake's canonical governance
+
+`FLAKE_CANONICAL_BUILD_PLAN.md` section 25 reserves "uploading, publishing a release" as an
+action separately authorized beyond building verified release candidates — repository
+automation and agent sessions may build and qualify `UNSIGNED_DEVELOPER_RC` candidates, but may
+not publish them as a public GitHub Release without explicit Founder authorization
+(`AGENTS.md` §8, "no unauthorized remote actions"). No release has been published under this
+reservation, and none is published by this packet.
+
+This creates a real, unresolved question for the SignPath application, not a repository-side
+blocker: SignPath's own reviewers, not published text alone, will determine whether an
+`UNSIGNED_DEVELOPER_RC` GitHub Release (clearly labeled as an unsigned developer build, exactly
+as `docs/release/USER_GUIDE.md` §9 already labels every artifact) satisfies "already released,"
+or whether they require a release the Founder considers more final. Two Founder-only paths
+forward, neither performable by this session without further authorization:
+
+1. **Apply now, without a published release**, and let SignPath's own review correspondence
+   clarify what they need — applying costs nothing and starts the review clock; if they ask for
+   a published artifact, the Founder can authorize publishing one at that point.
+2. **Authorize publishing an `UNSIGNED_DEVELOPER_RC` pre-release first** (a GitHub Release
+   tagged from the already-qualified `T05-03`/`T05-04` release-candidate artifacts, explicitly
+   labeled as an unsigned developer build, not a final release), strengthening the application
+   before submitting it.
+
+This session recommends path 1 (apply first; it is reversible and non-committal) but takes no
+action on either without the Founder's explicit choice — see the Founder-action request that
+accompanies this packet.
+
+## Complete SignPath application packet (copy-paste values)
+
+Every value below is exact and ready to paste into whatever field the live application form
+presents it for. Values SignPath issues only after approval are marked accordingly — they
+cannot be filled in before that point by anyone, including the Founder.
+
+| Field | Value |
+|---|---|
+| Project name | `Flake` |
+| Repository URL | `https://github.com/TheHalfMoon/Flake` |
+| License | `Apache License, Version 2.0` (OSI-approved; SPDX `Apache-2.0`) |
+| Project description | `Flake is a local-first application for capturing project work, preserving the evidence behind decisions, and resuming after interruption with visible changes and next actions. External agents may receive bounded evidence packages and return reviewable proposals; the project remains understandable when an agent disappears.` (verbatim from `README.md`) |
+| Functionality/download page URL | `https://github.com/TheHalfMoon/Flake` (README) and `https://github.com/TheHalfMoon/Flake/blob/main/docs/release/USER_GUIDE.md` |
+| Release/download URL | **Not yet published** — see "Reconciling the 'already released' requirement" above; once published, `https://github.com/TheHalfMoon/Flake/releases` |
+| Code signing policy URL | `https://github.com/TheHalfMoon/Flake/blob/main/docs/release/CODE_SIGNING_POLICY.md` (linked from `README.md`) |
+| Maintainer / applicant identity | GitHub account `TheHalfMoon` (repository owner) — the Founder applies using their own real identity; this cannot be a repository-automation identity |
+| Author role | `TheHalfMoon` |
+| Reviewer role | `TheHalfMoon` (single-maintainer project; table in `docs/release/CODE_SIGNING_POLICY.md` will be updated the moment any role is delegated) |
+| Approver role | `TheHalfMoon` |
+| MFA on SignPath account and on GitHub (`TheHalfMoon`) | **Founder must confirm/enable directly** — this session's read-only GitHub API check (`gh api user`) cannot observe 2FA status (GitHub no longer exposes it via that field for privacy); enable in GitHub under Settings → Password and authentication, and on the SignPath account at signup |
+| Build system | GitHub Actions, public repository, `windows-latest`-hosted runner |
+| Artifact types to be signed | Windows NSIS installer (`.exe`, Tauri desktop bundle) and CLI binaries `flake.exe` / `fehrest.exe` / `flake-migrate.exe`, produced by `scripts/release/package_cli_archive.sh` and the Tauri Windows bundle step already qualified in `.github/workflows/t05-03-release-candidates.yml` |
+| Organization id | **Issued by SignPath only after approval** — cannot be filled in now |
+| Project slug | **Issued by SignPath only after approval** — cannot be filled in now |
+| Signing policy slug | **Issued by SignPath only after approval** — cannot be filled in now |
+| `SIGNPATH_API_TOKEN` | **Issued by SignPath only after approval**, then stored as a GitHub Actions repository secret, never in this repository's tracked files or any agent-visible channel |
+| Origin Verification (optional, post-approval) | Recommended: enable on the signing policy once created, restricting signing to the `main` branch, per the recheck above |
+
+`SIGNPATH_PROJECT_ELIGIBILITY` remains `PENDING_EXTERNAL_APPROVAL`; nothing above changes that —
+it records exactly what the Founder needs to submit and confirms it against SignPath's live,
+current terms rather than the 2026-09-18 snapshot alone.
