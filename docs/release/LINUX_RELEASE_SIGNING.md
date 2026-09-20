@@ -85,7 +85,7 @@ shred -u /tmp/flake-release-signing-private.asc   # or securely delete by your O
 #    without still holding the private key.
 ```
 
-The one-time key-generation step was completed on 2026-09-18. The public key and production fingerprint are now published in this repository. Production signing still requires the key to be available to the authorized signing environment and a real release artifact to be signed and verified before the canonical T05-04 Linux signature gate can be marked PASS.
+The one-time key-generation step was completed on 2026-09-18. The public key and production fingerprint are now published in this repository. The Founder injected the key into the `GPG_PRIVATE_KEY`/`GPG_KEY_PASSPHRASE`/`GPG_KEY_FINGERPRINT` repository secrets on 2026-09-20, and `.github/workflows/t05-04-linux-production-signing.yml` (CI run [35498327004](https://github.com/TheHalfMoon/Flake/actions/runs/35498327004)) signed a real release candidate (CLI archive, its SHA-256 manifest, and the `.deb` bundle) and independently re-verified every signature in a clean `GNUPGHOME` seeded only with the published public key. The canonical T05-04 Linux signature gate is `PASS` — see `docs/evidence/flake-v1/T05-04/REPORT.md` for the full evidence.
 
 ## 3. CI secret injection (already implemented)
 
