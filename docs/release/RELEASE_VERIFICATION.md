@@ -61,15 +61,40 @@ gpg --verify flake_<version>_amd64.deb.asc flake_<version>_amd64.deb
 
 **Production fingerprint:** `F779807C73F29F4DB1E7DC9F78F7D4B92287FE22`
 
-## macOS — Developer ID and notarization (blocked, external, paid)
+## macOS — zero-cost direct distribution (no Apple Developer ID, no notarization)
 
-Genuinely blocked on a paid Apple Developer Program membership; no free/OSS path exists in
-Apple's current program (`docs/release/CODE_SIGNING_POLICY.md`). Once available, verify with:
+Per `docs/canonical/FOUNDER_ZERO_COST_MACOS_DIRECT_DISTRIBUTION_AMENDMENT_2026-09-20.md`,
+Flake's macOS artifact is ad-hoc-signed, checksummed, and GPG-signed with Flake's own project
+release-signing key — never an Apple Developer ID signature, never notarized. Full design:
+`docs/release/MACOS_DIRECT_DISTRIBUTION.md`.
 
 ```bash
+# 1. Checksum
+shasum -a 256 -c Flake-<version>.dmg.sha256
+
+# 2. Project GPG signature (same identity and fingerprint as the Linux release-signing key)
+gpg --import docs/release/flake-release-signing-public.asc
+gpg --verify Flake-<version>.dmg.asc Flake-<version>.dmg
+gpg --verify Flake-<version>.dmg.sha256.asc Flake-<version>.dmg.sha256
+# Compare the signing key's fingerprint against the one published in
+# docs/release/LINUX_RELEASE_SIGNING.md before trusting anything signed with it.
+
+# 3. Local codesign self-integrity check (NOT a trust-chain or notarization claim)
 codesign --verify --deep --strict --verbose=2 Flake.app
+
+# 4. Gatekeeper's own assessment -- EXPECTED TO REJECT this artifact; that is correct,
+#    not a bug. See docs/release/USER_GUIDE.md for how to open it anyway.
 spctl --assess --type execute --verbose=4 Flake.app
 ```
+
+**Production fingerprint (same identity used for Linux):**
+`F779807C73F29F4DB1E7DC9F78F7D4B92287FE22`
+
+**What this does and does not prove:** the checksum confirms the file was not corrupted or
+altered in transit. The GPG signature confirms it was produced by Flake's own project release
+process. The GitHub attestation (below) confirms it was built by this repository's own CI at
+an exact commit. None of these, individually or together, are Apple's platform trust — Flake
+does not have an Apple Developer ID and does not claim one.
 
 ## SBOM
 

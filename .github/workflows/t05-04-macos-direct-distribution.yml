@@ -1,0 +1,211 @@
+name: t05-04-macos-direct-distribution
+
+# Real macOS zero-cost direct-distribution qualification for T05-04, under
+# docs/canonical/FOUNDER_ZERO_COST_MACOS_DIRECT_DISTRIBUTION_AMENDMENT_2026-09-20.md.
+# No Apple Developer ID, no notarization, no stapling -- this workflow proves
+# and never claims otherwise. It ad-hoc-signs the actual .dmg Flake would
+# distribute (scripts/release/sign_macos.sh DIRECT_DISTRIBUTION_MODE=1, not
+# TEST_SIGNING_MODE's disposable pipeline-mechanics-only artifact), publishes
+# a SHA-256 manifest, signs the .dmg and manifest with Flake's existing
+# project-controlled GPG release-signing identity (the same key already
+# qualified for Linux in t05-04-linux-production-signing.yml -- a
+# project-provenance signature, never an Apple platform-trust claim), attests
+# GitHub build provenance for the .dmg, and reconfirms the unsigned-candidate
+# install/launch/uninstall qualification T05-03 already ran against this
+# specific ad-hoc-signed artifact.
+#
+# workflow_dispatch-only, same reservation as t05-04-linux-production-signing.yml
+# and release-provenance-attestation.yml: a deliberate, evidence-producing
+# action using real repository secrets, never an automatic side effect of
+# routine PR CI.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  macos-direct-distribution:
+    runs-on: macos-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Build flake CLI (needed by install_test.sh to seed/verify the retained vault)
+        run: cargo build --release --locked --bin flake
+
+      - name: Frontend build
+        working-directory: desktop
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build unsigned desktop .dmg bundle
+        working-directory: desktop
+        run: npm run tauri -- build --bundles dmg
+
+      - name: Locate the .dmg and record pre-signing SHA-256
+        id: locate
+        run: |
+          set -euo pipefail
+          dmg="$(find desktop/src-tauri/target/release/bundle/dmg -iname '*.dmg' | head -1)"
+          if [[ -z "$dmg" || ! -f "$dmg" ]]; then
+            echo "no .dmg produced" >&2
+            exit 1
+          fi
+          echo "dmg=$dmg" >> "$GITHUB_OUTPUT"
+          echo "==> $dmg"
+          shasum -a 256 "$dmg" > pre-sign.sha256
+          cat pre-sign.sha256
+
+      - name: Confirm direct distribution is a deliberate opt-in, not a silent fallback (sanity gate -- default/production mode must still fail closed without Developer ID credentials)
+        run: |
+          set +e
+          fake_app="$(mktemp -d)/Sanity.app"
+          mkdir -p "$fake_app"
+          scripts/release/sign_macos.sh "$fake_app" 2>/tmp/nogo.log
+          status=$?
+          set -e
+          if [[ $status -eq 0 ]]; then
+            echo "default/production mode unexpectedly succeeded with no SIGNING_IDENTITY/APPLE_ID set" >&2
+            cat /tmp/nogo.log
+            exit 1
+          fi
+          cat /tmp/nogo.log
+          rm -rf "$fake_app"
+
+      - name: Ad-hoc-sign the actual distributed artifact (DIRECT_DISTRIBUTION_MODE -- not TEST_SIGNING_MODE)
+        env:
+          DIRECT_DISTRIBUTION_MODE: "1"
+        run: |
+          set -euo pipefail
+          # sign_macos.sh takes a .app bundle; extract it from the .dmg, sign it in place, then
+          # rebuild the .dmg from the signed .app so the artifact actually distributed carries
+          # the signature (a detached signature on the outer .dmg would not sign the inner .app
+          # Gatekeeper actually assesses on launch).
+          MOUNT_POINT="$(mktemp -d)"
+          hdiutil attach "${{ steps.locate.outputs.dmg }}" -mountpoint "$MOUNT_POINT" -nobrowse -quiet
+          APP_SRC="$(find "$MOUNT_POINT" -maxdepth 1 -iname '*.app' | head -1)"
+          [[ -n "$APP_SRC" ]] || { echo "no .app found inside the .dmg" >&2; exit 1; }
+          WORK_APP="$(mktemp -d)/$(basename "$APP_SRC")"
+          ditto "$APP_SRC" "$WORK_APP"
+          hdiutil detach "$MOUNT_POINT" -quiet
+
+          scripts/release/sign_macos.sh "$WORK_APP"
+
+          rm -f "${{ steps.locate.outputs.dmg }}"
+          hdiutil create -volname "$(basename "$WORK_APP" .app)" -srcfolder "$WORK_APP" -ov -format UDZO "${{ steps.locate.outputs.dmg }}"
+
+      - name: Post-signing SHA-256 (expected to differ from pre-signing -- the .dmg was rebuilt around the signed .app)
+        run: shasum -a 256 "${{ steps.locate.outputs.dmg }}" | tee post-sign.sha256
+
+      - name: Generate the release SHA-256 manifest
+        id: manifest
+        run: |
+          set -euo pipefail
+          manifest="${{ steps.locate.outputs.dmg }}.sha256"
+          (cd "$(dirname "${{ steps.locate.outputs.dmg }}")" && shasum -a 256 "$(basename "${{ steps.locate.outputs.dmg }}")") > "$manifest"
+          echo "manifest=$manifest" >> "$GITHUB_OUTPUT"
+          cat "$manifest"
+
+      - name: Confirm project GPG signing still fails closed without credentials (sanity gate, run before touching the real secret)
+        run: |
+          if scripts/release/sign_linux.sh "${{ steps.manifest.outputs.manifest }}" 2>/tmp/nogpg.log; then
+            echo "production GPG signing unexpectedly succeeded with no credentials set" >&2
+            cat /tmp/nogpg.log
+            exit 1
+          fi
+          cat /tmp/nogpg.log
+
+      - name: Sign the .dmg with Flake's project-controlled GPG release-signing identity (project provenance, NOT an Apple signature)
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_KEY_PASSPHRASE: ${{ secrets.GPG_KEY_PASSPHRASE }}
+          GPG_KEY_FINGERPRINT: ${{ secrets.GPG_KEY_FINGERPRINT }}
+        run: |
+          brew list gnupg >/dev/null 2>&1 || brew install gnupg
+          scripts/release/sign_linux.sh "${{ steps.locate.outputs.dmg }}"
+
+      - name: Sign the checksum manifest with the same identity
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_KEY_PASSPHRASE: ${{ secrets.GPG_KEY_PASSPHRASE }}
+          GPG_KEY_FINGERPRINT: ${{ secrets.GPG_KEY_FINGERPRINT }}
+        run: scripts/release/sign_linux.sh "${{ steps.manifest.outputs.manifest }}"
+
+      - name: Independently verify the GPG signature (clean GNUPGHOME, published public key ONLY)
+        run: |
+          set -euo pipefail
+          expected_fpr="F779807C73F29F4DB1E7DC9F78F7D4B92287FE22"
+          expected_uid="Flake Release Signing <285091250+TheHalfMoon@users.noreply.github.com>"
+
+          verify_home="$(mktemp -d)"
+          chmod 700 "$verify_home"
+          export GNUPGHOME="$verify_home"
+
+          gpg --batch --import docs/release/flake-release-signing-public.asc
+
+          imported_fpr="$(gpg --batch --list-keys --with-colons | awk -F: '/^fpr:/ {print $10; exit}')"
+          [[ "$imported_fpr" == "$expected_fpr" ]] || { echo "fingerprint mismatch: $imported_fpr" >&2; exit 1; }
+          imported_uid="$(gpg --batch --list-keys --with-colons | awk -F: '/^uid:/ {print $10; exit}')"
+          [[ "$imported_uid" == "$expected_uid" ]] || { echo "uid mismatch: $imported_uid" >&2; exit 1; }
+
+          for f in "${{ steps.locate.outputs.dmg }}" "${{ steps.manifest.outputs.manifest }}"; do
+            echo "=== verifying $f against ${f}.asc ==="
+            status="$(gpg --batch --status-fd 1 --verify "${f}.asc" "$f")"
+            echo "$status" | grep -q '^\[GNUPG:\] GOODSIG' || { echo "GOODSIG not asserted for $f" >&2; exit 1; }
+            validsig_fpr="$(echo "$status" | awk '/^\[GNUPG:\] VALIDSIG/ {print $3; exit}')"
+            [[ "$validsig_fpr" == "$expected_fpr" ]] || { echo "VALIDSIG mismatch for $f: $validsig_fpr" >&2; exit 1; }
+            echo "==> $f: GOODSIG, fingerprint confirmed"
+          done
+
+          rm -rf "$verify_home"
+          echo "MACOS_ARTIFACT_PROJECT_GPG_SIGNATURE_VERIFIED=YES"
+          echo "MACOS_APPLE_PLATFORM_TRUST=NOT_CLAIMED"
+
+      - name: Attest GitHub build provenance for the .dmg
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: ${{ steps.locate.outputs.dmg }}
+
+      - name: Reconfirm codesign/spctl status against the direct-distribution artifact (spctl rejection is CORRECT and expected)
+        run: |
+          MOUNT_POINT="$(mktemp -d)"
+          hdiutil attach "${{ steps.locate.outputs.dmg }}" -mountpoint "$MOUNT_POINT" -nobrowse -quiet
+          APP="$(find "$MOUNT_POINT" -maxdepth 1 -iname '*.app' | head -1)"
+          echo "==> codesign --verify"
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          echo "==> spctl --assess (a non-zero/rejected result is CORRECT for an unnotarized artifact)"
+          set +e
+          spctl --assess --type execute --verbose=4 "$APP"
+          echo "SPCTL_EXIT=$? (expected non-zero -- Gatekeeper correctly rejecting an unnotarized build; see docs/release/USER_GUIDE.md for the per-app user override)"
+          set -e
+          hdiutil detach "$MOUNT_POINT" -quiet
+
+      - name: Reconfirm install/launch/uninstall + vault retention against this specific artifact
+        timeout-minutes: 10
+        run: scripts/release/install_test.sh
+
+      - name: Upload non-secret evidence (dmg, signatures, checksums -- never key material)
+        uses: actions/upload-artifact@v4
+        with:
+          name: t05-04-macos-direct-distribution-evidence
+          path: |
+            desktop/src-tauri/target/release/bundle/dmg/*.dmg
+            desktop/src-tauri/target/release/bundle/dmg/*.dmg.asc
+            desktop/src-tauri/target/release/bundle/dmg/*.sha256
+            desktop/src-tauri/target/release/bundle/dmg/*.sha256.asc
+            pre-sign.sha256
+            post-sign.sha256
+            dist/install-test/*.txt
+          if-no-files-found: error

@@ -53,3 +53,23 @@ The recovered Astro plan records Apache-2.0 intent, but final rights/notice/pack
 
 Release artifact signing status, the free/open-source signing mechanisms Flake uses, and how
 to verify a release: [`docs/release/CODE_SIGNING_POLICY.md`](docs/release/CODE_SIGNING_POLICY.md).
+
+## Download Flake
+
+Flake has not yet published a numbered release (see the canonical status above — release
+qualification is still in progress under `T05-04`). This repository's own README/docs and,
+once a version is published, its [GitHub Releases](https://github.com/TheHalfMoon/Flake/releases)
+page are the canonical distribution surface — Flake does not operate separate website
+infrastructure.
+
+| Platform | Signing/trust model | Notes |
+|---|---|---|
+| Windows | SignPath Foundation (free OSS Authenticode) — pending Founder application/approval | See `docs/release/SIGNPATH_ELIGIBILITY_PACKET.md` |
+| macOS | Direct download — independently verifiable (checksum, project GPG signature, GitHub attestation), **not Apple notarized** | See `docs/release/MACOS_DIRECT_DISTRIBUTION.md`; no Apple endorsement implied |
+| Linux | Project-controlled GPG release-signing key — **PASS** | See `docs/release/LINUX_RELEASE_SIGNING.md` |
+
+Every platform's published artifact, once a release exists, will list its version,
+architecture, SHA-256 checksum, signature/provenance verification command, release notes,
+installation instructions, and links to `LICENSE`/`NOTICE`/source — see
+[`docs/release/RELEASE_VERIFICATION.md`](docs/release/RELEASE_VERIFICATION.md) and
+[`docs/release/USER_GUIDE.md`](docs/release/USER_GUIDE.md).

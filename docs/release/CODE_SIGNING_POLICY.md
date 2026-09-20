@@ -11,7 +11,7 @@ signing policy (SignPath Foundation's terms do, see below).
 |---|---|---|
 | Windows | SignPath Foundation (free OSS Authenticode signing) | Repository-owned prerequisites complete; application to SignPath Foundation is a Founder action not yet submitted — see `docs/release/SIGNPATH_ELIGIBILITY_PACKET.md` |
 | Linux | Project-controlled GPG release-signing key | **PASS.** A real release candidate (CLI archive, its SHA-256 manifest, and the `.deb` bundle) was signed with the production key and independently re-verified in a clean keyring seeded only with the published public key — see `docs/release/LINUX_RELEASE_SIGNING.md` and CI run [35498327004](https://github.com/TheHalfMoon/Flake/actions/runs/35498327004) |
-| macOS | Apple Developer ID + notarization | Genuinely blocked on a paid Apple Developer Program membership (US $99/year); no free/OSS substitute exists in Apple's current program — see `docs/evidence/flake-v1/T05-04/REPORT.md`'s blocker packet |
+| macOS | Zero-cost direct distribution (project GPG signature + GitHub attestation, ad-hoc codesign) | Founder decision, `docs/canonical/FOUNDER_ZERO_COST_MACOS_DIRECT_DISTRIBUTION_AMENDMENT_2026-09-20.md` — no Apple Developer ID, no notarization, no App Store; not claimed to carry Apple platform trust — see `docs/release/MACOS_DIRECT_DISTRIBUTION.md` |
 | All platforms | GitHub artifact attestations (build provenance) | Implemented as an additional, non-substituting supply-chain evidence layer — see `docs/release/RELEASE_VERIFICATION.md` |
 
 No release is published as final/production-signed until its platform's row above reads a
@@ -56,16 +56,28 @@ About screen: local-first, offline, account-free, no telemetry.
 Full architecture, one-time key generation runbook, CI secret-injection mechanics, rotation and
 revocation procedure: [`docs/release/LINUX_RELEASE_SIGNING.md`](LINUX_RELEASE_SIGNING.md).
 
-## macOS — Apple Developer ID and notarization
+## macOS — zero-cost direct distribution
 
 Apple requires an active, paid Apple Developer Program membership (US $99/year, per
 [Apple's own enrollment documentation](https://developer.apple.com/programs/)) to obtain a
 Developer ID certificate and to notarize/staple a distributed `.app`/`.dmg`. There is no
-free/open-source exception in Apple's current program. Flake continues to build and test an
-ad-hoc-signed, unnotarized developer artifact (`scripts/release/sign_macos.sh`,
-`TEST_SIGNING_MODE=1`) for CI qualification only; that artifact is explicitly not the final,
-Gatekeeper-trusted production release, and `spctl --assess` is expected — and confirmed in CI —
-to reject it. This remains the one genuine external blocker for T05-04's signing subscope.
+free/open-source exception in Apple's current program — that research is unchanged and
+remains true.
+
+What changed is the Founder's product decision about which release model Flake ships under:
+per `docs/canonical/FOUNDER_ZERO_COST_MACOS_DIRECT_DISTRIBUTION_AMENDMENT_2026-09-20.md`,
+Flake does not purchase Apple Developer Program membership and does not distribute through
+the Mac App Store. Flake instead distributes an ad-hoc-signed `.dmg`
+(`scripts/release/sign_macos.sh`, `DIRECT_DISTRIBUTION_MODE=1` — distinct from
+`TEST_SIGNING_MODE=1`, which is pipeline-mechanics-only and never the shipped artifact),
+checksummed, signed with Flake's own project-controlled GPG release-signing key (the same
+identity already qualified for Linux), and covered by a GitHub build-provenance attestation.
+
+This is **not** claimed to be an Apple Developer ID signature, notarization, or stapling, and
+`spctl --assess` is expected — and confirmed in CI — to reject this artifact. Users open it via
+macOS's own supported per-app override (System Settings → Privacy & Security → "Open Anyway",
+or right-click → Open). Full design, exact CI evidence, and the user-facing override
+instructions: [`docs/release/MACOS_DIRECT_DISTRIBUTION.md`](MACOS_DIRECT_DISTRIBUTION.md).
 
 ## Additional supply-chain evidence: GitHub artifact attestations
 
