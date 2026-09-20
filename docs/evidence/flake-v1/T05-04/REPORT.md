@@ -204,3 +204,83 @@ Implemented `actions/attest-build-provenance@v2` for CLI release-candidate archi
 ### Updated completion assessment
 
 `T05-04`'s remaining acceptance clause ("all signatures/notarization/stapling verify") is still not closed -- nothing above fabricates a production signature, and the plan's own sequential DAG still keeps `T05-05` not dependency-ready. What changed is the shape of the remaining blocker: from three parallel credential gaps (a purchased Windows certificate, a purchased Apple Developer ID, an unspecified Linux signing mechanism) to one genuine, unavoidable paid external blocker (macOS) plus two fully-scoped, repository-work-complete items each waiting on one minimal, already-documented Founder action (submit the real SignPath application; run the one-time local GPG key generation). No paid Windows certificate and no paid Linux signing provider are required going forward.
+
+## Addendum: real Linux production signing qualification (PASS)
+
+The Founder ran the one-time local key-generation runbook on 2026-09-18 (recorded above) and, on
+2026-09-20, injected the resulting production key directly into this repository's GitHub Actions
+secrets from the machine that holds it (`GPG_PRIVATE_KEY`, `GPG_KEY_PASSPHRASE`,
+`GPG_KEY_FINGERPRINT`), piped straight into `gh secret set` with no intermediate file and never
+pasted into any agent-visible channel. `gh secret list` on `TheHalfMoon/Flake` confirmed only the
+three secret *names* exist (values were never read).
+
+A new, `workflow_dispatch`-only workflow, `.github/workflows/t05-04-linux-production-signing.yml`
+(added and merged via PR #112, merge commit `bcea246f7cc84ca19477800622da46a71a92ff9e`, every
+existing CI gate green — `qualify`/`cli-archive-and-sbom`/`desktop-bundle-install-test` on all
+three native platforms, `reproducibility`, `verify-artifacts`, `d6-vm-unclean-shutdown-linux`,
+`section27-performance`, `m-scale-performance`, and the existing disposable-identity
+`linux-release-signing-test`/`windows-authenticode-test-signing`/`macos-codesign-test-signing`
+jobs), was then run once directly on `main` at that same commit: CI run
+[`35498327004`](https://github.com/TheHalfMoon/Flake/actions/runs/35498327004), conclusion
+`success`.
+
+Real, non-fabricated evidence from that run's own log (not merely trusted from the job's green
+checkmark):
+
+- **Sanity gate first:** before touching the real secret, the same script (`sign_linux.sh`) was
+  invoked with no credentials and confirmed to fail closed (`GPG_KEY_ID: GPG_KEY_ID or
+  GPG_PRIVATE_KEY must be set (production mode)`), proving the production branch's fail-closed
+  behavior was still intact on this exact commit before any real signature was attempted.
+- **Exact artifacts and pre-signing SHA-256**, recorded before any signing occurred:
+  - `dist/flake-0.0.1-phase-t-linux-x86_64.tar.gz` —
+    `60e1630deb961808b518f231e1e5f455edd9cb1925f1e48ce29c810ee0e75d55`
+  - `dist/flake-0.0.1-phase-t-linux-x86_64.sha256` —
+    `e1305442e3d54e933ffaecccdc5cba6dad101f6cd7720b7c43b1942c31b646f3`
+  - `desktop/src-tauri/target/release/bundle/deb/Flake_0.0.1-phase-t_amd64.deb` —
+    `6a2c0e256a10cf6be010ecbea0f25599b6c61ead95a1c0612cdf44d02618a679`
+- **Production signing** (`TEST_SIGNING_MODE` unset throughout): each of the three artifacts was
+  signed with the real key imported from the `GPG_PRIVATE_KEY` secret into a fresh, per-invocation
+  ephemeral `GNUPGHOME`, destroyed immediately after. The imported key's own fingerprint was
+  confirmed to match the `GPG_KEY_FINGERPRINT` secret before any signature was produced (the
+  script's existing fail-closed pin — GitHub redacts the printed value in the log because it is
+  also stored as a secret, but the script's own `exit 1` on mismatch never fired, and the key id
+  used for every `gpg --local-user` invocation, `78F7D4B92287FE22`, is exactly the low 16 hex
+  digits of the published fingerprint `F779807C73F29F4DB1E7DC9F78F7D4B92287FE22`). Every
+  in-script `gpg --verify` immediately after signing printed `gpg: Good signature from "Flake
+  Release Signing <285091250+TheHalfMoon@users.noreply.github.com>" [unknown]` with `Primary key
+  fingerprint: F779 807C 73F2 9F4D B1E7  DC9F 78F7 D4B9 2287 FE22` for all three artifacts. Every
+  job step printed `TEST_SIGNING_IDENTITY_ONLY=NO` — never the disposable-test-identity path.
+- **Bytes unchanged:** post-signing `sha256sum` of all three artifacts reproduced the exact
+  pre-signing hashes above byte-for-byte (`diff` between the two recorded manifests was empty),
+  proving the detached `.asc` signatures never modified the signed files.
+- **Independent re-verification**, deliberately in a second, freshly created `GNUPGHOME`
+  containing *only* the already-published `docs/release/flake-release-signing-public.asc` (never
+  the private key, never the same environment the signing step used): the imported public key's
+  fingerprint and UID (`Flake Release Signing
+  <285091250+TheHalfMoon@users.noreply.github.com>`) were asserted to match exactly, then
+  `gpg --status-fd 1 --verify` was run against every `.asc`/artifact pair and required to emit
+  both `[GNUPG:] GOODSIG` and a `[GNUPG:] VALIDSIG` line whose fingerprint field matched the
+  published fingerprint exactly, for all three artifacts (`dist/flake-0.0.1-phase-t-linux-x86_64.tar.gz`,
+  its `.sha256` manifest, and the `.deb`). The job's final lines: `TEST_SIGNING_IDENTITY_ONLY=NO`,
+  `PRODUCTION_SIGNATURE_VERIFIED=YES`, `LINUX_PRODUCTION_FINGERPRINT=F779807C73F29F4DB1E7DC9F78F7D4B92287FE22`.
+- **No secret material leaked:** the only values GitHub Actions redacted in the log were the three
+  secret env vars themselves and any log line that happened to contain the fingerprint string
+  (redacted because it was also stored as the `GPG_KEY_FINGERPRINT` secret, not because it is
+  itself sensitive — it is already public in `docs/release/flake-release-signing-public.asc`). No
+  private key or passphrase content appears anywhere in the log. Only detached `.asc` signatures,
+  checksum manifests, and this verification log were uploaded as the workflow's evidence artifact
+  (`t05-04-linux-production-signing-evidence`) — never the private key.
+
+One genuine CI hiccup during this same pass, investigated rather than dismissed: PR #112's own
+`m-scale-performance` job (T05-01's unrelated L-scale migration-timing performance gate) failed
+once, missing its `gate_maximum_seconds: 1800` ceiling by 66 seconds (`import_seconds: 1866.2`) —
+the first failure of that workflow across its last 15 runs, on a PR that touches no migration or
+performance code. Rerunning only that job (`gh run rerun --job`) on the same commit passed cleanly
+in 20m16s, confirming GitHub-hosted-runner timing variance rather than a real regression; the PR's
+other 20+ checks were green on the first pass.
+
+`T05-04_LINUX_SIGNING_STATUS=PASS`. `T05-04` itself remains `IN_PROGRESS`: Windows is still
+`PENDING_SIGNPATH_EXTERNAL_APPROVAL` (repository-side work complete; the Founder has not yet
+submitted the real application at `signpath.org/apply`) and macOS remains
+`BLOCKED_EXTERNAL_APPLE_CREDENTIALS` (genuinely blocked on a paid Apple Developer Program
+membership). `T05-05` remains not dependency-ready until both of those close.

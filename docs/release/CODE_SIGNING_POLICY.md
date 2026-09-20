@@ -10,7 +10,7 @@ signing policy (SignPath Foundation's terms do, see below).
 | Platform | Mechanism | Status |
 |---|---|---|
 | Windows | SignPath Foundation (free OSS Authenticode signing) | Repository-owned prerequisites complete; application to SignPath Foundation is a Founder action not yet submitted — see `docs/release/SIGNPATH_ELIGIBILITY_PACKET.md` |
-| Linux | Project-controlled GPG release-signing key | Production key created and public key/fingerprint published; final real-artifact signing qualification remains before the production gate is PASS — see `docs/release/LINUX_RELEASE_SIGNING.md` |
+| Linux | Project-controlled GPG release-signing key | **PASS.** A real release candidate (CLI archive, its SHA-256 manifest, and the `.deb` bundle) was signed with the production key and independently re-verified in a clean keyring seeded only with the published public key — see `docs/release/LINUX_RELEASE_SIGNING.md` and CI run [35498327004](https://github.com/TheHalfMoon/Flake/actions/runs/35498327004) |
 | macOS | Apple Developer ID + notarization | Genuinely blocked on a paid Apple Developer Program membership (US $99/year); no free/OSS substitute exists in Apple's current program — see `docs/evidence/flake-v1/T05-04/REPORT.md`'s blocker packet |
 | All platforms | GitHub artifact attestations (build provenance) | Implemented as an additional, non-substituting supply-chain evidence layer — see `docs/release/RELEASE_VERIFICATION.md` |
 
