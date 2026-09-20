@@ -65,7 +65,7 @@ infrastructure.
 | Platform | Signing/trust model | Notes |
 |---|---|---|
 | Windows | SignPath Foundation (free OSS Authenticode) — pending Founder application/approval | See `docs/release/SIGNPATH_ELIGIBILITY_PACKET.md` |
-| macOS | Direct download — independently verifiable (checksum, project GPG signature, GitHub attestation), **not Apple notarized** | See `docs/release/MACOS_DIRECT_DISTRIBUTION.md`; no Apple endorsement implied |
+| macOS | Direct download — independently verifiable (checksum, project GPG signature, GitHub attestation), **not Apple notarized** — **PASS** | See `docs/release/MACOS_DIRECT_DISTRIBUTION.md`; no Apple endorsement implied |
 | Linux | Project-controlled GPG release-signing key — **PASS** | See `docs/release/LINUX_RELEASE_SIGNING.md` |
 
 Every platform's published artifact, once a release exists, will list its version,
