@@ -109,7 +109,14 @@ T05-04_MACOS_DIRECT_DISTRIBUTION_EVIDENCE=docs/evidence/flake-v1/T05-04/REPORT.m
 T05-04_MACOS_DEVELOPER_ID_REQUIRED=NO
 T05-04_MACOS_NOTARIZATION_REQUIRED=NO
 T05-04_MACOS_GATEKEEPER_TRUST=NOT_CLAIMED
-T05-04_SIGNPATH_ELIGIBILITY_PACKET=docs/release/SIGNPATH_ELIGIBILITY_PACKET.md (rechecked live against signpath.org/terms.html and docs.signpath.io 2026-09-20 -- no material change; complete copy-paste application packet added, one open question flagged: SignPath's "already released" criterion against Flake's not-yet-published-release state, a Founder decision, not a repository blocker)
+T05-04_SIGNPATH_ELIGIBILITY_PACKET=docs/release/SIGNPATH_ELIGIBILITY_PACKET.md (rechecked live against signpath.org/terms.html and docs.signpath.io 2026-09-20 -- no material change; complete copy-paste application packet added; "already released" criterion resolved 2026-09-20 by Founder-authorized UNSIGNED_DEVELOPER_RC prerelease, see T05-04_WINDOWS_PRERELEASE_* below)
+T05-04_WINDOWS_PRERELEASE_STATUS=PUBLISHED (Founder authorization scoped to exactly one prerelease, solely to satisfy SignPath's "already released" eligibility criterion -- not a final production release)
+T05-04_WINDOWS_PRERELEASE_URL=https://github.com/TheHalfMoon/Flake/releases/tag/v0.0.1-phase-t-rc.1
+T05-04_WINDOWS_PRERELEASE_TAG=v0.0.1-phase-t-rc.1
+T05-04_WINDOWS_PRERELEASE_TARGET_COMMIT=27824604e09fc3ef9ba682f54e99139bdb9d8ab3
+T05-04_WINDOWS_PRERELEASE_SOURCE_CI_RUN=35518382422 (t05-03-release-candidates, tree-identical to target commit above)
+T05-04_WINDOWS_PRERELEASE_ARTIFACTS_SHA256=Flake_0.0.1-phase-t_x64-setup.exe=83c077a3b4c39bf0751a193c0c56e554597339cc6f868918f29a61238d8a0b44 ; flake-0.0.1-phase-t-windows-x86_64.zip=1b8a66d789bb461a6d35333859d9c0b3a3def1c57f0b0ffd79441f5b978c8f3e (both independently re-verified after upload by fresh re-download)
+T05-04_WINDOWS_PRERELEASE_ATTESTATION=NOT_GENERATED (release-provenance-attestation.yml deliberately not triggered -- would rebuild artifacts independently rather than attest the exact published files; recorded honestly in release notes)
 T05-04_LINUX_SIGNING_DESIGN=docs/release/LINUX_RELEASE_SIGNING.md
 T05-04_LINUX_SIGNING_IDENTITY_DECISION=docs/canonical/FOUNDER_RELEASE_SIGNING_IDENTITY_DECISION_2026-09-18.md
 T05-04_CODE_SIGNING_POLICY=docs/release/CODE_SIGNING_POLICY.md
