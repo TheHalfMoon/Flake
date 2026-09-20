@@ -29,9 +29,8 @@ MACOS_DEVELOPER_ID_REQUIRED=NO
 MACOS_NOTARIZATION_REQUIRED=NO
 MACOS_DISTRIBUTION_MODE=DIRECT_WEBSITE
 MACOS_GATEKEEPER_TRUST=NOT_CLAIMED
-EXECUTABLE_REPOSITORY_WORK=AVAILABLE
-EXECUTABLE_REPOSITORY_WORK_ITEM_1=MACOS_ZERO_COST_DIRECT_DISTRIBUTION_QUALIFICATION (this PR)
-EXECUTABLE_REPOSITORY_WORK_BLOCKER_1=WINDOWS_SIGNPATH_APPROVAL (Founder/external action only, unchanged by this amendment)
+EXECUTABLE_REPOSITORY_WORK=ZERO
+EXECUTABLE_REPOSITORY_WORK_BLOCKER_1=WINDOWS_SIGNPATH_APPROVAL (Founder/external action only -- the sole remaining T05-04 blocker; macOS zero-cost qualification closed PASS, see T05-04_MACOS_SIGNING_STATUS)
 P03_STATUS=CLOSED
 T04-01_STATUS=COMPLETE
 T04-01_EVIDENCE=docs/evidence/flake-v1/T04-01/REPORT.md
@@ -90,7 +89,7 @@ T05-04_WINDOWS_SIGNING_CREDENTIALS=UNAVAILABLE
 T05-04_MACOS_DEVELOPER_ID=NOT_REQUIRED (Founder decision, FOUNDER_DECISION_ZERO_COST_MACOS_DISTRIBUTION above)
 T05-04_MACOS_NOTARIZATION_CREDENTIALS=NOT_REQUIRED (Founder decision, FOUNDER_DECISION_ZERO_COST_MACOS_DISTRIBUTION above)
 T05-04_LINUX_RELEASE_SIGNING_KEY=GENERATED_FOUNDER_HELD_NOT_YET_INJECTED_TO_CI
-T05-04_BLOCKED_SUBSCOPE=Windows Authenticode signing (pending SignPath Foundation external application/approval -- the one remaining external/Founder-only action). Linux release-signing and macOS zero-cost direct distribution are no longer blocked -- see T05-04_LINUX_SIGNING_STATUS and T05-04_MACOS_SIGNING_STATUS below.
+T05-04_BLOCKED_SUBSCOPE=Windows Authenticode signing only -- pending SignPath Foundation external application/approval, the one remaining external/Founder-only action. Linux release-signing (PASS) and macOS zero-cost direct distribution (PASS) are closed.
 T05-04_SIGNING_MECHANICS_TEST=COMPLETE (TEST_SIGNING_IDENTITY_ONLY=YES, disposable identity per platform -- production signature clause remains blocked, see T05-04_BLOCKED_SUBSCOPE above)
 T05-04_SIGNING_MECHANICS_CI_RUN=35294005232
 T05-04_SIGNING_MECHANICS_MERGE_COMMIT=c21db04823e3b67764f806f61b21ae95826a711b
@@ -100,10 +99,16 @@ T05-04_LINUX_PRODUCTION_SIGNING_WORKFLOW=.github/workflows/t05-04-linux-producti
 T05-04_LINUX_PRODUCTION_SIGNING_WORKFLOW_MERGE_COMMIT=bcea246f7cc84ca19477800622da46a71a92ff9e
 T05-04_LINUX_PRODUCTION_SIGNING_CI_RUN=35498327004
 T05-04_LINUX_PRODUCTION_SIGNING_EVIDENCE=docs/evidence/flake-v1/T05-04/REPORT.md (addendum: "Real Linux production signing qualification (PASS)")
-T05-04_MACOS_SIGNING_STATUS=PENDING_ZERO_COST_QUALIFICATION_CI_RUN
-T05-04_MACOS_ZERO_COST_TECHNICAL_QUALIFICATION=PENDING_CI_RUN
+T05-04_MACOS_SIGNING_STATUS=PASS
+T05-04_MACOS_ZERO_COST_TECHNICAL_QUALIFICATION=PASS
 T05-04_MACOS_DIRECT_DISTRIBUTION_DESIGN=docs/release/MACOS_DIRECT_DISTRIBUTION.md
 T05-04_MACOS_DIRECT_DISTRIBUTION_WORKFLOW=.github/workflows/t05-04-macos-direct-distribution.yml
+T05-04_MACOS_DIRECT_DISTRIBUTION_WORKFLOW_MERGE_COMMIT=a85f906fa579f611c4c05f6464f955805cd8fd32
+T05-04_MACOS_DIRECT_DISTRIBUTION_CI_RUN=35514419522
+T05-04_MACOS_DIRECT_DISTRIBUTION_EVIDENCE=docs/evidence/flake-v1/T05-04/REPORT.md (addendum: "zero-Apple-fee macOS direct distribution (PASS)")
+T05-04_MACOS_DEVELOPER_ID_REQUIRED=NO
+T05-04_MACOS_NOTARIZATION_REQUIRED=NO
+T05-04_MACOS_GATEKEEPER_TRUST=NOT_CLAIMED
 T05-04_SIGNPATH_ELIGIBILITY_PACKET=docs/release/SIGNPATH_ELIGIBILITY_PACKET.md
 T05-04_LINUX_SIGNING_DESIGN=docs/release/LINUX_RELEASE_SIGNING.md
 T05-04_LINUX_SIGNING_IDENTITY_DECISION=docs/canonical/FOUNDER_RELEASE_SIGNING_IDENTITY_DECISION_2026-09-18.md
@@ -217,6 +222,30 @@ Historical Fehrest, Phase T, R1, and Spec 002 artifacts remain immutable evidenc
 The historical local-only planning SHAs `4246f6d...` and `852e44b...` are provenance references only. Execution does not require those Git objects or any OneDrive/local path; `docs/evidence/flake-v1/T00-01/REPORT.md` records exactly how a pre-existing local branch carrying those identifiers was reconciled (not adopted as-is) against live GitHub truth.
 
 ## Next action
+
+**macOS zero-cost direct distribution qualification: real CI run, PASS.** After merging PR #114
+(the amendment and implementation, below), this session ran
+`.github/workflows/t05-04-macos-direct-distribution.yml` once directly on `main` at merge commit
+`a85f906fa579f611c4c05f6464f955805cd8fd32`: CI run
+[`35514419522`](https://github.com/TheHalfMoon/Flake/actions/runs/35514419522), conclusion
+`success` in 5m32s. Independently confirmed from that run's own log (not merely the green
+checkmark): the sanity gate held (default/production signing mode still fails closed without
+Developer ID credentials); `codesign --verify` passed and `spctl --assess` correctly rejected the
+ad-hoc-signed, unnotarized `.dmg` (`SPCTL_EXIT=3`); the project GPG signature
+(`F779807C73F29F4DB1E7DC9F78F7D4B92287FE22`, the same identity already qualified for Linux) was
+independently re-verified against both the `.dmg` and its checksum manifest in a clean keyring
+seeded only from the published public key; a GitHub build-provenance attestation was created for
+the exact signed artifact digest; and `install_test.sh` reconfirmed install/launch, bundled
+license files, and vault retention against this specific signed artifact. Full evidence:
+`docs/evidence/flake-v1/T05-04/REPORT.md`'s "zero-Apple-fee macOS direct distribution (PASS)"
+addendum. `T05-04_MACOS_SIGNING_STATUS=PASS` and `T05-04_MACOS_ZERO_COST_TECHNICAL_QUALIFICATION=PASS`
+above reflect this real, independently-checked run — never asserted from the amendment's design
+document alone. `T05-04` remains `IN_PROGRESS`: Windows (`PENDING_SIGNPATH_EXTERNAL_APPROVAL`) is
+now the *only* remaining blocker, and it is a Founder/external action, not repository work —
+submit the real SignPath Foundation application at `signpath.org/apply` (real applicant identity,
+MFA-enrolled account) and await SignPath's own review/approval; nothing else in this repository's
+own DAG is dependency-ready, so `T05-05` correctly stays not dependency-ready and
+`PROJECT_COMPLETE=NO`.
 
 **Founder governance amendment: zero-Apple-fee macOS direct distribution (2026-09-20).** The
 Founder ruled, in `docs/canonical/FOUNDER_ZERO_COST_MACOS_DIRECT_DISTRIBUTION_AMENDMENT_2026-09-20.md`,

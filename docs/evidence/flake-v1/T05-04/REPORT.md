@@ -284,3 +284,78 @@ other 20+ checks were green on the first pass.
 submitted the real application at `signpath.org/apply`) and macOS remains
 `BLOCKED_EXTERNAL_APPLE_CREDENTIALS` (genuinely blocked on a paid Apple Developer Program
 membership). `T05-05` remains not dependency-ready until both of those close.
+
+## Addendum: zero-Apple-fee macOS direct distribution (PASS)
+
+Per the Founder's `docs/canonical/FOUNDER_ZERO_COST_MACOS_DIRECT_DISTRIBUTION_AMENDMENT_2026-09-20.md`
+(2026-09-20), Flake will not purchase Apple Developer Program membership and will not distribute
+through the Mac App Store. This supersedes, prospectively and for macOS only, T05-04's prior
+"all signatures/notarization/stapling verify" reading for macOS with a zero-cost technical
+qualification. It does not change the underlying research — a paid Apple Developer Program
+membership remains the only way to obtain Developer ID signing and notarization — only the
+Founder's product decision about which release model Flake ships under.
+
+`scripts/release/sign_macos.sh` gained a new `DIRECT_DISTRIBUTION_MODE=1` (distinct from the
+existing pipeline-mechanics-only `TEST_SIGNING_MODE=1`, which always deletes its own output) and
+a new `workflow_dispatch`-only workflow, `.github/workflows/t05-04-macos-direct-distribution.yml`,
+was added and merged via PR #114 (merge commit `a85f906fa579f611c4c05f6464f955805cd8fd32`, every
+existing CI gate green — `qualify`/`cli-archive-and-sbom`/`desktop-bundle-install-test` on all
+three native platforms, `reproducibility`, `verify-artifacts`, `d6-vm-unclean-shutdown-linux`,
+`section27-performance`, `m-scale-performance`, and the existing
+`linux-release-signing-test`/`windows-authenticode-test-signing`/`macos-codesign-test-signing`
+jobs). It was then run once directly on `main` at that same commit: CI run
+[`35514419522`](https://github.com/TheHalfMoon/Flake/actions/runs/35514419522), conclusion
+`success`, `macos-direct-distribution` job in 5m32s.
+
+Real, non-fabricated evidence from that run's own log (not merely trusted from the job's green
+checkmark):
+
+- **Sanity gate first:** before ad-hoc-signing anything, `sign_macos.sh` was invoked against a
+  disposable empty bundle with no `TEST_SIGNING_MODE`/`DIRECT_DISTRIBUTION_MODE` set (default
+  production path) and required to fail closed on the missing `SIGNING_IDENTITY`/`APPLE_ID`
+  Developer ID variables; the step is written to fail the whole job if that gate unexpectedly
+  succeeds, and the job passed, so this gate held.
+- **Artifact:** `desktop/src-tauri/target/release/bundle/dmg/Flake_0.0.1-phase-t_aarch64.dmg`,
+  extracted, ad-hoc-signed (`DIRECT_DISTRIBUTION_MODE=1`), and rebuilt via `hdiutil create`. Every
+  signing step printed `TEST_SIGNING_IDENTITY_ONLY=NO`, `DIRECT_DISTRIBUTION_MODE=YES`,
+  `MACOS_APPLE_PLATFORM_TRUST=NOT_CLAIMED`, `MACOS_GATEKEEPER_TRUST=NOT_CLAIMED`,
+  `MACOS_NOTARIZATION=NOT_CLAIMED`, `MACOS_DEVELOPER_ID_SIGNATURE=NOT_CLAIMED` — never a
+  production Apple claim.
+- **`codesign --verify --deep --strict` passed** (`SIGNATURE_MECHANICS_VERIFIED=YES`) — a local
+  tamper-evidence check on the ad-hoc-signed bundle's own contents, not a trust-chain claim.
+- **`spctl --assess` correctly rejected the artifact**: `SPCTL_EXIT=3` (non-zero) — Gatekeeper
+  doing its job against an unnotarized build, confirmed rather than hidden or worked around.
+- **Project GPG signature** (the same identity already qualified for Linux,
+  `F779807C73F29F4DB1E7DC9F78F7D4B92287FE22`): the `.dmg` and its SHA-256 manifest were each
+  signed via `sign_linux.sh` (artifact-agnostic despite its name) using the `GPG_PRIVATE_KEY`
+  repository secret in a fresh ephemeral `GNUPGHOME`, then independently re-verified in a second,
+  freshly created `GNUPGHOME` seeded only from the already-published
+  `docs/release/flake-release-signing-public.asc` — never the private key, never the signing
+  step's own environment. Both artifacts printed `GOODSIG, fingerprint confirmed`;
+  `MACOS_ARTIFACT_PROJECT_GPG_SIGNATURE_VERIFIED=YES`, `MACOS_APPLE_PLATFORM_TRUST=NOT_CLAIMED`.
+  Before touching the real secret, the same production path was confirmed to still fail closed
+  with no credentials set (mirroring the Linux sanity gate).
+- **GitHub build-provenance attestation**: `actions/attest-build-provenance@v2` attested the
+  signed `.dmg`, printing `Attestation created for Flake_0.0.1-phase-t_aarch64.dmg@sha256:310c035d23e6b88f67b6b6ff51e195696970f2886ca9ba43381be420f5141afc`
+  — this exact digest is GitHub's own independently-computed SHA-256 of the final signed
+  artifact, bound to this repository, commit, and workflow run.
+- **Install/launch/uninstall reconfirmed against this specific signed artifact** (not merely the
+  unsigned `T05-03` candidate): `install_test.sh` mounted the `.dmg`, copied `Flake.app`, launched
+  the installed binary, confirmed the bundled `LICENSE`/`NOTICE`/`THIRD-PARTY-LICENSES.md` were
+  present inside the installed bundle, and confirmed the pre-existing test vault was retained and
+  unmodified (`RETAINED=YES`).
+- **No secret material leaked:** only the three named `GPG_*` secret env vars were ever redacted
+  in the log; no private key or passphrase content appears anywhere. Only the signed `.dmg`, its
+  detached signatures, checksum manifests, and the install-test log were uploaded as the
+  workflow's evidence artifact (`t05-04-macos-direct-distribution-evidence`) — never key material.
+
+`T05-04_MACOS_SIGNING_STATUS=PASS` under the amended, zero-cost acceptance clause —
+`MACOS_ZERO_COST_TECHNICAL_QUALIFICATION=PASS`, `MACOS_DEVELOPER_ID_REQUIRED=NO`,
+`MACOS_NOTARIZATION_REQUIRED=NO`, `MACOS_GATEKEEPER_TRUST=NOT_CLAIMED` throughout — never a claim
+of Apple platform trust, Developer ID, or notarization. `T05-04` itself remains `IN_PROGRESS`:
+Windows is still `PENDING_SIGNPATH_EXTERNAL_APPROVAL` — repository-side work is complete
+(`docs/release/SIGNPATH_ELIGIBILITY_PACKET.md`, `docs/release/CODE_SIGNING_POLICY.md`); the one
+remaining action is the Founder submitting the real SignPath Foundation application at
+`signpath.org/apply` (real applicant identity, MFA-enrolled account) and SignPath's own
+review/approval, which cannot be fabricated or completed by repository automation. `T05-05`
+remains not dependency-ready until that closes.
