@@ -1,0 +1,180 @@
+name: t05-04-linux-production-signing
+
+# Real Linux production release-signing qualification for T05-04 (plan section 25:
+# "Sign ... Linux/checksum manifests using owner-controlled credentials without
+# exposing them"). Unlike t05-04-signing-pipeline-test.yml's disposable, per-run TEST
+# identity, this workflow uses the real production GPG_PRIVATE_KEY / GPG_KEY_PASSPHRASE /
+# GPG_KEY_FINGERPRINT repository secrets (docs/release/LINUX_RELEASE_SIGNING.md) to sign
+# a real Linux release candidate and independently verify the result in a clean GNUPGHOME
+# seeded only with the published public key (docs/release/flake-release-signing-public.asc)
+# -- never the same environment the private key was imported into.
+#
+# workflow_dispatch-only: a deliberate, evidence-producing action, never an automatic
+# side effect of routine CI (the same reservation release-provenance-attestation.yml
+# already applies to publishing provenance).
+#
+# Never sets TEST_SIGNING_MODE. scripts/release/sign_linux.sh's production branch fails
+# closed if GPG_KEY_ID/GPG_PRIVATE_KEY is absent, and separately refuses to sign if an
+# imported key's fingerprint does not match GPG_KEY_FINGERPRINT -- so a missing or
+# substituted secret can never silently produce a signature under the wrong identity.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-production-signing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Linux Tauri system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf build-essential
+
+      - name: Build CLI release archive + SHA-256 manifest
+        run: scripts/release/package_cli_archive.sh
+
+      - name: Build .deb bundle (the exact same UNSIGNED_DEVELOPER_RC bundle T05-03 produces)
+        working-directory: desktop
+        run: |
+          npm ci
+          npm run build
+          npm run tauri -- build --bundles deb
+
+      - name: Locate required artifacts and record pre-signing SHA-256
+        id: locate
+        run: |
+          set -euo pipefail
+          archive="$(find dist -maxdepth 1 -iname 'flake-*.tar.gz' | head -1)"
+          manifest="$(find dist -maxdepth 1 -iname 'flake-*.sha256' | head -1)"
+          deb="$(find desktop/src-tauri/target/release/bundle/deb -iname '*.deb' | head -1)"
+          for f in "$archive" "$manifest" "$deb"; do
+            if [[ -z "$f" || ! -f "$f" ]]; then
+              echo "a required Linux release artifact was not found (archive/manifest/deb)" >&2
+              exit 1
+            fi
+          done
+          echo "archive=$archive" >> "$GITHUB_OUTPUT"
+          echo "manifest=$manifest" >> "$GITHUB_OUTPUT"
+          echo "deb=$deb" >> "$GITHUB_OUTPUT"
+          echo "==> required artifacts:"
+          echo "  archive:  $archive"
+          echo "  manifest: $manifest"
+          echo "  deb:      $deb"
+          echo "==> pre-signing SHA-256 (must be byte-identical after signing -- detached signatures never modify the signed file)"
+          sha256sum "$archive" "$manifest" "$deb" | tee pre-sign.sha256
+
+      - name: Confirm production mode still fails closed without credentials (sanity gate, run before touching the real secret)
+        run: |
+          if scripts/release/sign_linux.sh "${{ steps.locate.outputs.manifest }}" 2>/tmp/nogo.log; then
+            echo "production mode unexpectedly succeeded with no credentials set" >&2
+            cat /tmp/nogo.log
+            exit 1
+          fi
+          cat /tmp/nogo.log
+
+      - name: PRODUCTION-sign the release archive
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_KEY_PASSPHRASE: ${{ secrets.GPG_KEY_PASSPHRASE }}
+          GPG_KEY_FINGERPRINT: ${{ secrets.GPG_KEY_FINGERPRINT }}
+        run: scripts/release/sign_linux.sh "${{ steps.locate.outputs.archive }}"
+
+      - name: PRODUCTION-sign the checksum manifest
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_KEY_PASSPHRASE: ${{ secrets.GPG_KEY_PASSPHRASE }}
+          GPG_KEY_FINGERPRINT: ${{ secrets.GPG_KEY_FINGERPRINT }}
+        run: scripts/release/sign_linux.sh "${{ steps.locate.outputs.manifest }}"
+
+      - name: PRODUCTION-sign the .deb package
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_KEY_PASSPHRASE: ${{ secrets.GPG_KEY_PASSPHRASE }}
+          GPG_KEY_FINGERPRINT: ${{ secrets.GPG_KEY_FINGERPRINT }}
+        run: scripts/release/sign_linux.sh "${{ steps.locate.outputs.deb }}"
+
+      - name: Prove artifact bytes are unchanged by signing
+        run: |
+          set -euo pipefail
+          echo "==> post-signing SHA-256"
+          sha256sum "${{ steps.locate.outputs.archive }}" "${{ steps.locate.outputs.manifest }}" "${{ steps.locate.outputs.deb }}" | tee post-sign.sha256
+          diff pre-sign.sha256 post-sign.sha256
+          echo "ARTIFACT_BYTES_UNCHANGED=YES"
+
+      - name: Independently verify every production signature (clean GNUPGHOME, published public key ONLY)
+        run: |
+          set -euo pipefail
+          expected_fpr="F779807C73F29F4DB1E7DC9F78F7D4B92287FE22"
+          expected_uid="Flake Release Signing <285091250+TheHalfMoon@users.noreply.github.com>"
+
+          verify_home="$(mktemp -d)"
+          chmod 700 "$verify_home"
+          export GNUPGHOME="$verify_home"
+
+          echo "==> importing ONLY the published public key (docs/release/flake-release-signing-public.asc) -- never the private key -- into a clean, freshly created keyring"
+          gpg --batch --import docs/release/flake-release-signing-public.asc
+
+          imported_fpr="$(gpg --batch --list-keys --with-colons | awk -F: '/^fpr:/ {print $10; exit}')"
+          if [[ "$imported_fpr" != "$expected_fpr" ]]; then
+            echo "published public key fingerprint ($imported_fpr) does not match expected ($expected_fpr)" >&2
+            exit 1
+          fi
+          echo "==> confirmed published public key fingerprint: $imported_fpr"
+
+          imported_uid="$(gpg --batch --list-keys --with-colons | awk -F: '/^uid:/ {print $10; exit}')"
+          if [[ "$imported_uid" != "$expected_uid" ]]; then
+            echo "published public key UID ($imported_uid) does not match expected ($expected_uid)" >&2
+            exit 1
+          fi
+          echo "==> confirmed published public key UID: $imported_uid"
+
+          for f in "${{ steps.locate.outputs.archive }}" "${{ steps.locate.outputs.manifest }}" "${{ steps.locate.outputs.deb }}"; do
+            echo "=== verifying $f against ${f}.asc ==="
+            set +e
+            status="$(gpg --batch --status-fd 1 --verify "${f}.asc" "$f" 2>verify-stderr.log)"
+            rc=$?
+            set -e
+            cat verify-stderr.log
+            rm -f verify-stderr.log
+            if [[ $rc -ne 0 ]]; then
+              echo "gpg --verify failed (exit $rc) for $f" >&2
+              exit 1
+            fi
+            echo "$status" | grep -q '^\[GNUPG:\] GOODSIG' || { echo "GOODSIG not asserted for $f" >&2; exit 1; }
+            validsig_fpr="$(echo "$status" | awk '/^\[GNUPG:\] VALIDSIG/ {print $3; exit}')"
+            if [[ "$validsig_fpr" != "$expected_fpr" ]]; then
+              echo "VALIDSIG fingerprint ($validsig_fpr) for $f does not match expected ($expected_fpr)" >&2
+              exit 1
+            fi
+            echo "==> $f: GOODSIG, VALIDSIG fingerprint confirmed ($validsig_fpr)"
+          done
+
+          rm -rf "$verify_home"
+
+          echo "TEST_SIGNING_IDENTITY_ONLY=NO"
+          echo "PRODUCTION_SIGNATURE_VERIFIED=YES"
+          echo "LINUX_PRODUCTION_FINGERPRINT=$expected_fpr"
+
+      - name: Upload non-secret evidence (signatures, checksums, verification log -- never key material)
+        uses: actions/upload-artifact@v4
+        with:
+          name: t05-04-linux-production-signing-evidence
+          path: |
+            dist/*.sha256
+            dist/*.sha256.asc
+            dist/*.tar.gz.asc
+            desktop/src-tauri/target/release/bundle/deb/*.asc
+            pre-sign.sha256
+            post-sign.sha256
+          if-no-files-found: error
