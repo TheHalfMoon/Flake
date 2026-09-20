@@ -34,8 +34,8 @@ const DESKTOP_DIR = path.join(REPO, "desktop");
 
 function platformBinaryPath() {
   const base = path.join(DESKTOP_DIR, "src-tauri", "target", "debug");
-  if (process.platform === "win32") return path.join(base, "flake-desktop.exe");
-  return path.join(base, "flake-desktop");
+  if (process.platform === "win32") return path.join(base, "pluma-desktop.exe");
+  return path.join(base, "pluma-desktop");
 }
 
 const OUT_DIR = path.join(__dirname, "..", "results");
