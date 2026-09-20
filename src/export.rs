@@ -235,9 +235,9 @@ pub(crate) fn compute_integrity_root(
 
 fn readme_text(kind: &str) -> String {
     format!(
-        "# Flake portable export ({kind})\n\n\
-This directory is a **portable export** of owned Flake state. It is plain \
-JSON and Markdown files; no Flake install, SQLite library, or any other \
+        "# Pluma portable export ({kind})\n\n\
+This directory is a **portable export** of owned Pluma state. It is plain \
+JSON and Markdown files; no Pluma install, SQLite library, or any other \
 tool-specific dependency is needed to read or verify it.\n\n\
 ## Layout\n\n\
 - `export-manifest.json` — this export's own manifest: every member's path, \
@@ -254,7 +254,7 @@ hash against `revisions[].payload_sha256`.\n\
 `Note` revisions: the note's plain-text Markdown body alone, for easy \
 reading. Never HTML; never executed by anything that reads it.\n\n\
 ## What this is not\n\n\
-This is **not** a live Flake vault — you cannot point `CanonicalStore::open` \
+This is **not** a live Pluma vault — you cannot point `CanonicalStore::open` \
 at this directory. It carries no writer lock, no live transaction log, and \
 publishing it does not grant any local filesystem or agent authority to \
 whoever receives it.\n"

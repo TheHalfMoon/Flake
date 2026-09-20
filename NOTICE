@@ -1,4 +1,4 @@
-Flake
+Pluma
 Copyright 2026 TheHalfMoon
 
 This product includes software developed by TheHalfMoon, licensed under the
@@ -19,7 +19,7 @@ itself -- is recorded in docs/legal/THIRD-PARTY-LICENSES.md. In particular:
   - The bundled SQLite C source (compiled via libsqlite3-sys/rusqlite's
     "bundled" feature) is dedicated to the public domain by its authors.
 
-None of the above requires Flake's own source to be relicensed or disclosed
+None of the above requires Pluma's own source to be relicensed or disclosed
 beyond what is already public.
 
 Source availability, licensing questions, and vulnerability/issue reporting:

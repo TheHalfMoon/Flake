@@ -90,7 +90,7 @@ if [[ "$TEST_MODE" == "1" ]]; then
   # Out-Null).
   THUMBPRINT="$(powershell.exe -NoProfile -NonInteractive -Command "
     \$pw = ConvertTo-SecureString -String 'test-only-disposable-password' -Force -AsPlainText
-    \$cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject 'CN=Flake TEST Signing Identity - NOT PRODUCTION - disposable' -KeyUsage DigitalSignature -FriendlyName 'flake-ci-disposable-test-cert' -CertStoreLocation Cert:\\CurrentUser\\My -NotAfter (Get-Date).AddDays(1)
+    \$cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject 'CN=Pluma TEST Signing Identity - NOT PRODUCTION - disposable' -KeyUsage DigitalSignature -FriendlyName 'pluma-ci-disposable-test-cert' -CertStoreLocation Cert:\\CurrentUser\\My -NotAfter (Get-Date).AddDays(1)
     Export-PfxCertificate -Cert \$cert -FilePath '$PFX_PATH' -Password \$pw | Out-Null
     Write-Output \$cert.Thumbprint
   " | tr -d '\r\n')"

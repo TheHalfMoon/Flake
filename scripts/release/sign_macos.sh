@@ -22,7 +22,7 @@
 # FOUNDER_ZERO_COST_MACOS_DIRECT_DISTRIBUTION_AMENDMENT_2026-09-20.md --
 # no paid Apple Developer Program membership, no Developer ID, no
 # notarization/stapling required or claimed). Ad-hoc-signs the ACTUAL
-# artifact Flake distributes from its own README/docs/Releases surface,
+# artifact Pluma distributes from its own README/docs/Releases surface,
 # not merely a disposable test build -- distinct from TEST_SIGNING_MODE
 # above, which exists only to prove pipeline mechanics and always deletes
 # its own output. Still never claims Apple platform trust, a Developer ID

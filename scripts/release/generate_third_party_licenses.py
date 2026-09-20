@@ -2,9 +2,9 @@
 """T05-04 (plan section 25/28: "add Apache-2.0 project license and exact
 component notices... Resolve Unicode/Zlib/platform runtime and any adapted
 code obligations"). Regenerates docs/legal/THIRD-PARTY-LICENSES.md from the
-exact locked dependency graph of every shipped Flake binary: the root crate
-(flake/fehrest/flake-migrate CLI) and desktop/src-tauri (flake-desktop),
-plus desktop's shipped (non-dev) npm dependencies.
+exact locked dependency graph of every shipped Pluma binary: the root crate
+(pluma/flake/fehrest/pluma-migrate/flake-migrate CLI) and desktop/src-tauri
+(pluma-desktop), plus desktop's shipped (non-dev) npm dependencies.
 
 Deliberately not a wrapper around cargo-about/cargo-license: this repository
 has hit real, severe local disk pressure installing heavier cargo tooling
@@ -317,12 +317,12 @@ def main() -> int:
     )
     total = len(combined)
     out.append(
-        f"**{total} shipped third-party components** across Flake's CLI "
-        "(`flake`/`fehrest`/`flake-migrate`) and desktop (`flake-desktop`, "
-        "Tauri) binaries. None require Flake's own source to be "
-        "relicensed, disclosed beyond what is already public, or "
-        "dual-licensed under anything other than Apache-2.0 (Flake's own "
-        "chosen license, `LICENSE`).\n"
+        f"**{total} shipped third-party components** across Pluma's CLI "
+        "(`pluma`/`flake`/`fehrest`/`pluma-migrate`/`flake-migrate`) and "
+        "desktop (`pluma-desktop`, Tauri) binaries. None require Pluma's "
+        "own source to be relicensed, disclosed beyond what is already "
+        "public, or dual-licensed under anything other than Apache-2.0 "
+        "(Pluma's own chosen license, `LICENSE`).\n"
     )
 
     out.append("## Special-attention obligations\n")

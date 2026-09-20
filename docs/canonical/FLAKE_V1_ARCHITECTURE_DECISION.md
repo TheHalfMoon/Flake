@@ -1,4 +1,4 @@
-# Flake v1 architecture decision — migration-derived index
+# Flake v1 architecture decision — migration-derived index (project renamed to Pluma, 2026-09-20)
 
 `MIGRATION_DERIVED=YES`
 `ORIGINAL_ASTRO_BYTES=NOT_RECOVERED`

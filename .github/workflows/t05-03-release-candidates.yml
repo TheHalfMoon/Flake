@@ -39,7 +39,7 @@ jobs:
           cargo install cargo-audit --locked
           cargo audit
 
-      - name: Build CLI release archive (flake/fehrest/flake-migrate + user guide)
+      - name: Build CLI release archive (pluma/flake/fehrest/pluma-migrate/flake-migrate + user guide)
         shell: bash
         run: scripts/release/package_cli_archive.sh
 
@@ -86,9 +86,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf build-essential xvfb
 
-      - name: Build flake CLI (needed by install_test.sh to seed/verify the retained vault)
+      - name: Build pluma CLI (needed by install_test.sh to seed/verify the retained vault)
         shell: bash
-        run: cargo build --release --locked --bin flake
+        run: cargo build --release --locked --bin pluma
 
       - name: Frontend build
         shell: bash

@@ -1,4 +1,4 @@
-# Flake canonical build plan
+# Flake canonical build plan (project renamed to Pluma, 2026-09-20)
 
 Date: 2026-09-13. Owner: Astro, final planning authority delegated by the founder. Audience: Muse, future implementation agent. Version: 1.0. This is a specification and execution contract; it is not evidence that the specified product exists.
 

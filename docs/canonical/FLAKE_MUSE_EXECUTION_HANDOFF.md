@@ -1,4 +1,4 @@
-# Flake Muse execution handoff
+# Flake Muse execution handoff (project renamed to Pluma, 2026-09-20)
 
 Status: `ASTRO_PLAN_COMPLETE=YES`; implementation is active. `specs/CURRENT.md` owns the live frontier.
 

@@ -1,4 +1,4 @@
-# CURRENT — Flake v1 Execution Frontier
+# CURRENT — Pluma v1 Execution Frontier
 
 **Purpose:** one authoritative pointer for what repository work may happen now.
 
@@ -7,7 +7,9 @@
 ## Current frontier
 
 ```text
-PRODUCT_IDENTITY=FLAKE
+PRODUCT_IDENTITY=PLUMA
+PRODUCT_IDENTITY_FORMER_NAME=FLAKE (renamed 2026-09-20; repository moved from TheHalfMoon/Flake to TheHalfMoon/Pluma; `flake`/`flake-migrate` retained as deprecated compatibility CLI aliases -- see `Cargo.toml`)
+REPOSITORY=https://github.com/TheHalfMoon/Pluma
 ASTRO_PLAN_COMPLETE=YES
 CANONICAL_BUILD_PLAN=docs/canonical/FLAKE_CANONICAL_BUILD_PLAN.md
 CANONICAL_BUILD_PLAN_SHA256=b555f83ff12882ae6f55f90bbeaa411de52b84661a7f3953350cbfc6bd789fb2
@@ -111,7 +113,7 @@ T05-04_MACOS_NOTARIZATION_REQUIRED=NO
 T05-04_MACOS_GATEKEEPER_TRUST=NOT_CLAIMED
 T05-04_SIGNPATH_ELIGIBILITY_PACKET=docs/release/SIGNPATH_ELIGIBILITY_PACKET.md (rechecked live against signpath.org/terms.html and docs.signpath.io 2026-09-20 -- no material change; complete copy-paste application packet added; "already released" criterion resolved 2026-09-20 by Founder-authorized UNSIGNED_DEVELOPER_RC prerelease, see T05-04_WINDOWS_PRERELEASE_* below)
 T05-04_WINDOWS_PRERELEASE_STATUS=PUBLISHED (Founder authorization scoped to exactly one prerelease, solely to satisfy SignPath's "already released" eligibility criterion -- not a final production release)
-T05-04_WINDOWS_PRERELEASE_URL=https://github.com/TheHalfMoon/Flake/releases/tag/v0.0.1-phase-t-rc.1
+T05-04_WINDOWS_PRERELEASE_URL=https://github.com/TheHalfMoon/Pluma/releases/tag/v0.0.1-phase-t-rc.1
 T05-04_WINDOWS_PRERELEASE_TAG=v0.0.1-phase-t-rc.1
 T05-04_WINDOWS_PRERELEASE_TARGET_COMMIT=27824604e09fc3ef9ba682f54e99139bdb9d8ab3
 T05-04_WINDOWS_PRERELEASE_SOURCE_CI_RUN=35518382422 (t05-03-release-candidates, tree-identical to target commit above)
@@ -234,7 +236,7 @@ The historical local-only planning SHAs `4246f6d...` and `852e44b...` are proven
 (the amendment and implementation, below), this session ran
 `.github/workflows/t05-04-macos-direct-distribution.yml` once directly on `main` at merge commit
 `a85f906fa579f611c4c05f6464f955805cd8fd32`: CI run
-[`35514419522`](https://github.com/TheHalfMoon/Flake/actions/runs/35514419522), conclusion
+[`35514419522`](https://github.com/TheHalfMoon/Pluma/actions/runs/35514419522), conclusion
 `success` in 5m32s. Independently confirmed from that run's own log (not merely the green
 checkmark): the sanity gate held (default/production signing mode still fails closed without
 Developer ID credentials); `codesign --verify` passed and `spctl --assess` correctly rejected the
@@ -256,7 +258,7 @@ own DAG is dependency-ready, so `T05-05` correctly stays not dependency-ready an
 
 **Founder governance amendment: zero-Apple-fee macOS direct distribution (2026-09-20).** The
 Founder ruled, in `docs/canonical/FOUNDER_ZERO_COST_MACOS_DIRECT_DISTRIBUTION_AMENDMENT_2026-09-20.md`,
-that Flake will not purchase Apple Developer Program membership and will not distribute
+that Pluma will not purchase Apple Developer Program membership and will not distribute
 through the Mac App Store; `T05-04`'s macOS signing/notarization/stapling acceptance clause is
 amended, prospectively and for macOS only, to a zero-cost technical qualification (ad-hoc
 codesign of the actual distributed artifact, SHA-256 checksum, the same project GPG
@@ -269,7 +271,7 @@ session implemented `scripts/release/sign_macos.sh`'s new `DIRECT_DISTRIBUTION_M
 (full design and the exact per-app Gatekeeper override instructions — never a system-wide
 Gatekeeper-disable recommendation), and updated `docs/release/CODE_SIGNING_POLICY.md`,
 `docs/release/RELEASE_VERIFICATION.md`, `docs/release/USER_GUIDE.md`, and `README.md`'s new
-"Download Flake" section accordingly. `T05-04_MACOS_SIGNING_STATUS=PENDING_ZERO_COST_QUALIFICATION_CI_RUN`
+"Download Pluma" section accordingly. `T05-04_MACOS_SIGNING_STATUS=PENDING_ZERO_COST_QUALIFICATION_CI_RUN`
 above reflects that this is implemented but not yet independently proven in CI with real
 evidence — per `AGENTS.md` §6 ("Never claim PASS ... without exact evidence"), this field will
 not read `PASS` until the workflow has actually run green and been independently checked, not

@@ -1,4 +1,4 @@
-//! `flake-fault-workload` — a small standalone binary used only by
+//! `pluma-fault-workload` — a small standalone binary used only by
 //! `T05-02`'s own D6 native-unclean-shutdown fault-injection harness
 //! (`.github/workflows/t05-02-durability-qualification.yml`'s
 //! `d6-vm-unclean-shutdown-linux` job and the equivalent local Hyper-V
@@ -37,10 +37,10 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 const USAGE: &str = "\
-flake-fault-workload — D6 native-unclean-shutdown fault-injection workload
+pluma-fault-workload — D6 native-unclean-shutdown fault-injection workload
 
 USAGE:
-  flake-fault-workload <vault-root> <target-head-seq>
+  pluma-fault-workload <vault-root> <target-head-seq>
 
 Opens (or, on first run, creates) a format-2 canonical store at
 <vault-root>, then commits small CreateObject records one at a time,

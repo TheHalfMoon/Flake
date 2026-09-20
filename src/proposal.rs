@@ -213,7 +213,7 @@ fn agent_actor(proposal: &AgentProposal) -> String {
 }
 
 /// Validate and admit one inbound proposal as `Pending`. `raw_bytes` is
-/// exactly what was received from outside Flake — UTF-8 JSON, bounded to
+/// exactly what was received from outside Pluma — UTF-8 JSON, bounded to
 /// [`MAX_PROPOSAL_BYTES`].
 pub fn admit_proposal(
     store: &mut CanonicalStore,

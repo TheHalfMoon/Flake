@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # T05-03 (plan section 25: "Release set: ... SHA-256 manifest, signatures,
 # SBOM and notices"). Generates a CycloneDX SBOM for the shipped release
-# binaries (flake/fehrest/flake-migrate) plus the desktop shell, then
+# binaries (pluma/flake/fehrest/pluma-migrate/flake-migrate) plus the
+# desktop shell, then
 # copies just the SBOMs for artifacts this release actually ships --
 # `cargo cyclonedx --describe binaries` emits one file per `[[bin]]`
 # target in the workspace (including internal-only benchmark/fault-test
@@ -39,18 +40,24 @@ collect_sbom() {
   )
 }
 
-echo "==> generating SBOM: flake (root workspace CLI)"
+echo "==> generating SBOM: pluma (root workspace CLI, canonical name)"
+collect_sbom "$REPO_ROOT" pluma pluma-cli-sbom.cdx.json
+
+echo "==> generating SBOM: flake (root workspace CLI, deprecated compatibility alias)"
 collect_sbom "$REPO_ROOT" flake flake-cli-sbom.cdx.json
 
-echo "==> generating SBOM: fehrest (root workspace CLI, compatibility alias)"
+echo "==> generating SBOM: fehrest (root workspace CLI, deprecated compatibility alias)"
 collect_sbom "$REPO_ROOT" fehrest fehrest-cli-sbom.cdx.json
 
-echo "==> generating SBOM: flake-migrate (standalone migration tool)"
+echo "==> generating SBOM: pluma-migrate (standalone migration tool, canonical name)"
+collect_sbom "$REPO_ROOT" pluma-migrate pluma-migrate-sbom.cdx.json
+
+echo "==> generating SBOM: flake-migrate (standalone migration tool, deprecated compatibility alias)"
 collect_sbom "$REPO_ROOT" flake-migrate flake-migrate-sbom.cdx.json
 
 if [[ -d desktop/src-tauri ]]; then
-  echo "==> generating SBOM: flake-desktop (desktop shell)"
-  collect_sbom "$REPO_ROOT/desktop/src-tauri" flake-desktop flake-desktop-sbom.cdx.json
+  echo "==> generating SBOM: pluma-desktop (desktop shell)"
+  collect_sbom "$REPO_ROOT/desktop/src-tauri" pluma-desktop pluma-desktop-sbom.cdx.json
 fi
 
 echo "==> SBOM(s) written to $DIST_DIR/sbom/"

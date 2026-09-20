@@ -1,4 +1,4 @@
-//! `flake-migrate` — versioned standalone offline format-1-to-format-2
+//! `pluma-migrate` — versioned standalone offline format-1-to-format-2
 //! migration tool (`T05-01`).
 //!
 //! **Why a separate binary, not a `fehrest` subcommand.** Plan §21's
@@ -27,6 +27,12 @@
 //!
 //! No network code path exists anywhere in this binary or the library it
 //! links (workspace-wide invariant, unchanged).
+//!
+//! **Two shipped names, one binary.** `pluma-migrate` is the canonical name
+//! after the 2026-09-20 Flake→Pluma product rename; `flake-migrate` is kept
+//! as a deprecated compatibility alias (`Cargo.toml`'s two `[[bin]]`
+//! entries both point at this exact file) and will not be removed without
+//! a separate, explicitly governed breaking release.
 
 use fehrest::migration::{self, ImportSelection};
 use std::collections::BTreeSet;
@@ -34,13 +40,13 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 const USAGE: &str = "\
-flake-migrate — standalone offline format-1 -> format-2 migration tool
+pluma-migrate — standalone offline format-1 -> format-2 migration tool
 
 USAGE:
-  flake-migrate preview <source-root>
-  flake-migrate import  <source-root> <new-root> [--select id1,id2,...]
-  flake-migrate --version
-  flake-migrate --help
+  pluma-migrate preview <source-root>
+  pluma-migrate import  <source-root> <new-root> [--select id1,id2,...]
+  pluma-migrate --version
+  pluma-migrate --help
 
 Every command is fully offline and touches only the two paths named on
 its own command line. `preview` never writes anything. `import` creates
@@ -81,7 +87,7 @@ fn main() -> ExitCode {
 fn run(argv: &[String]) -> fehrest::Result<ExitCode> {
     match argv.first().map(String::as_str) {
         Some("--version") => {
-            println!("flake-migrate {}", env!("CARGO_PKG_VERSION"));
+            println!("pluma-migrate {}", env!("CARGO_PKG_VERSION"));
             Ok(ExitCode::from(0))
         }
         Some("--help") | Some("-h") | None => {

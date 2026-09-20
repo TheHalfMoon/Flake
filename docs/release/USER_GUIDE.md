@@ -1,10 +1,10 @@
-# Flake — quickstart and recovery guide
+# Pluma — quickstart and recovery guide
 
 This guide ships inside every release archive. It covers the CLI only; the
 desktop app has its own in-window guidance (folder-picker labels, notices)
 and does not require reading this file first.
 
-Flake is local-first and offline: it never connects to a network, never
+Pluma is local-first and offline: it never connects to a network, never
 requires a sign-in, and never uploads a vault anywhere on its own. Every
 command below works with no internet connection.
 
@@ -15,15 +15,21 @@ does not mean.
 
 ## 1. What's in this archive
 
-- `flake` (`flake.exe` on Windows) — the CLI, and the name to use going
+- `pluma` (`pluma.exe` on Windows) — the CLI, and the name to use going
   forward.
+- `flake` (`flake.exe` on Windows) — the exact same program under this
+  product's name before its 2026-09-20 rename to Pluma. Kept as a
+  deprecated compatibility alias for anyone with existing scripts or muscle
+  memory; it will not be removed without a separate, explicitly governed
+  breaking release.
 - `fehrest` (`fehrest.exe` on Windows) — the exact same program under its
-  historical name, kept for anyone with existing scripts or muscle memory.
-  The two are built from identical source; neither has behavior the other
-  lacks.
-- `flake-migrate` (`flake-migrate.exe` on Windows) — a standalone tool for
+  original historical name, kept for anyone with existing scripts or muscle
+  memory. All three (`pluma`/`flake`/`fehrest`) are built from identical
+  source; none has behavior the others lack.
+- `pluma-migrate` (`pluma-migrate.exe` on Windows) — a standalone tool for
   moving an older-format vault onto the current format. Only needed if you
-  have a vault created by a pre-1.0 build.
+  have a vault created by a pre-1.0 build. `flake-migrate` ships alongside
+  it as the same deprecated-alias compatibility name.
 - This guide.
 - `LICENSE`, `NOTICE`, `docs/legal/THIRD-PARTY-LICENSES.md` — this
   product's own license and every third-party component's license (see
@@ -34,29 +40,29 @@ does not mean.
 Create a vault:
 
 ```
-flake canonical-init --vault /path/to/my-vault
+pluma canonical-init --vault /path/to/my-vault
 ```
 
 Create a project and capture a note:
 
 ```
-flake project-create --vault /path/to/my-vault --name "My first project"
-flake capture --vault /path/to/my-vault --project <project-id> --body "Hello, Flake."
+pluma project-create --vault /path/to/my-vault --name "My first project"
+pluma capture --vault /path/to/my-vault --project <project-id> --body "Hello, Pluma."
 ```
 
 List commands and their exact flags at any time:
 
 ```
-flake --help
+pluma --help
 ```
 
 Nothing above touches any location outside the `--vault` path you gave it.
-Flake does not scan your home directory, does not read other applications'
+Pluma does not scan your home directory, does not read other applications'
 data, and does not write anything until you tell it to.
 
 ## 3. Where your data lives
 
-Flake never chooses a data location for you implicitly from a command —
+Pluma never chooses a data location for you implicitly from a command —
 every command that touches a vault takes an explicit `--vault <path>`. The
 desktop app suggests (but does not require) a per-user application-data
 folder the first time you create a vault; you can always pick any other
@@ -72,7 +78,7 @@ or a running service.
 Create a verified backup:
 
 ```
-flake backup-run --vault /path/to/my-vault --out /path/to/backup-dest
+pluma backup-run --vault /path/to/my-vault --out /path/to/backup-dest
 ```
 
 This copies the vault to a fresh location and independently re-verifies the
@@ -82,7 +88,7 @@ reported as a failure, not silently accepted.
 Restore a backup to a new location:
 
 ```
-flake backup-restore --backup /path/to/backup-dest --out /path/to/restored-vault
+pluma backup-restore --backup /path/to/backup-dest --out /path/to/restored-vault
 ```
 
 `--out` must not already exist; `backup-restore` refuses to overwrite an
@@ -98,7 +104,7 @@ termination, a crashed process) and you are unsure of its state, do not
 delete or edit it by hand. Instead, recover it to a fresh location:
 
 ```
-flake vault-recover --vault /path/to/my-vault --out /path/to/recovered-vault
+pluma vault-recover --vault /path/to/my-vault --out /path/to/recovered-vault
 ```
 
 `vault-recover` never modifies the original vault — it reads it, repairs
@@ -113,11 +119,11 @@ further inspection.
 
 If you have a vault from a build that predates the current on-disk format,
 use the standalone migration tool rather than opening it directly with
-`flake`:
+`pluma`:
 
 ```
-flake-migrate preview /path/to/old-vault
-flake-migrate import /path/to/old-vault /path/to/new-vault
+pluma-migrate preview /path/to/old-vault
+pluma-migrate import /path/to/old-vault /path/to/new-vault
 ```
 
 `preview` reports what would be imported without writing anything.
@@ -126,7 +132,7 @@ vault is never modified or deleted by migration.
 
 ## 7. Updating
 
-Flake has no auto-updater and makes no network requests to check for
+Pluma has no auto-updater and makes no network requests to check for
 updates. To update, download a newer release archive, verify it (see
 below), and replace the old binaries with the new ones. Your vaults are
 plain folders outside the installation/archive location, so replacing the
@@ -135,7 +141,7 @@ format, it will require an explicit migration step (like section 6 above)
 rather than upgrading a vault's format silently in place.
 
 To go back to an older version, keep the old archive's binaries around and
-use them instead — an older `flake` build refuses to open a vault written
+use them instead — an older `pluma` build refuses to open a vault written
 in a newer format it doesn't understand, rather than silently
 misinterpreting it.
 
@@ -163,19 +169,19 @@ and, on Windows once active, Authenticode).
 
 ### macOS: opening an unnotarized build (Gatekeeper)
 
-Flake's macOS release is distributed directly from Flake's own README/docs and GitHub
+Pluma's macOS release is distributed directly from Pluma's own README/docs and GitHub
 Releases page, not through the Mac App Store, and is not Apple-notarized — see
 `docs/canonical/FOUNDER_ZERO_COST_MACOS_DIRECT_DISTRIBUTION_AMENDMENT_2026-09-20.md` for why.
-The first time you try to open it, macOS Gatekeeper will refuse with a message like *"Flake"
+The first time you try to open it, macOS Gatekeeper will refuse with a message like *"Pluma"
 cannot be opened because it is from an unidentified developer* — this is Gatekeeper correctly
 doing its job against an unnotarized build, not a bug.
 
 To open it anyway (Apple's own supported per-app override — this does not disable Gatekeeper
 or any other macOS security feature):
 
-1. Try to open Flake normally; macOS will refuse and show the warning above.
+1. Try to open Pluma normally; macOS will refuse and show the warning above.
 2. Open **System Settings → Privacy & Security**, scroll to **Security**, and click
-   **Open Anyway** next to the message naming Flake. (Older macOS: right-click — or
+   **Open Anyway** next to the message naming Pluma. (Older macOS: right-click — or
    Control-click — the app and choose **Open**, then confirm in the dialog that appears.)
 3. macOS remembers this choice for this app going forward.
 
@@ -184,14 +190,14 @@ Full design and verification details: `docs/release/MACOS_DIRECT_DISTRIBUTION.md
 ## 10. Getting help
 
 This is a developer release candidate, not a supported product release.
-Run `flake` with no arguments (or `flake --help`) for the full command
+Run `pluma` with no arguments (or `pluma --help`) for the full command
 list; each command's own error message names its exact required flags if
 you omit one. That usage text is the authoritative reference, not this
 guide.
 
 ## 11. License, source, privacy and reporting a problem
 
-Run `flake license` for these same facts on the command line at any time
+Run `pluma license` for these same facts on the command line at any time
 (no `--vault` needed); the desktop app has an equivalent "About" screen
 reachable from every top-level view.
 
@@ -199,9 +205,9 @@ reachable from every top-level view.
   `LICENSE` in this archive; `NOTICE` and `docs/legal/THIRD-PARTY-LICENSES.md`
   (also included) record every third-party component this build ships and
   its exact license.
-- **Source:** <https://github.com/TheHalfMoon/Flake>
-- **Privacy:** Flake is local-first, offline and account-free. It does not
+- **Source:** <https://github.com/TheHalfMoon/Pluma>
+- **Privacy:** Pluma is local-first, offline and account-free. It does not
   sign in, sync to a cloud service, or send telemetry. No data leaves this
   device unless you explicitly export or disclose it (`export-run`,
   `package-export`).
-- **Report a problem / get support:** <https://github.com/TheHalfMoon/Flake/issues>
+- **Report a problem / get support:** <https://github.com/TheHalfMoon/Pluma/issues>

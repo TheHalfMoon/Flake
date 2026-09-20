@@ -1,9 +1,9 @@
 [package]
-name = "flake-desktop"
+name = "pluma-desktop"
 version = "0.0.1-phase-t"
 edition = "2021"
 rust-version = "1.97"
-description = "Flake T04-01 thin desktop shell -- presentation only, reuses Core, no new authority model."
+description = "Pluma T04-01 thin desktop shell -- presentation only, reuses Core, no new authority model."
 license = "Apache-2.0"
 publish = false
 
@@ -44,5 +44,5 @@ serde_json = { version = "1", default-features = false, features = ["std"] }
 fehrest = { path = "../.." }
 
 [[bin]]
-name = "flake-desktop"
+name = "pluma-desktop"
 path = "src/main.rs"

@@ -1,9 +1,13 @@
 # Release verification
 
-How to independently verify a Flake release artifact. This page collects verification commands
-for every mechanism Flake uses or intends to use; it does not restate their design (see
+How to independently verify a Pluma release artifact. This page collects verification commands
+for every mechanism Pluma uses or intends to use; it does not restate their design (see
 `docs/release/CODE_SIGNING_POLICY.md` for the policy overview and links to each mechanism's own
 document).
+
+Filenames below use the `pluma-`/`Pluma`-prefixed naming used from the 2026-09-20 Flake→Pluma
+rename onward; a release published before that date carries the equivalent `flake-`/`Flake`
+prefix instead — substitute accordingly.
 
 A verification failure on any of the checks below means the artifact must not be trusted or
 installed. Fail closed — do not proceed past a failed check.
@@ -14,7 +18,7 @@ Every release-candidate CLI archive and desktop bundle ships alongside a `.sha25
 (`scripts/release/package_cli_archive.sh`). Verify with:
 
 ```bash
-sha256sum -c flake-<version>-<platform>.sha256
+sha256sum -c pluma-<version>-<platform>.sha256
 ```
 
 ## GitHub artifact attestations (build provenance)
@@ -24,7 +28,7 @@ commit, rather than substituted or tampered with after the fact. Requires the
 [GitHub CLI](https://cli.github.com/) (`gh`, version with `attestation` support):
 
 ```bash
-gh attestation verify flake-<version>-<platform>.zip -R TheHalfMoon/Flake
+gh attestation verify pluma-<version>-<platform>.zip -R TheHalfMoon/Pluma
 ```
 
 A successful verification prints the exact source repository, workflow, and commit SHA the
@@ -37,11 +41,11 @@ manager trust the artifact; those still require the mechanisms below where appli
 Not yet active — see `docs/release/SIGNPATH_ELIGIBILITY_PACKET.md`. Once active, verify with:
 
 ```powershell
-signtool verify /pa /v flake-<version>-windows-installer.exe
+signtool verify /pa /v pluma-<version>-windows-installer.exe
 ```
 
 A trusted result names SignPath Foundation as the certificate issuer (per SignPath's own model:
-they vouch that the binary was built from Flake's own open-source repository, rather than
+they vouch that the binary was built from Pluma's own open-source repository, rather than
 verifying a personally-identified certificate holder).
 
 ## Linux — GPG detached signature
@@ -55,8 +59,8 @@ gpg --list-keys --with-colons "285091250+TheHalfMoon@users.noreply.github.com" \
 # Compare the printed fingerprint against the one published in
 # docs/release/LINUX_RELEASE_SIGNING.md before trusting anything signed with it.
 
-gpg --verify flake-<version>-linux-x86_64.tar.gz.asc flake-<version>-linux-x86_64.tar.gz
-gpg --verify flake_<version>_amd64.deb.asc flake_<version>_amd64.deb
+gpg --verify pluma-<version>-linux-x86_64.tar.gz.asc pluma-<version>-linux-x86_64.tar.gz
+gpg --verify pluma_<version>_amd64.deb.asc pluma_<version>_amd64.deb
 ```
 
 **Production fingerprint:** `F779807C73F29F4DB1E7DC9F78F7D4B92287FE22`
@@ -64,36 +68,36 @@ gpg --verify flake_<version>_amd64.deb.asc flake_<version>_amd64.deb
 ## macOS — zero-cost direct distribution (no Apple Developer ID, no notarization)
 
 Per `docs/canonical/FOUNDER_ZERO_COST_MACOS_DIRECT_DISTRIBUTION_AMENDMENT_2026-09-20.md`,
-Flake's macOS artifact is ad-hoc-signed, checksummed, and GPG-signed with Flake's own project
+Pluma's macOS artifact is ad-hoc-signed, checksummed, and GPG-signed with Pluma's own project
 release-signing key — never an Apple Developer ID signature, never notarized. Full design:
 `docs/release/MACOS_DIRECT_DISTRIBUTION.md`.
 
 ```bash
 # 1. Checksum
-shasum -a 256 -c Flake-<version>.dmg.sha256
+shasum -a 256 -c Pluma-<version>.dmg.sha256
 
 # 2. Project GPG signature (same identity and fingerprint as the Linux release-signing key)
 gpg --import docs/release/flake-release-signing-public.asc
-gpg --verify Flake-<version>.dmg.asc Flake-<version>.dmg
-gpg --verify Flake-<version>.dmg.sha256.asc Flake-<version>.dmg.sha256
+gpg --verify Pluma-<version>.dmg.asc Pluma-<version>.dmg
+gpg --verify Pluma-<version>.dmg.sha256.asc Pluma-<version>.dmg.sha256
 # Compare the signing key's fingerprint against the one published in
 # docs/release/LINUX_RELEASE_SIGNING.md before trusting anything signed with it.
 
 # 3. Local codesign self-integrity check (NOT a trust-chain or notarization claim)
-codesign --verify --deep --strict --verbose=2 Flake.app
+codesign --verify --deep --strict --verbose=2 Pluma.app
 
 # 4. Gatekeeper's own assessment -- EXPECTED TO REJECT this artifact; that is correct,
 #    not a bug. See docs/release/USER_GUIDE.md for how to open it anyway.
-spctl --assess --type execute --verbose=4 Flake.app
+spctl --assess --type execute --verbose=4 Pluma.app
 ```
 
 **Production fingerprint (same identity used for Linux):**
 `F779807C73F29F4DB1E7DC9F78F7D4B92287FE22`
 
 **What this does and does not prove:** the checksum confirms the file was not corrupted or
-altered in transit. The GPG signature confirms it was produced by Flake's own project release
+altered in transit. The GPG signature confirms it was produced by Pluma's own project release
 process. The GitHub attestation (below) confirms it was built by this repository's own CI at
-an exact commit. None of these, individually or together, are Apple's platform trust — Flake
+an exact commit. None of these, individually or together, are Apple's platform trust — Pluma
 does not have an Apple Developer ID and does not claim one.
 
 ## SBOM
@@ -108,5 +112,5 @@ license, cross-referenced against `docs/legal/THIRD-PARTY-LICENSES.md`.
 `docs/legal/THIRD-PARTY-LICENSES.md` (every shipped third-party component) are bundled inside
 every distributed CLI archive and desktop installer (`T05-04`, verified against the actual
 installed bundle by `scripts/release/install_test.sh`, not merely trusted from bundler config).
-Also reachable at runtime via the `flake license` CLI command and the desktop About screen
+Also reachable at runtime via the `pluma license` CLI command and the desktop About screen
 (`src/about.rs`).

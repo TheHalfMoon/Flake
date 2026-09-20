@@ -2,12 +2,12 @@
 
 **Status:** `T02-05`. Produced by `crate::export::export_to_new_root`, published
 at `<dest_root>/.fehrest-export/`. A **generic JSON/byte reader can validate
-and read this format with no Flake dependency at all** — this document is
+and read this format with no Pluma dependency at all** — this document is
 that generic reader's specification.
 
 ## What this is not
 
-This is **not** a live Flake vault. You cannot point
+This is **not** a live Pluma vault. You cannot point
 `crate::canonical::CanonicalStore::open` at an export directory — it carries
 no writer lock, no live transaction log, and no `canonical.sqlite`. It is a
 read-only, independently verifiable snapshot. See `docs/formats/format-2-canonical-sqlite.md`

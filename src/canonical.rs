@@ -51,7 +51,7 @@
 //! format-2 store rather than only the pre-existing synthetic fixture.
 //!
 //! Full published format documentation, exact table DDL and a generic
-//! (non-Flake) reader example live in `docs/formats/format-2-canonical-sqlite.md`.
+//! (non-Pluma) reader example live in `docs/formats/format-2-canonical-sqlite.md`.
 //!
 //! ## Creation protocol (§16)
 //!
