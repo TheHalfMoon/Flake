@@ -37,13 +37,21 @@ and SignPath's GitHub Actions integration documentation
 
 ```text
 SIGNPATH_PROJECT_ELIGIBILITY=PENDING_EXTERNAL_APPROVAL
-SIGNPATH_REQUIRED_ACTION=Founder submits the real application at
-  https://signpath.org/apply using a real personal/GitHub identity and
-  completes any follow-up review correspondence SignPath sends; this
-  cannot be completed by repository automation because it requires a
-  real human applicant identity and account creation with SignPath, and
-  SignPath's own "already released" criterion is confirmed only through
-  their actual review, not by self-certification against published text
+SIGNPATH_APPLICATION_STATUS=SUBMITTED_FOUNDER_CONFIRMED (Founder reported
+  the real application submitted at https://signpath.org/apply; recorded
+  in this repository 2026-09-21. No submission ID, organization ID,
+  project slug, signing-policy slug, or timestamp is claimed here beyond
+  the Founder's confirmation itself -- SignPath does not expose those
+  until after approval, and none is fabricated in their place)
+SIGNPATH_APPROVAL_STATUS=PENDING_EXTERNAL_REVIEW (no approval, rejection,
+  or information request has been received yet; this field changes only
+  on an actual SignPath response, reverified before being recorded)
+SIGNPATH_REQUIRED_ACTION=Await SignPath Foundation's review of the
+  submitted application and respond to any follow-up correspondence
+  SignPath sends; this cannot be advanced by repository automation --
+  SignPath's own "already released" criterion and every other review
+  judgment is confirmed only through their actual review, not by
+  self-certification against published text
 SIGNPATH_APPLICATION_URL=https://signpath.org/apply
 SIGNPATH_REQUIRED_PROJECT_DATA=project name (Pluma); repository URL
   (https://github.com/TheHalfMoon/Pluma); license (Apache-2.0); code
@@ -59,10 +67,10 @@ SIGNPATH_REQUIRED_PROJECT_DATA=project name (Pluma); repository URL
   and the Tauri Windows bundle); build system (GitHub Actions, public
   repository, windows-latest runner)
 SIGNPATH_REPOSITORY_WORK_COMPLETE=YES
-WINDOWS_REMAINING_EXTERNAL_ACTION=Founder submits the SignPath Foundation
-  application at https://signpath.org/apply and completes SignPath's own
-  review/onboarding (organization id, project slug, signing policy slug,
-  API token are issued only after approval and cannot be fabricated here)
+WINDOWS_REMAINING_EXTERNAL_ACTION=Await SignPath Foundation's review and
+  approval of the already-submitted application (organization id,
+  project slug, signing policy slug, API token are issued only after
+  approval and cannot be fabricated here)
 ```
 
 ## What "repository work complete" means concretely

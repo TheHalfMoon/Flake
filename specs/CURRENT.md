@@ -96,6 +96,8 @@ T05-04_SIGNING_MECHANICS_TEST=COMPLETE (TEST_SIGNING_IDENTITY_ONLY=YES, disposab
 T05-04_SIGNING_MECHANICS_CI_RUN=35294005232
 T05-04_SIGNING_MECHANICS_MERGE_COMMIT=c21db04823e3b67764f806f61b21ae95826a711b
 T05-04_WINDOWS_SIGNING_STATUS=PENDING_SIGNPATH_EXTERNAL_APPROVAL
+T05-04_SIGNPATH_APPLICATION_STATUS=SUBMITTED_FOUNDER_CONFIRMED (Founder reported the real SignPath Foundation application submitted at signpath.org/apply; recorded 2026-09-21; no submission ID/org ID/project slug/signing-policy slug/API token/approval timestamp claimed or invented)
+T05-04_SIGNPATH_APPROVAL_STATUS=PENDING_EXTERNAL_REVIEW
 T05-04_LINUX_SIGNING_STATUS=PASS
 T05-04_LINUX_PRODUCTION_SIGNING_WORKFLOW=.github/workflows/t05-04-linux-production-signing.yml
 T05-04_LINUX_PRODUCTION_SIGNING_WORKFLOW_MERGE_COMMIT=bcea246f7cc84ca19477800622da46a71a92ff9e
@@ -231,6 +233,8 @@ Historical Fehrest, Phase T, R1, and Spec 002 artifacts remain immutable evidenc
 The historical local-only planning SHAs `4246f6d...` and `852e44b...` are provenance references only. Execution does not require those Git objects or any OneDrive/local path; `docs/evidence/flake-v1/T00-01/REPORT.md` records exactly how a pre-existing local branch carrying those identifiers was reconciled (not adopted as-is) against live GitHub truth.
 
 ## Next action
+
+**SignPath Foundation application submitted (Founder-confirmed), reverified live GitHub truth unchanged (2026-09-21).** The Founder reported having submitted the real SignPath Foundation application at `signpath.org/apply`. This is recorded as `T05-04_SIGNPATH_APPLICATION_STATUS=SUBMITTED_FOUNDER_CONFIRMED` above -- a Founder report, not an independently repository-verifiable fact, since SignPath's application state is not exposed to repository automation. It is explicitly **not** treated as approval: `T05-04_SIGNPATH_APPROVAL_STATUS=PENDING_EXTERNAL_REVIEW` and `T05-04_WINDOWS_SIGNING_STATUS` stays `PENDING_SIGNPATH_EXTERNAL_APPROVAL`, unchanged. No submission ID, organization ID, project slug, signing-policy slug, API token, certificate detail, or approval timestamp is claimed anywhere in this repository -- SignPath issues those only after approval, and none is fabricated in their place. `docs/release/CODE_SIGNING_POLICY.md` and `docs/release/SIGNPATH_ELIGIBILITY_PACKET.md` were updated to say the application has been submitted and is pending SignPath's own review, replacing the prior "not yet submitted" wording, which live GitHub truth (the repository's own state before this update) no longer reflected. Before this edit, this session reverified: live `main` at `d9fed64c02ef8a9eee34ac81bcd604f0024c9835` (matching the expected SHA given), `PRODUCT_IDENTITY=PLUMA`, repository `https://github.com/TheHalfMoon/Pluma`, and `T05-04_WINDOWS_SIGNING_STATUS=PENDING_SIGNPATH_EXTERNAL_APPROVAL` -- all already true and unchanged by this submission report. Re-reading the canonical DAG (plan section 31, `AGENTS.md` §2/§9): with Windows's SignPath approval still the sole open `T05-04` acceptance clause and now genuinely external-only (awaiting SignPath's own response, not a repository-side task), no further repository-owned work is dependency-ready. `T05-05` remains correctly not dependency-ready, `EXECUTABLE_REPOSITORY_WORK=ZERO` stands, and `PROJECT_COMPLETE=NO`. The genuine stop condition is `WINDOWS_SIGNPATH_EXTERNAL_REVIEW`; no work was fabricated to appear busy while waiting.
 
 **macOS zero-cost direct distribution qualification: real CI run, PASS.** After merging PR #114
 (the amendment and implementation, below), this session ran
