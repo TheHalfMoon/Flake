@@ -36,17 +36,65 @@ artifact was built from. This is additional supply-chain evidence — it confirm
 platform trust (it does not make Windows SmartScreen, macOS Gatekeeper, or a Linux package
 manager trust the artifact; those still require the mechanisms below where applicable).
 
-## Windows — Authenticode (pending SignPath Foundation approval)
+## Windows — website-first direct distribution (unsigned, disclosed)
 
-Not yet active — see `docs/release/SIGNPATH_ELIGIBILITY_PACKET.md`. Once active, verify with:
+Per `docs/canonical/FOUNDER_WEBSITE_FIRST_DIRECT_DISTRIBUTION_AMENDMENT_2026-09-26.md`,
+Pluma's Windows installer and CLI archive are distributed unsigned from the web — never the
+Microsoft Store, never a paid certificate. Full design:
+`docs/release/WINDOWS_DIRECT_DISTRIBUTION.md`.
 
 ```powershell
-signtool verify /pa /v pluma-<version>-windows-installer.exe
+# 1. Checksum (PowerShell)
+Get-FileHash pluma-<version>-windows-x86_64.zip -Algorithm SHA256
+# Compare against the published .sha256 manifest byte-for-byte.
+# (Or: certutil -hashfile pluma-<version>-windows-x86_64.zip SHA256)
 ```
 
-A trusted result names SignPath Foundation as the certificate issuer (per SignPath's own model:
-they vouch that the binary was built from Pluma's own open-source repository, rather than
-verifying a personally-identified certificate holder).
+```bash
+# 2. Project GPG signature (same identity and fingerprint as the Linux/macOS release-signing key)
+gpg --import docs/release/flake-release-signing-public.asc
+gpg --verify pluma-<version>-windows-x86_64.zip.asc pluma-<version>-windows-x86_64.zip
+gpg --verify Pluma_<version>_x64-setup.exe.asc Pluma_<version>_x64-setup.exe
+# Compare the signing key's fingerprint against the one published in
+# docs/release/LINUX_RELEASE_SIGNING.md before trusting anything signed with it.
+```
+
+```bash
+# 3. GitHub artifact attestation (build provenance, not platform trust)
+gh attestation verify Pluma_<version>_x64-setup.exe -R TheHalfMoon/Pluma
+```
+
+```powershell
+# 4. Authenticode truth inspection (expected: NOT SIGNED -- this is disclosed, not hidden)
+signtool verify /pa /v Pluma_<version>_x64-setup.exe
+Get-AuthenticodeSignature -FilePath Pluma_<version>_x64-setup.exe | Format-List Status,StatusMessage
+```
+
+**Production state:**
+
+```text
+WINDOWS_DISTRIBUTION_MODE=DIRECT_WEB
+WINDOWS_AUTHENTICODE_TRUST=NOT_AVAILABLE
+WINDOWS_AUTHENTICODE_TRUST_CLAIMED=NO
+WINDOWS_SMARTSCREEN_WARNING=EXPECTED_AND_DISCLOSED
+```
+
+**What this does and does not prove:** the checksum confirms the file was not corrupted or
+altered in transit. The GPG signature confirms it was produced by Pluma's own project release
+process. The GitHub attestation confirms it was built by this repository's own CI at an exact
+commit. None of these, individually or together, are Windows platform trust — Pluma does not
+have a trusted Authenticode certificate and does not claim one. Windows SmartScreen may warn;
+see `docs/release/WINDOWS_DIRECT_DISTRIBUTION.md` for the safe per-file override path. Never
+disable Defender/SmartScreen globally, weaken system policy, bypass enterprise controls, or
+disable security services.
+
+### Prior SignPath Foundation history (preserved)
+
+Windows Authenticode via SignPath Foundation was previously the intended v1 path
+(`docs/release/SIGNPATH_ELIGIBILITY_PACKET.md`). SignPath declined the application on
+2026-09-25 for insufficient public visibility; the Founder superseded that path with direct
+web distribution and declined the paid route. No SignPath approval or credential was ever
+received or claimed.
 
 ## Linux — GPG detached signature
 

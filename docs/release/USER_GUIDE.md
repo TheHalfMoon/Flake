@@ -145,6 +145,11 @@ use them instead — an older `pluma` build refuses to open a vault written
 in a newer format it doesn't understand, rather than silently
 misinterpreting it.
 
+For the desktop app, run the newer installer over the existing install
+(current-user install); the installer preserves your vaults and reports
+that retention. This manual-download model is the actual update model —
+Pluma invents no updater.
+
 ## 8. Uninstalling (desktop app)
 
 Uninstalling the desktop app removes the installed application files only.
@@ -153,10 +158,13 @@ with `backup-run`. The uninstaller reports this retention explicitly.
 
 ## 9. Verifying what you downloaded
 
-This release candidate is unsigned (`UNSIGNED_DEVELOPER_RC`): the binaries
-and installers are not code-signed. Your OS will likely warn you about
-running or installing an unrecognized/unsigned program — that warning is
-accurate for this build.
+Pluma is distributed directly from the web (see `docs/release/DOWNLOAD.md`
+and
+`docs/canonical/FOUNDER_WEBSITE_FIRST_DIRECT_DISTRIBUTION_AMENDMENT_2026-09-26.md`).
+Windows builds are unsigned direct-web distribution (`WINDOWS_AUTHENTICODE_TRUST=NOT_AVAILABLE`,
+never claimed as signed); macOS builds are unnotarized direct distribution. Your OS will
+likely warn you about running or installing an unrecognized/unsigned program — those warnings
+are accurate for these builds.
 
 Every archive published alongside this guide ships with a SHA-256 checksum
 manifest. Confirm the archive you downloaded matches the published checksum
@@ -165,7 +173,27 @@ not corrupted or altered in transit; it does not by itself prove who built
 it — that assurance comes from a signature. See
 `docs/release/RELEASE_VERIFICATION.md` for the exact verification commands
 per platform (checksum, project GPG signature, GitHub build attestation,
-and, on Windows once active, Authenticode).
+and Authenticode truth inspection on Windows).
+
+### Windows: SmartScreen and reputation warnings (expected and disclosed)
+
+Pluma's Windows installer and binaries are not Authenticode-signed with a publicly trusted
+certificate, and Pluma is not distributed through the Microsoft Store — see
+`docs/release/WINDOWS_DIRECT_DISTRIBUTION.md` for why. Windows SmartScreen and/or Defender
+reputation checks may warn that the app is from an unknown publisher or might be unsafe.
+This is Windows correctly doing its job against an unsigned build, not a bug.
+
+Safe path only:
+
+1. Confirm the download came from the official Pluma distribution surface
+   (`docs/release/DOWNLOAD.md` and the linked GitHub Release).
+2. Verify the SHA-256 checksum byte-for-byte.
+3. Verify the project GPG signature (and optionally the GitHub attestation).
+4. Only then, if you personally choose to trust the verified artifact, click **More info**
+   then **Run anyway** on the SmartScreen dialog.
+
+Never disable Microsoft Defender globally, disable SmartScreen globally, weaken system
+policy, bypass enterprise controls, or disable security services to install Pluma.
 
 ### macOS: opening an unnotarized build (Gatekeeper)
 

@@ -9,7 +9,7 @@ signing policy (SignPath Foundation's terms do, see below).
 
 | Platform | Mechanism | Status |
 |---|---|---|
-| Windows | SignPath Foundation (free OSS Authenticode signing) | Repository-owned prerequisites complete; Founder has submitted the application to SignPath Foundation and it is pending SignPath's own external review/approval — see `docs/release/SIGNPATH_ELIGIBILITY_PACKET.md` |
+| Windows | Website-first direct distribution (unsigned; project GPG signature + GitHub provenance) | **DIRECT_WEB.** Founder amendment `docs/canonical/FOUNDER_WEBSITE_FIRST_DIRECT_DISTRIBUTION_AMENDMENT_2026-09-26.md` — no Microsoft Store, no paid certificate, no SignPath dependency for v1; `WINDOWS_AUTHENTICODE_TRUST=NOT_AVAILABLE`, `WINDOWS_AUTHENTICODE_TRUST_CLAIMED=NO`, SmartScreen warnings expected and disclosed — see `docs/release/WINDOWS_DIRECT_DISTRIBUTION.md` (qualification pending exact CI evidence: `PENDING_DIRECT_DISTRIBUTION_QUALIFICATION_CI_RUN`) |
 | Linux | Project-controlled GPG release-signing key | **PASS.** A real release candidate (CLI archive, its SHA-256 manifest, and the `.deb` bundle) was signed with the production key and independently re-verified in a clean keyring seeded only with the published public key — see `docs/release/LINUX_RELEASE_SIGNING.md` and CI run [35498327004](https://github.com/TheHalfMoon/Pluma/actions/runs/35498327004) |
 | macOS | Zero-cost direct distribution (project GPG signature + GitHub attestation, ad-hoc codesign) | **PASS.** Founder decision, `docs/canonical/FOUNDER_ZERO_COST_MACOS_DIRECT_DISTRIBUTION_AMENDMENT_2026-09-20.md` — no Apple Developer ID, no notarization, no App Store; not claimed to carry Apple platform trust. Real release candidate `.dmg` ad-hoc-signed, GPG-signed with the same identity as Linux, and independently re-verified — see `docs/release/MACOS_DIRECT_DISTRIBUTION.md` and CI run [35514419522](https://github.com/TheHalfMoon/Pluma/actions/runs/35514419522) |
 | All platforms | GitHub artifact attestations (build provenance) | Implemented as an additional, non-substituting supply-chain evidence layer — see `docs/release/RELEASE_VERIFICATION.md` |
@@ -19,17 +19,44 @@ completed, non-blocked state. An `UNSIGNED_DEVELOPER_RC` label on any distribute
 means exactly that — a developer/test build, never a production release, regardless of which
 row is closer to ready.
 
-## Windows — SignPath Foundation
+## Windows — website-first direct distribution (unsigned)
 
-**Free code signing provided by SignPath.io, certificate by SignPath Foundation.**
+Pluma distributes its Windows installer and CLI archive directly from the web under
+`docs/canonical/FOUNDER_WEBSITE_FIRST_DIRECT_DISTRIBUTION_AMENDMENT_2026-09-26.md`: no
+Microsoft Store, no mandatory app store, no paid certificate, and no paid cloud signing
+service. Full design: [`docs/release/WINDOWS_DIRECT_DISTRIBUTION.md`](WINDOWS_DIRECT_DISTRIBUTION.md).
 
-Pluma intends to use [SignPath Foundation](https://signpath.org/)'s free code-signing program
-for open-source projects rather than a purchased commercial certificate. The Founder has
-submitted the application; it is now pending SignPath's own external review and approval
-(`docs/release/SIGNPATH_ELIGIBILITY_PACKET.md` records the exact eligibility check against
-SignPath's own published terms and the exact remaining external action). No approval,
-organization/project/signing-policy identifiers, or API credentials have been received —
-this repository will not claim any of those until SignPath actually issues them.
+```text
+WINDOWS_DISTRIBUTION_MODE=DIRECT_WEB
+WINDOWS_UNSIGNED_DIRECT_DISTRIBUTION_ALLOWED=YES
+WINDOWS_AUTHENTICODE_TRUST=NOT_AVAILABLE
+WINDOWS_AUTHENTICODE_TRUST_CLAIMED=NO
+WINDOWS_SMARTSCREEN_WARNING=EXPECTED_AND_DISCLOSED
+WINDOWS_STORE_SIGNATURE=NOT_USED
+WINDOWS_PAID_CERTIFICATE_REQUIRED=NO
+```
+
+Windows Authenticode is desirable but not required for v1 completion when no zero-cost trusted
+certificate is available. A real Windows signature inspection showing `AUTHENTICODE=NOT_SIGNED`
+is the expected result under this amendment — acceptable only when explicitly documented,
+never represented as trusted/signed, and only when every other release-integrity gate
+(checksum, project GPG signature, GitHub provenance, SBOM, install qualification) passes.
+
+### Prior SignPath Foundation history (preserved, not deleted)
+
+**Free code signing once intended via SignPath.io, certificate by SignPath Foundation.**
+
+Pluma once intended to use [SignPath Foundation](https://signpath.org/)'s free code-signing
+program for open-source projects rather than a purchased commercial certificate. The Founder
+submitted the application (recorded 2026-09-21); SignPath Foundation / Phillip Deng declined
+it on 2026-09-25 (`APPLICATION NOT APPROVED AT THIS TIME`) for insufficient public trust and
+visibility signals, inviting reapplication after broader recognition and offering a paid
+subscription, which the Founder declined. `docs/release/SIGNPATH_ELIGIBILITY_PACKET.md`
+records the exact history. SignPath may be revisited after Pluma gains public adoption
+(`SIGNPATH_FOUNDATION_REAPPLY_AFTER_PUBLIC_ADOPTION=YES`); it is not a v1 blocker
+(`T05-04_SIGNPATH_EXTERNAL_BLOCKER=SUPERSEDED_BY_FOUNDER_DIRECT_DISTRIBUTION_DECISION`). No
+SignPath approval, organization/project/signing-policy identifiers, or API credentials were
+ever received — this repository claims none of those.
 
 ### Roles
 

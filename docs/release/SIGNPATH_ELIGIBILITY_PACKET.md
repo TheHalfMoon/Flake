@@ -258,3 +258,33 @@ cannot be filled in before that point by anyone, including the Founder.
 `SIGNPATH_PROJECT_ELIGIBILITY` remains `PENDING_EXTERNAL_APPROVAL`; nothing above changes that —
 it records exactly what the Founder needs to submit and confirms it against SignPath's live,
 current terms rather than the 2026-09-18 snapshot alone.
+
+## Addendum: SignPath Foundation response received 2026-09-25 (Founder-supplied external evidence)
+
+The Founder received a real response from SignPath Foundation / Phillip Deng, dated
+2026-09-25, with outcome `APPLICATION NOT APPROVED AT THIS TIME`. The stated reason is that
+the project does not yet have enough public trust and visibility signals for the Foundation
+program. Signals cited include GitHub stars, forks, contributors, external articles,
+independent references/discussions, Reddit, Stack Overflow, YouTube, institutional backing,
+and sustained activity and engagement. SignPath explicitly invited the project to reapply
+after broader recognition, and also offered a regular paid subscription. The Founder decision
+is: do not use the paid SignPath route.
+
+```text
+T05-04_SIGNPATH_APPLICATION_STATUS=REJECTED_INSUFFICIENT_PUBLIC_VISIBILITY
+T05-04_SIGNPATH_FOUNDATION_APPROVAL=NO
+T05-04_SIGNPATH_REAPPLY_AFTER_ADOPTION=YES
+T05-04_SIGNPATH_PAID_ROUTE=DECLINED_BY_FOUNDER
+T05-04_SIGNPATH_EXTERNAL_BLOCKER=SUPERSEDED_BY_FOUNDER_DIRECT_DISTRIBUTION_DECISION
+```
+
+No SignPath rejection ID, project ID, organization ID, policy slug, certificate, API token,
+exact internal scoring, or minimum star count is claimed here — none was supplied with the
+response as reported, and none is fabricated in its place.
+
+This packet is preserved as historical evidence. It is no longer the v1 Windows exit
+condition: per
+`docs/canonical/FOUNDER_WEBSITE_FIRST_DIRECT_DISTRIBUTION_AMENDMENT_2026-09-26.md`, Windows
+v1 qualification proceeds under `docs/release/WINDOWS_DIRECT_DISTRIBUTION.md` (unsigned direct
+web distribution with disclosed limitations), and SignPath may be revisited after Pluma gains
+public adoption (`SIGNPATH_FOUNDATION_REAPPLY_AFTER_PUBLIC_ADOPTION=YES`).
