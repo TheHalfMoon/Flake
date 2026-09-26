@@ -1,0 +1,153 @@
+name: t05-05-independent-reproduction
+
+# T05-05 (plan section 25: "Verify the release using a separate executor and
+# clean environment"). The separate executor is a fresh GitHub-hosted runner
+# per profile (no access to any developer workstation state, no private
+# caches): it rebuilds from the exact pinned source with frozen
+# dependencies/toolchain, compares unsigned payloads, installs the signed
+# artifacts offline, runs the core loop plus full export/independent
+# reconstruction with all derived state deleted and without relying on
+# product source, and repeats the legacy migration path from the published
+# instructions. The verifier holds only expected digests and public
+# verification material -- no signing secrets enter this workflow.
+#
+# workflow_dispatch-only, same reservation as the T05-04 evidence workflows:
+# a deliberate, evidence-producing action, never an automatic side effect
+# of routine PR CI.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  independent-reproduction:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Record pinned source identity (the exact source being reproduced)
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "source_commit=$(git rev-parse HEAD)" | tee source-identity.txt
+          echo "source_tree=$(git rev-parse HEAD^{tree})" | tee -a source-identity.txt
+          git status --short --branch | tee -a source-identity.txt
+          cat source-identity.txt
+
+      - name: Record frozen toolchain (pinned compiler, locked dependencies)
+        shell: bash
+        run: |
+          set -euo pipefail
+          rustc --version | tee toolchain.txt
+          cargo --version | tee -a toolchain.txt
+          python3 --version | tee -a toolchain.txt
+          echo "cargo_lock_root=$(sha256sum Cargo.lock | cut -d' ' -f1)" | tee -a toolchain.txt
+          echo "cargo_lock_desktop=$(sha256sum desktop/src-tauri/Cargo.lock | cut -d' ' -f1)" | tee -a toolchain.txt
+          cat toolchain.txt
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Two clean builds agree on declared reproducible payloads
+        shell: bash
+        run: scripts/release/reproducibility_check.sh
+
+      - name: Build CLI release archive + SHA-256 manifest from this exact source
+        shell: bash
+        run: scripts/release/package_cli_archive.sh
+
+      - name: Install cargo-cyclonedx
+        shell: bash
+        run: cargo install cargo-cyclonedx --locked
+
+      - name: Generate SBOMs (CLI + desktop shell)
+        shell: bash
+        run: scripts/release/generate_sbom.sh
+
+      - name: Build pluma + pluma-migrate release binaries (needed below)
+        shell: bash
+        run: cargo build --release --locked --bin pluma --bin pluma-migrate
+
+      - name: Core loop + full export/independent reconstruction (derived state deleted, no product source used)
+        shell: bash
+        run: |
+          set -euo pipefail
+          exe=""
+          case "$(uname -s)" in
+            MINGW*|MSYS*|CYGWIN*) exe=".exe" ;;
+          esac
+          mkdir -p dist/t05-05
+          python3 tools/independent-verify/run_all.py \
+            --binary "target/release/pluma${exe}" \
+            --workdir "dist/t05-05/reconstruction" \
+            > "dist/t05-05/independent-reconstruction.json"
+          python3 -c "import json; d=json.load(open('dist/t05-05/independent-reconstruction.json')); assert d['passed'], d['failures']; print('INDEPENDENT_RECONSTRUCTION=PASS')"
+
+      - name: Legacy migration path repeated from the published instructions (USER_GUIDE section 6)
+        shell: bash
+        run: |
+          set -euo pipefail
+          exe=""
+          case "$(uname -s)" in
+            MINGW*|MSYS*|CYGWIN*) exe=".exe" ;;
+          esac
+          mkdir -p dist/t05-05
+          python3 docs/evidence/flake-v1/T05-05/checks/legacy_migration_repeat.py \
+            --pluma-bin "target/release/pluma${exe}" \
+            --migrate-bin "target/release/pluma-migrate${exe}" \
+            --workdir "dist/t05-05/migration-work" \
+            --out "dist/t05-05/legacy-migration-repeat.json"
+
+      - name: Install Linux Tauri system dependencies
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf build-essential xvfb
+
+      - name: Frontend build
+        shell: bash
+        working-directory: desktop
+        run: |
+          npm ci
+          npm run build
+          npm audit
+
+      - name: Build desktop bundle from this exact source
+        shell: bash
+        working-directory: desktop
+        run: npm run tauri -- build
+
+      - name: Disable Windows Defender real-time monitoring for this CI job (Windows only)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: Set-MpPreference -DisableRealtimeMonitoring $true
+
+      - name: Clean-install / launch / reinstall / uninstall qualification, vault-retention proof, no-network-on-launch observation
+        shell: bash
+        timeout-minutes: 10
+        run: scripts/release/install_test.sh
+
+      - name: Upload non-secret evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: t05-05-independent-reproduction-evidence-${{ matrix.os }}
+          path: |
+            source-identity.txt
+            toolchain.txt
+            dist/reproducibility/reproducibility-result.txt
+            dist/*.sha256
+            dist/sbom/*.cdx.json
+            dist/t05-05/independent-reconstruction.json
+            dist/t05-05/legacy-migration-repeat.json
+            dist/install-test/*.txt
+          if-no-files-found: error
