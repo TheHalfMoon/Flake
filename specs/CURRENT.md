@@ -44,8 +44,8 @@ MACOS_DEVELOPER_ID_REQUIRED=NO
 MACOS_NOTARIZATION_REQUIRED=NO
 MACOS_DISTRIBUTION_MODE=DIRECT_WEBSITE
 MACOS_GATEKEEPER_TRUST=NOT_CLAIMED
-EXECUTABLE_REPOSITORY_WORK=NONZERO
-EXECUTABLE_REPOSITORY_WORK_ITEM_1=T05-04_WINDOWS_DIRECT_WEB_QUALIFICATION (amendment ratified 2026-09-26; workflow `.github/workflows/t05-04-windows-direct-distribution.yml` implemented in this change, pending exact CI evidence run -- T05-04 stays IN_PROGRESS until that run is genuinely green)
+EXECUTABLE_REPOSITORY_WORK=ZERO
+EXECUTABLE_REPOSITORY_WORK_NOTE=T05-04 Windows direct-web qualification closed PASS (CI run 36243789672); T05-05 is now the dependency-ready unit
 P03_STATUS=CLOSED
 T04-01_STATUS=COMPLETE
 T04-01_EVIDENCE=docs/evidence/flake-v1/T04-01/REPORT.md
@@ -120,7 +120,15 @@ OSSIGN_V1_BLOCKER=NO
 OSSIGN_REAPPLY_WHEN_ELIGIBLE=YES
 T05-04_WINDOWS_DIRECT_DISTRIBUTION_DESIGN=docs/release/WINDOWS_DIRECT_DISTRIBUTION.md
 T05-04_WINDOWS_DIRECT_DISTRIBUTION_WORKFLOW=.github/workflows/t05-04-windows-direct-distribution.yml
-T05-04_WINDOWS_DIRECT_DISTRIBUTION_STATUS=PENDING_DIRECT_DISTRIBUTION_QUALIFICATION_CI_RUN (amendment + workflow implemented in this change; no PASS claimed before the workflow runs green and is independently checked)
+T05-04_WINDOWS_DIRECT_DISTRIBUTION_STATUS=PASS
+T05-04_WINDOWS_DIRECT_DISTRIBUTION_CI_RUN=36243789672
+T05-04_WINDOWS_DIRECT_DISTRIBUTION_EVIDENCE=docs/evidence/flake-v1/T05-04/REPORT.md (addendum: "Windows direct-web distribution qualification PASS")
+T05-04_WINDOWS_DIRECT_DISTRIBUTION_ARTIFACTS_SHA256=Pluma_0.0.1-phase-t_x64-setup.exe=09c5d0d161603ac607e5d3695a9569e0bec7badd3d2a71a07995d64de0faa41b ; pluma-0.0.1-phase-t-windows-x86_64.zip=6767273e02eaa34918ba11119fb41bf7064923c280f5ab4b274fcb4a35d30fe2 ; pluma-0.0.1-phase-t-windows-x86_64.sha256=54dc502ca7dfee89037f3ef0a5fa80079449140d6d7ad8362a79791838e416e5 (all independently re-verified: post-signing byte identity plus clean-keyring GPG GOODSIG)
+T05-04_WINDOWS_AUTHENTICODE_STATUS=NOT_SIGNED (real signtool inspection in CI run 36243789672 -- Get-AuthenticodeSignature NotSigned, signtool verified 0 files; explicitly documented, never a trust claim)
+T05-04_STATUS=COMPLETE
+ACTIVE_IMPLEMENTATION_UNIT=T05-05
+NEXT_DEPENDENCY_READY_UNIT=T05-05
+T05-05_STATUS=IN_PROGRESS
 T05-04_WINDOWS_DIRECT_DISTRIBUTION_INSPECTION=scripts/release/inspect_windows_signature.sh (expected AUTHENTICODE=NOT_SIGNED, explicitly documented, never a trust claim)
 T05-04_WINDOWS_DOWNLOAD_SURFACE=docs/release/DOWNLOAD.md
 T05-04_LINUX_SIGNING_STATUS=PASS

@@ -469,3 +469,58 @@ preserved, not rewritten.
 and `T05-04` remains `IN_PROGRESS`. `T05-05` remains not dependency-ready until that run is
 independently checked and recorded in a follow-up. No `v1.0.0` tag invented; historical
 `v0.0.1-phase-t-rc.1` untouched.
+
+## Addendum: Windows direct-web distribution qualification PASS (2026-09-26, CI run 36243789672)
+
+`.github/workflows/t05-04-windows-direct-distribution.yml` ran once directly on `main` at
+merge commit `5d918fd54dbeeac582187a34348e067e9d2b29ee` (PR #120): CI run
+[`36243789672`](https://github.com/TheHalfMoon/Pluma/actions/runs/36243789672), conclusion
+`success`. Independently confirmed from that run's own log and downloaded evidence artifact
+(not merely the green checkmark):
+
+- **Artifact:** `desktop/src-tauri/target/release/bundle/nsis/Pluma_0.0.1-phase-t_x64-setup.exe`
+  (218 MB post-rename Pluma branding — no stale Flake-brand production filename) and
+  `dist/pluma-0.0.1-phase-t-windows-x86_64.zip` (7.4 MB CLI archive), built on
+  `windows-latest` from the exact merged source.
+- **Integrity:** pre-qualification SHA-256 recorded and published —
+  installer `09c5d0d161603ac607e5d3695a9569e0bec7badd3d2a71a07995d64de0faa41b`,
+  CLI archive `6767273e02eaa34918ba11119fb41bf7064923c280f5ab4b274fcb4a35d30fe2`,
+  manifest `54dc502ca7dfee89037f3ef0a5fa80079449140d6d7ad8362a79791838e416e5`;
+  post-signing re-hash byte-identical (`ARTIFACT_BYTES_UNCHANGED=YES` — detached `.asc`
+  signatures never modify the signed file). Six CycloneDX SBOMs produced
+  (`pluma-cli`, `flake-cli`, `fehrest-cli`, `pluma-migrate`, `flake-migrate`,
+  `pluma-desktop`). Version `0.0.1-phase-t`, architecture `x86_64` recorded.
+- **Aliases:** all five staged binaries (`pluma`/`flake`/`fehrest`/`pluma-migrate`/
+  `flake-migrate`) smoke-checked `--help` OK against the built output.
+- **Authenticode truth:** `Get-AuthenticodeSignature` reports `Status: NotSigned`;
+  `signtool verify /pa /v` verifies 0 files (exit 1, expected). Recorded as
+  `WINDOWS_AUTHENTICODE_STATUS=NOT_SIGNED`, `WINDOWS_AUTHENTICODE_TRUST=NOT_AVAILABLE`,
+  `WINDOWS_AUTHENTICODE_TRUST_CLAIMED=NO`,
+  `WINDOWS_SMARTSCREEN_WARNING=EXPECTED_AND_DISCLOSED` — never a signing PASS.
+- **Sanity gate first:** production GPG signing invoked with no credentials set and required
+  to fail closed before the real secret was touched; the job passed, so the gate held.
+- **Project GPG signatures:** installer, CLI archive, and checksum manifest each signed with
+  the production identity, then independently re-verified in a clean keyring seeded only from
+  the published public key — `GOODSIG` asserted for all three with `VALIDSIG` fingerprint
+  `F779807C73F29F4DB1E7DC9F78F7D4B92287FE22` confirmed (never the signing step's own
+  environment, never the private key).
+- **GitHub build-provenance attestation** created for the installer (logged
+  `Attestation created`).
+- **Install/launch/reinstall/uninstall reconfirmed against this specific artifact** (not
+  merely the unsigned `T05-03` candidate): silent NSIS current-user install, app launch with
+  no non-loopback connection opened by the app process, bundled `LICENSE`/`NOTICE`/
+  `THIRD-PARTY-LICENSES.md` present in the installed tree, reinstall-over-existing OK,
+  uninstall removed the app executable, and the pre-install vault retained unmodified
+  (`RETAINED=YES`, `result-MINGW64_NT-10.0-26100.txt`).
+- **No secret material leaked:** only the three named `GPG_*` secret env vars were referenced;
+  no private key or passphrase content appears in the log. Only the installer, detached
+  signatures, checksums, SBOMs, and install-test log were uploaded as evidence — never key
+  material.
+
+`T05-04_WINDOWS_DIRECT_DISTRIBUTION=PASS` under the amended contract —
+`WINDOWS_DISTRIBUTION_MODE=DIRECT_WEB`, `WINDOWS_AUTHENTICODE_TRUST=NOT_AVAILABLE`,
+`WINDOWS_AUTHENTICODE_TRUST_CLAIMED=NO`,
+`WINDOWS_SMARTSCREEN_WARNING=EXPECTED_AND_DISCLOSED` throughout — never a claim of Windows
+platform trust, Store distribution, or a paid certificate. With Linux release-signing (PASS)
+and macOS zero-cost direct distribution (PASS) already closed, `T05-04` is now complete and
+`T05-05` becomes dependency-ready.
