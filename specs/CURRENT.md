@@ -126,12 +126,13 @@ T05-04_WINDOWS_DIRECT_DISTRIBUTION_EVIDENCE=docs/evidence/flake-v1/T05-04/REPORT
 T05-04_WINDOWS_DIRECT_DISTRIBUTION_ARTIFACTS_SHA256=Pluma_0.0.1-phase-t_x64-setup.exe=09c5d0d161603ac607e5d3695a9569e0bec7badd3d2a71a07995d64de0faa41b ; pluma-0.0.1-phase-t-windows-x86_64.zip=6767273e02eaa34918ba11119fb41bf7064923c280f5ab4b274fcb4a35d30fe2 ; pluma-0.0.1-phase-t-windows-x86_64.sha256=54dc502ca7dfee89037f3ef0a5fa80079449140d6d7ad8362a79791838e416e5 (all independently re-verified: post-signing byte identity plus clean-keyring GPG GOODSIG)
 T05-04_WINDOWS_AUTHENTICODE_STATUS=NOT_SIGNED (real signtool inspection in CI run 36243789672 -- Get-AuthenticodeSignature NotSigned, signtool verified 0 files; explicitly documented, never a trust claim)
 T05-04_STATUS=COMPLETE
-ACTIVE_IMPLEMENTATION_UNIT=T05-05
-NEXT_DEPENDENCY_READY_UNIT=T05-05
-T05-05_STATUS=IN_PROGRESS
+ACTIVE_IMPLEMENTATION_UNIT=T05-06
+NEXT_DEPENDENCY_READY_UNIT=T05-06
+T05-05_STATUS=COMPLETE
 T05-05_EVIDENCE=docs/evidence/flake-v1/T05-05/REPORT.md
 T05-05_REPRODUCTION_WORKFLOW=.github/workflows/t05-05-independent-reproduction.yml
-T05-05_CI_RUN=PENDING (workflow implemented, awaiting exact green run on all three profiles)
+T05-05_CI_RUN=36254592422 (independent reproduction PASS on windows/macos/ubuntu -- byte-identical ELF/Mach-O, isolated PE linker fields with bit-identical remainder, reconstruction PASS, migration repeat passed, install qualification per profile)
+T05-06_STATUS=IN_PROGRESS
 T05-04_WINDOWS_DIRECT_DISTRIBUTION_INSPECTION=scripts/release/inspect_windows_signature.sh (expected AUTHENTICODE=NOT_SIGNED, explicitly documented, never a trust claim)
 T05-04_WINDOWS_DOWNLOAD_SURFACE=docs/release/DOWNLOAD.md
 T05-04_LINUX_SIGNING_STATUS=PASS
