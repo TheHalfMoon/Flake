@@ -413,3 +413,59 @@ Founder's authorization.
 resolves the "already released" prerequisite the packet had flagged as an open question; it does
 not and cannot substitute for SignPath's own review and approval. `T05-05` remains not
 dependency-ready.
+
+## Addendum: website-first direct distribution amendment ratified, Windows direct-web qualification implemented (2026-09-26, pending CI run)
+
+**Founder governance:** `docs/canonical/FOUNDER_WEBSITE_FIRST_DIRECT_DISTRIBUTION_AMENDMENT_2026-09-26.md`
+(`FOUNDER_DECISION=RATIFIED`, effective 2026-09-26, Class E) supersedes the prior
+external-signing-only Windows exit condition prospectively. Microsoft Store, Mac App Store, any
+mandatory app store, paid Windows signing for the current release, paid Apple Developer Program
+membership, and paid cloud signing are out of the v1 contract
+(`WEBSITE_FIRST_DIRECT_DISTRIBUTION=YES`, `FOUNDER_ZERO_COST_DISTRIBUTION_REQUIRED=YES`).
+The new Windows contract is `WINDOWS_DISTRIBUTION_MODE=DIRECT_WEB` with
+`WINDOWS_AUTHENTICODE_TRUST=NOT_AVAILABLE` / `WINDOWS_AUTHENTICODE_TRUST_CLAIMED=NO` /
+`WINDOWS_SMARTSCREEN_WARNING=EXPECTED_AND_DISCLOSED`, and `WINDOWS_AUTHENTICODE_STATUS=PASS`
+is never set without a real verified trusted signature.
+
+**External evidence recorded truthfully:** SignPath Foundation / Phillip Deng responded
+2026-09-25 with `APPLICATION NOT APPROVED AT THIS TIME` for insufficient public trust and
+visibility signals (stars, forks, contributors, articles, references, Reddit, Stack Overflow,
+YouTube, institutional backing, sustained activity), invited reapplication after broader
+recognition, and offered a paid subscription the Founder declined. Recorded as
+`T05-04_SIGNPATH_APPLICATION_STATUS=REJECTED_INSUFFICIENT_PUBLIC_VISIBILITY`,
+`T05-04_SIGNPATH_FOUNDATION_APPROVAL=NO`, `T05-04_SIGNPATH_REAPPLY_AFTER_ADOPTION=YES`,
+`T05-04_SIGNPATH_PAID_ROUTE=DECLINED_BY_FOUNDER`,
+`T05-04_SIGNPATH_EXTERNAL_BLOCKER=SUPERSEDED_BY_FOUNDER_DIRECT_DISTRIBUTION_DECISION`.
+No rejection/project/org ID, policy slug, certificate, token, scoring, or star count is
+claimed. OSSign is `OSSIGN_STATUS=DEFERRED_FUTURE_OPTION`, `OSSIGN_V1_BLOCKER=NO`,
+`OSSIGN_REAPPLY_WHEN_ELIGIBLE=YES`. History (submitted, then rejected, then amended) is
+preserved, not rewritten.
+
+**Implemented in this change (no PASS claimed):**
+
+- `docs/release/WINDOWS_DIRECT_DISTRIBUTION.md` (clauses A-H: build, install, data
+  continuity, manual update model, integrity, Authenticode truth, SmartScreen UX, clean
+  download reverification).
+- `scripts/release/inspect_windows_signature.sh` (real `signtool verify /pa /v` plus
+  `Get-AuthenticodeSignature`; reports `NOT_SIGNED`/`SIGNED_TRUSTED`/`UNTRUSTED` truthfully,
+  never a trust PASS; `bash -n` clean).
+- `.github/workflows/t05-04-windows-direct-distribution.yml` (`workflow_dispatch`-only:
+  build, integrity metadata, signature inspection expecting `NOT_SIGNED`, GPG-sign
+  installer/archive/manifest with the existing project key plus clean-keyring re-verify,
+  GitHub provenance attestation, `install_test.sh` reconfirmation, byte-identity proof;
+  YAML parsed clean).
+- `docs/release/DOWNLOAD.md` (canonical v1 download landing surface; historical
+  `v0.0.1-phase-t-rc.1` preserved with exact SHA-256 identities).
+- Updated `docs/release/CODE_SIGNING_POLICY.md`,
+  `docs/release/SIGNPATH_ELIGIBILITY_PACKET.md` (rejection addendum),
+  `docs/release/RELEASE_VERIFICATION.md` (Windows direct-web truth),
+  `docs/release/USER_GUIDE.md` (sections 7/9: manual update model, SmartScreen safe path,
+  no global-disable instructions), `README.md` (download table plus DOWNLOAD pointer), and
+  `specs/CURRENT.md` (amendment pointer, Windows direct-web `PENDING` fields, SignPath
+  rejection states, `EXECUTABLE_REPOSITORY_WORK=NONZERO` for the pending qualification run).
+
+**Not done here:** the new workflow has not yet run green in CI, so
+`T05-04_WINDOWS_DIRECT_DISTRIBUTION_STATUS=PENDING_DIRECT_DISTRIBUTION_QUALIFICATION_CI_RUN`
+and `T05-04` remains `IN_PROGRESS`. `T05-05` remains not dependency-ready until that run is
+independently checked and recorded in a follow-up. No `v1.0.0` tag invented; historical
+`v0.0.1-phase-t-rc.1` untouched.

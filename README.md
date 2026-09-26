@@ -64,9 +64,13 @@ infrastructure.
 
 | Platform | Signing/trust model | Notes |
 |---|---|---|
-| Windows | SignPath Foundation (free OSS Authenticode) — pending Founder application/approval | See `docs/release/SIGNPATH_ELIGIBILITY_PACKET.md` |
+| Windows | Direct download — unsigned, independently verifiable (checksum, project GPG signature, GitHub attestation); SmartScreen warnings expected and disclosed | See `docs/release/WINDOWS_DIRECT_DISTRIBUTION.md`; `WINDOWS_AUTHENTICODE_TRUST=NOT_AVAILABLE`, never claimed as signed; no Microsoft Store |
 | macOS | Direct download — independently verifiable (checksum, project GPG signature, GitHub attestation), **not Apple notarized** — **PASS** | See `docs/release/MACOS_DIRECT_DISTRIBUTION.md`; no Apple endorsement implied |
 | Linux | Project-controlled GPG release-signing key — **PASS** | See `docs/release/LINUX_RELEASE_SIGNING.md` |
+
+Canonical download landing page: [`docs/release/DOWNLOAD.md`](docs/release/DOWNLOAD.md).
+Founder distribution amendment:
+[`docs/canonical/FOUNDER_WEBSITE_FIRST_DIRECT_DISTRIBUTION_AMENDMENT_2026-09-26.md`](docs/canonical/FOUNDER_WEBSITE_FIRST_DIRECT_DISTRIBUTION_AMENDMENT_2026-09-26.md).
 
 Every platform's published artifact, once a release exists, will list its version,
 architecture, SHA-256 checksum, signature/provenance verification command, release notes,

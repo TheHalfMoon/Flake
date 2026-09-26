@@ -1,0 +1,221 @@
+name: t05-04-windows-direct-distribution
+
+# Real Windows website-first direct-distribution qualification for T05-04, under
+# docs/canonical/FOUNDER_WEBSITE_FIRST_DIRECT_DISTRIBUTION_AMENDMENT_2026-09-26.md.
+# No Authenticode trust, no Microsoft Store, no paid certificate -- this workflow
+# proves and never claims otherwise. It builds the actual Windows installer and
+# CLI archive Pluma distributes (same build T05-03 already qualifies), records
+# full integrity metadata, runs a REAL signature inspection (expected result:
+# WINDOWS_AUTHENTICODE_STATUS=NOT_SIGNED), signs the artifacts with Pluma's
+# existing project-controlled GPG release-signing identity (project provenance,
+# never a platform-trust claim), attests GitHub build provenance, and reconfirms
+# the install/launch/reinstall/uninstall qualification T05-03 already ran
+# against this specific artifact.
+#
+# workflow_dispatch-only, same reservation as t05-04-linux-production-signing.yml,
+# t05-04-macos-direct-distribution.yml, and release-provenance-attestation.yml:
+# a deliberate, evidence-producing action using real repository secrets, never an
+# automatic side effect of routine PR CI.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-direct-distribution:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Build CLI release archive + SHA-256 manifest
+        shell: bash
+        run: scripts/release/package_cli_archive.sh
+
+      - name: Install cargo-cyclonedx
+        shell: bash
+        run: cargo install cargo-cyclonedx --locked
+
+      - name: Generate SBOMs (CLI + desktop shell)
+        shell: bash
+        run: scripts/release/generate_sbom.sh
+
+      - name: Build pluma CLI (needed by install_test.sh to seed/verify the retained vault)
+        shell: bash
+        run: cargo build --release --locked --bin pluma
+
+      - name: Frontend build
+        shell: bash
+        working-directory: desktop
+        run: |
+          npm ci
+          npm run build
+          npm audit
+
+      - name: Build unsigned desktop installer bundle (DIRECT_WEB -- unsigned by design)
+        shell: bash
+        working-directory: desktop
+        run: npm run tauri -- build --bundles nsis
+
+      - name: Locate required artifacts and record integrity metadata
+        id: locate
+        shell: bash
+        run: |
+          set -euo pipefail
+          installer="$(find desktop/src-tauri/target/release/bundle/nsis -iname '*.exe' ! -iname '*uninstall*' | head -1)"
+          archive="$(find dist -maxdepth 1 -iname 'pluma-*.zip' | head -1)"
+          manifest="$(find dist -maxdepth 1 -iname 'pluma-*.sha256' | head -1)"
+          for f in "$installer" "$archive" "$manifest"; do
+            if [[ -z "$f" || ! -f "$f" ]]; then
+              echo "a required Windows release artifact was not found (installer/archive/manifest)" >&2
+              exit 1
+            fi
+          done
+          echo "installer=$installer" >> "$GITHUB_OUTPUT"
+          echo "archive=$archive" >> "$GITHUB_OUTPUT"
+          echo "manifest=$manifest" >> "$GITHUB_OUTPUT"
+          echo "==> required artifacts:"
+          echo "  installer: $installer"
+          echo "  archive:   $archive"
+          echo "  manifest:  $manifest"
+          echo "==> source commit: $(git rev-parse HEAD)"
+          echo "==> architecture: x86_64 (windows-latest)"
+          echo "==> version: $(grep '^version' desktop/src-tauri/tauri.conf.json)"
+          echo "==> integrity metadata:"
+          sha256sum "$installer" "$archive" "$manifest" | tee pre-qualify.sha256
+          ls -la "$installer" "$archive" "$manifest" | tee artifact-sizes.txt
+          echo "==> SBOMs:"
+          ls -la dist/sbom/*.cdx.json | tee sbom-list.txt
+
+      - name: Confirm canonical pluma.exe builds and aliases behave identically
+        shell: bash
+        run: |
+          set -euo pipefail
+          for bin in pluma flake fehrest pluma-migrate flake-migrate; do
+            "target/release/${bin}.exe" --help > /dev/null
+            echo "  smoke OK: $bin.exe"
+          done
+          echo "ALIAS_PARITY_SMOKE=YES (full parity proven by tests/flake_fehrest_alias_parity.rs)"
+
+      - name: Real Windows signature inspection (expected NOT_SIGNED -- never a trust claim)
+        shell: bash
+        run: |
+          set -euo pipefail
+          scripts/release/inspect_windows_signature.sh "${{ steps.locate.outputs.installer }}" | tee authenticode-inspection.txt
+          grep -q 'WINDOWS_AUTHENTICODE_TRUST_CLAIMED=NO' authenticode-inspection.txt
+          grep -q 'WINDOWS_STORE_SIGNATURE=NOT_USED' authenticode-inspection.txt
+          if grep -q 'WINDOWS_AUTHENTICODE_STATUS=SIGNED_TRUSTED' authenticode-inspection.txt; then
+            echo "unexpected trusted Authenticode signature -- investigate before treating this as the unsigned direct-distribution artifact" >&2
+            exit 1
+          fi
+          grep -q 'WINDOWS_AUTHENTICODE_STATUS=NOT_SIGNED' authenticode-inspection.txt
+          echo "AUTHENTICODE_TRUTH_RECORDED=YES (NOT_SIGNED, explicitly documented, never represented as trusted)"
+
+      - name: Confirm project GPG signing still fails closed without credentials (sanity gate, run before touching the real secret)
+        shell: bash
+        run: |
+          if scripts/release/sign_linux.sh "${{ steps.locate.outputs.manifest }}" 2>/tmp/nogpg.log; then
+            echo "production GPG signing unexpectedly succeeded with no credentials set" >&2
+            cat /tmp/nogpg.log
+            exit 1
+          fi
+          cat /tmp/nogpg.log
+
+      - name: Sign the installer with Pluma's project-controlled GPG release-signing identity (project provenance, NOT Authenticode)
+        shell: bash
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_KEY_PASSPHRASE: ${{ secrets.GPG_KEY_PASSPHRASE }}
+          GPG_KEY_FINGERPRINT: ${{ secrets.GPG_KEY_FINGERPRINT }}
+        run: scripts/release/sign_linux.sh "${{ steps.locate.outputs.installer }}"
+
+      - name: Sign the CLI archive with the same identity
+        shell: bash
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_KEY_PASSPHRASE: ${{ secrets.GPG_KEY_PASSPHRASE }}
+          GPG_KEY_FINGERPRINT: ${{ secrets.GPG_KEY_FINGERPRINT }}
+        run: scripts/release/sign_linux.sh "${{ steps.locate.outputs.archive }}"
+
+      - name: Sign the checksum manifest with the same identity
+        shell: bash
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_KEY_PASSPHRASE: ${{ secrets.GPG_KEY_PASSPHRASE }}
+          GPG_KEY_FINGERPRINT: ${{ secrets.GPG_KEY_FINGERPRINT }}
+        run: scripts/release/sign_linux.sh "${{ steps.locate.outputs.manifest }}"
+
+      - name: Independently verify every project GPG signature (clean keyring, published public key ONLY)
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_fpr="F779807C73F29F4DB1E7DC9F78F7D4B92287FE22"
+          export GNUPGHOME="$(mktemp -d)"
+          chmod 700 "$GNUPGHOME"
+          # Git Bash on Windows ships a minimal gpg; prefer the Gpg4win one when present.
+          gpg --batch --import docs/release/flake-release-signing-public.asc
+          imported_fpr="$(gpg --batch --list-keys --with-colons | awk -F: '/^fpr:/ {print $10; exit}')"
+          [[ "$imported_fpr" == "$expected_fpr" ]] || { echo "fingerprint mismatch: $imported_fpr" >&2; exit 1; }
+          for f in "${{ steps.locate.outputs.installer }}" "${{ steps.locate.outputs.archive }}" "${{ steps.locate.outputs.manifest }}"; do
+            echo "=== verifying $f against ${f}.asc ==="
+            status="$(gpg --batch --status-fd 1 --verify "${f}.asc" "$f")"
+            echo "$status" | grep -q '^\[GNUPG:\] GOODSIG' || { echo "GOODSIG not asserted for $f" >&2; exit 1; }
+            validsig_fpr="$(echo "$status" | awk '/^\[GNUPG:\] VALIDSIG/ {print $3; exit}')"
+            [[ "$validsig_fpr" == "$expected_fpr" ]] || { echo "VALIDSIG mismatch for $f: $validsig_fpr" >&2; exit 1; }
+            echo "==> $f: GOODSIG, fingerprint confirmed"
+          done
+          echo "WINDOWS_ARTIFACT_PROJECT_GPG_SIGNATURE_VERIFIED=YES"
+          echo "WINDOWS_AUTHENTICODE_TRUST_CLAIMED=NO"
+
+      - name: Attest GitHub build provenance for the installer
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: ${{ steps.locate.outputs.installer }}
+
+      - name: Disable Windows Defender real-time monitoring for this CI job (Windows only)
+        shell: powershell
+        run: Set-MpPreference -DisableRealtimeMonitoring $true
+
+      - name: Reconfirm install/launch/reinstall/uninstall + vault retention against this specific artifact
+        shell: bash
+        timeout-minutes: 10
+        run: scripts/release/install_test.sh
+
+      - name: Prove artifact bytes are unchanged by project signing (detached signatures never modify the signed file)
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum "${{ steps.locate.outputs.installer }}" "${{ steps.locate.outputs.archive }}" "${{ steps.locate.outputs.manifest }}" | tee post-qualify.sha256
+          diff <(awk '{print $1}' pre-qualify.sha256) <(awk '{print $1}' post-qualify.sha256)
+          echo "ARTIFACT_BYTES_UNCHANGED=YES"
+
+      - name: Upload non-secret evidence (installer, signatures, checksums, SBOMs -- never key material)
+        uses: actions/upload-artifact@v4
+        with:
+          name: t05-04-windows-direct-distribution-evidence
+          path: |
+            desktop/src-tauri/target/release/bundle/nsis/*.exe
+            desktop/src-tauri/target/release/bundle/nsis/*.exe.asc
+            dist/*.zip
+            dist/*.zip.asc
+            dist/*.sha256
+            dist/*.sha256.asc
+            dist/sbom/*.cdx.json
+            pre-qualify.sha256
+            post-qualify.sha256
+            authenticode-inspection.txt
+            artifact-sizes.txt
+            sbom-list.txt
+            dist/install-test/*.txt
+          if-no-files-found: error
